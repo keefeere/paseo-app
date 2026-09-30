@@ -72,7 +72,12 @@ function createToast(): ToastApi {
   };
 }
 
-function createWrapper(input: { client: TestClient; openedFiles: OpenedFile[]; toast?: ToastApi }) {
+function createWrapper(input: {
+  client: TestClient;
+  openedFiles: OpenedFile[];
+  onOpenExternalUrl?: (url: string) => void;
+  toast?: ToastApi;
+}) {
   const queryClient = createQueryClient();
   return function Wrapper({ children }: { children: ReactNode }) {
     const openWorkspaceFile = useCallback(
@@ -89,6 +94,7 @@ function createWrapper(input: { client: TestClient; openedFiles: OpenedFile[]; t
           serverId="server-1"
           workspaceRoot="/Users/test/project"
           onOpenWorkspaceFile={openWorkspaceFile}
+          onOpenExternalUrl={input.onOpenExternalUrl}
           toast={input.toast}
         >
           {children}
@@ -103,6 +109,33 @@ describe("useFileLink", () => {
   // once jsdom is torn down.
   afterEach(() => {
     cleanup();
+  });
+
+  it("delegates external links to the workspace opener", async () => {
+    const onOpenExternalUrl = vi.fn();
+    const { result } = renderHook(
+      () =>
+        useFileLink({
+          href: "https://example.com/docs",
+          text: "Paseo docs",
+          markup: "link",
+        }),
+      {
+        wrapper: createWrapper({
+          client: { getDirectorySuggestions: vi.fn() },
+          openedFiles: [],
+          onOpenExternalUrl,
+        }),
+      },
+    );
+
+    act(() => {
+      result.current.onPress();
+    });
+
+    await waitFor(() => {
+      expect(onOpenExternalUrl).toHaveBeenCalledWith("https://example.com/docs");
+    });
   });
 
   it("returns the same object across no-op parent rerenders", () => {
