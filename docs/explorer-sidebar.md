@@ -81,8 +81,9 @@ new target and never yanks an existing tab out of a user-selected pane.
 ## Routing preferences
 
 Desktop **Settings → Layout → Open location** has independent Main panel or On the side choices for
-Explorer Files, diffs, chat files, files opened from diffs, and subagents. They default to Main
-panel. Mobile ignores them.
+Explorer Files, diffs, chat files, files opened from diffs, subagents, and terminals. They default to Main
+panel. Mobile ignores them. Terminal creation, script terminal opens, and plugin terminal navigation
+share this preference. Explicit pane placement wins; revealing an existing terminal keeps its pane.
 
 Chat URLs independently choose Ask, Internal browser — side, Internal browser — tab, or External
 browser. Ask offers the internal tab and external browser for that click. Script service URLs keep

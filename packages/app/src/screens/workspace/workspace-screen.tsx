@@ -55,6 +55,7 @@ import {
 import {
   openPreferredWorkspacePreview,
   openPreferredWorkspaceTarget,
+  resolveDiscoveredTerminalPlacement,
   openWorkspaceTargetBeside,
   openWorkspaceTargetAtLocation,
 } from "@/workspace-tabs/open-beside";
@@ -1448,6 +1449,21 @@ function useWorkspaceTerminalTabActions({
   labels,
   toast,
 }: WorkspaceTerminalTabActionsInput): WorkspaceTerminalTabActions {
+  const compact = useIsCompactFormFactor();
+  const terminalPreferences = useSettings((settings) => settings.openInSidePane);
+  const openTerminalPreferred = useCallback(
+    (terminalId: string) => {
+      openPreferredWorkspaceTarget({
+        workspaceKey: persistenceKey,
+        target: { kind: "terminal", terminalId },
+        isCompact: compact || !supportsDesktopPaneSplits(),
+        source: "terminals",
+        preferences: terminalPreferences,
+      });
+    },
+    [persistenceKey, compact, terminalPreferences],
+  );
+
   const handleTerminalCreated = useCallback(
     ({ terminalId, destination }: { terminalId: string; destination: TerminalTabDestination }) => {
       if (!persistenceKey) {
@@ -1460,27 +1476,19 @@ function useWorkspaceTerminalTabActions({
         });
         return;
       }
+      if (!destination.paneId) {
+        openTerminalPreferred(terminalId);
+        return;
+      }
       openWorkspaceTabFocused(
         persistenceKey,
         { kind: "terminal", terminalId },
         paneLocalPlacement(destination.paneId),
       );
     },
-    [openWorkspaceTabFocused, persistenceKey, replaceWorkspaceTabTarget],
+    [openWorkspaceTabFocused, persistenceKey, replaceWorkspaceTabTarget, openTerminalPreferred],
   );
-  const handleScriptTerminalSelected = useCallback(
-    (terminalId: string) => {
-      if (!persistenceKey) {
-        return;
-      }
-      openWorkspaceTabFocused(
-        persistenceKey,
-        { kind: "terminal", terminalId },
-        FOCUSED_PANE_PLACEMENT,
-      );
-    },
-    [openWorkspaceTabFocused, persistenceKey],
-  );
+  const handleScriptTerminalSelected = openTerminalPreferred;
   const handleWorkspacePathUnavailable = useCallback(() => {
     toast.error(labels.workspacePathUnavailable);
   }, [labels.workspacePathUnavailable, toast]);
@@ -2044,6 +2052,13 @@ function WorkspaceScreenContent({
       return pending?.serverId === normalizedServerId && pending.lifecycle === "active";
     });
 
+    const terminalPlacement = resolveDiscoveredTerminalPlacement({
+      workspaceKey: persistenceKey,
+      terminalIds: standaloneTerminalIds,
+      isCompact: isMobile || !supportsDesktopPaneSplits(),
+      preferences: openInSidePane,
+      hasPendingCreate: createTerminalMutation.isPending || pendingTerminalCreateInput !== null,
+    });
     reconcileWorkspaceTabs(
       persistenceKey,
       buildWorkspaceTabSnapshot({
@@ -2052,6 +2067,7 @@ function WorkspaceScreenContent({
         terminalsHydrated: terminalsQuery.isSuccess,
         knownTerminalIds,
         standaloneTerminalIds,
+        terminalPlacement,
         hasActivePendingTerminalCreate:
           createTerminalMutation.isPending || pendingTerminalCreateInput !== null,
         hasActivePendingDraftCreate: hasActivePendingDraftCreateInWorkspace,
@@ -2070,6 +2086,8 @@ function WorkspaceScreenContent({
     reconcileWorkspaceTabs,
     knownTerminalIds,
     standaloneTerminalIds,
+    isMobile,
+    openInSidePane,
     terminalsQuery.isSuccess,
     uiTabs,
     workspaceAgentVisibility,
