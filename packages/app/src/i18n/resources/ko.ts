@@ -26,6 +26,16 @@ export const ko: TranslationResources = {
     total: "일치 항목 {{total}}개",
   },
   common: {
+    links: {
+      title: "링크 열기",
+      systemHandler: "이 기기에 설치된 앱으로 엽니다.",
+      unsupported: "여기에서 이 링크를 열 수 없습니다. 주소를 다른 앱에 복사할 수 있습니다.",
+      open: "앱에서 열기",
+      copy: "주소 복사",
+      failed:
+        "링크를 열거나 복사하지 못했습니다. 지원하는 앱이 설치되어 있는지 확인하거나 주소를 복사하세요.",
+      opened: "링크를 시스템에 전달했습니다. 브라우저에서 앱 열기를 허용하세요.",
+    },
     bottomSheetBackdrop: "하단 시트 배경",
     back: "뒤로",
     loading: "불러오는 중...",
@@ -1856,6 +1866,8 @@ export const ko: TranslationResources = {
       noPreview: "사용 가능한 미리보기가 없습니다",
       binaryPreviewUnavailable: "바이너리 미리보기를 사용할 수 없습니다",
       tooLargeToDisplay: "이 파일은 너무 커서 표시할 수 없습니다",
+      showDirectory: "상위 폴더 표시",
+      resourceActions: "파일 작업",
       failedToLoad: "파일을 불러오지 못했습니다",
       failedToLoadPreview: "파일 미리보기를 불러오지 못했습니다",
       editor: {

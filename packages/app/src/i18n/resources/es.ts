@@ -27,6 +27,17 @@ export const es: TranslationResources = {
     total: "{{total}} coincidencias",
   },
   common: {
+    links: {
+      title: "Abrir enlace",
+      systemHandler: "Abrir con una aplicación instalada en este dispositivo.",
+      unsupported:
+        "Este enlace no se puede abrir aquí. Puedes copiar su dirección en otra aplicación.",
+      open: "Abrir en una aplicación",
+      copy: "Copiar dirección",
+      failed:
+        "No se pudo abrir o copiar el enlace. Comprueba que haya una aplicación compatible instalada o copia la dirección.",
+      opened: "Enlace enviado al sistema. En un navegador, permite abrir la aplicación.",
+    },
     bottomSheetBackdrop: "Fondo del panel inferior",
     back: "Atrás",
     loading: "Cargando...",
@@ -1894,6 +1905,8 @@ export const es: TranslationResources = {
       noPreview: "No hay vista previa disponible",
       binaryPreviewUnavailable: "Vista previa binaria no disponible",
       tooLargeToDisplay: "Este archivo es demasiado grande para mostrarlo",
+      showDirectory: "Mostrar carpeta contenedora",
+      resourceActions: "Acciones del archivo",
       failedToLoad: "No se pudo cargar el archivo",
       failedToLoadPreview: "No se pudo cargar la vista previa del archivo",
       editor: {

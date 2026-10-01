@@ -213,7 +213,10 @@ export function parseFileProtocolUrl(value: string): InlinePathTarget | null {
     return null;
   }
 
-  if (parsedUrl.protocol !== FILE_PROTOCOL) {
+  if (
+    parsedUrl.protocol !== FILE_PROTOCOL ||
+    (parsedUrl.hostname && parsedUrl.hostname !== "localhost")
+  ) {
     return null;
   }
 
@@ -530,9 +533,15 @@ function isHomeRelativePath(pathValue: string): boolean {
 }
 
 function isExternalHref(value: string): boolean {
-  if (value.includes("://")) {
-    return !value.toLowerCase().startsWith(`${FILE_PROTOCOL}//`);
+  if (value.toLowerCase().startsWith(`${FILE_PROTOCOL}//`)) {
+    try {
+      const url = new URL(value);
+      return Boolean(url.hostname && url.hostname !== "localhost");
+    } catch {
+      return false;
+    }
   }
+  if (value.includes("://")) return true;
 
   const inlinePathTarget = parseInlinePathToken(value);
   if (inlinePathTarget) {

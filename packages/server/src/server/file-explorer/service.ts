@@ -1,3 +1,4 @@
+import type { FilePreviewUnavailable } from "@getpaseo/protocol/messages";
 import { constants, promises as fs, type BigIntStats, type Stats } from "fs";
 import type { FileHandle } from "fs/promises";
 import path from "path";
@@ -529,6 +530,36 @@ export async function writeExplorerFile({
     await temporaryHandle?.close().catch(() => undefined);
     await fs.unlink(temporaryPath).catch(() => undefined);
   }
+}
+
+/** Preview requests inspect the resource before allocating or transferring its contents. */
+export async function getUnavailableFilePreview(
+  input: ReadFileParams & { maxBytes: number },
+): Promise<FilePreviewUnavailable | null> {
+  const scoped = await resolveScopedPath(input);
+  const stats = await fs.stat(scoped.resolvedPath);
+  if (stats.isDirectory()) {
+    return {
+      reason: "directory",
+      path: scoped.resolvedPath,
+      size: stats.size,
+      mimeType: "inode/directory",
+    };
+  }
+  // Do not open FIFOs, sockets or devices: opening one can block the session indefinitely.
+  if (!stats.isFile()) {
+    return {
+      reason: "unsupported",
+      path: scoped.resolvedPath,
+      size: stats.size,
+      mimeType: "inode/special",
+    };
+  }
+  const file = await getDownloadableFileInfo(input);
+  const metadata = { path: file.absolutePath, size: file.size, mimeType: file.mimeType };
+  if (file.size > input.maxBytes) return { reason: "too_large", ...metadata };
+  if (file.mimeType === "application/octet-stream") return { reason: "unsupported", ...metadata };
+  return null;
 }
 
 export async function getDownloadableFileInfo({ root, relativePath }: ReadFileParams): Promise<{

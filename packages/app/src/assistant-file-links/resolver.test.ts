@@ -274,3 +274,18 @@ describe("getAssistantFileLinkToken", () => {
     ).toBe("workspace-git-service.ts:1553");
   });
 });
+
+it("resolves a directory suggestion without pretending it is a missing file", async () => {
+  const target = { raw: "src/components", path: "/Users/test/project/src/components" };
+  const result = await fetchDaemonResolution({
+    ambiguousQuery: "src/components",
+    token: "src/components",
+    target,
+    workspaceRoot: CONTEXT.workspaceRoot,
+    getDirectorySuggestions: async (input) => {
+      expect(input.includeDirectories).toBe(true);
+      return resolvedSuggestions([{ path: "src/components", kind: "directory" }]);
+    },
+  });
+  expect(result).toEqual(target);
+});

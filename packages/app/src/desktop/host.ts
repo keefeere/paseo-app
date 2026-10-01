@@ -70,6 +70,7 @@ export interface DesktopNotificationBridge {
 }
 
 export interface DesktopOpenerBridge {
+  openPath?: (path: string) => Promise<void>;
   openUrl?: (url: string) => Promise<void>;
 }
 

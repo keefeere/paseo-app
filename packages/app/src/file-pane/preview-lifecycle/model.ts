@@ -1,3 +1,4 @@
+import type { FilePreviewUnavailable } from "@getpaseo/protocol/messages";
 import type { FileReadResult } from "@getpaseo/client/internal/daemon-client";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { persistAttachmentFromBytes } from "@/attachments/service";
@@ -17,7 +18,8 @@ export type FilePreviewLifecycleSnapshot =
   | { status: "preparing"; preview?: FilePanePreview }
   | { status: "ready"; preview: FilePanePreview }
   | { status: "error"; message: string; preview?: FilePanePreview }
-  | { status: "unsupported" };
+  | { status: "unsupported" }
+  | { status: "unavailable"; resource: FilePreviewUnavailable };
 
 const initialSnapshot: FilePreviewLifecycleSnapshot = { status: "initial" };
 
@@ -161,6 +163,7 @@ function getReadySource(input: {
 
 function getNonReadySnapshot(snapshot: LiveFileSnapshot): FilePreviewLifecycleSnapshot {
   if (snapshot.read.status === "error") {
+    if (snapshot.read.resource) return { status: "unavailable", resource: snapshot.read.resource };
     return { status: "error", message: snapshot.read.error };
   }
   if (snapshot.read.status === "pending") {
@@ -181,6 +184,14 @@ function sameNonReadyState(
 ): boolean {
   if (current.status !== next.status) {
     return false;
+  }
+  if (current.status === "unavailable" && next.status === "unavailable") {
+    return (
+      current.resource.reason === next.resource.reason &&
+      current.resource.path === next.resource.path &&
+      current.resource.size === next.resource.size &&
+      current.resource.mimeType === next.resource.mimeType
+    );
   }
   return current.status !== "error" || next.status !== "error" || current.message === next.message;
 }

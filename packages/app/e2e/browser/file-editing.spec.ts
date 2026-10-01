@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, open, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { expect, test, type Page } from "../support/fixtures";
 import {
@@ -720,5 +720,131 @@ test.describe("CodeMirror workspace file editing", () => {
     await expect(page.getByLabel("Vim mode INSERT")).toBeVisible();
     await editor(page).press("Escape");
     await expect(page.getByLabel("Vim mode NORMAL")).toBeVisible();
+  });
+});
+
+test.describe("Resource links", () => {
+  async function openResourceChat(
+    page: Page,
+    links: (root: string) => string,
+    prepare: (root: string) => Promise<void>,
+  ) {
+    const workspace = await seedWorkspace({ repoPrefix: "resource-links-" });
+    try {
+      await prepare(workspace.repoPath);
+      const agent = await workspace.client.createAgent({
+        provider: "mock",
+        cwd: workspace.repoPath,
+        workspaceId: workspace.workspaceId,
+        title: "Resource links",
+        modeId: "load-test",
+        model: "e2e-fast-stream",
+        initialPrompt: "Show resource links",
+        featureValues: { mockAssistantResponse: links(workspace.repoPath) },
+      });
+      await openAgentRoute(page, { workspaceId: workspace.workspaceId, agentId: agent.id });
+      return workspace;
+    } catch (error) {
+      await workspace.cleanup();
+      throw error;
+    }
+  }
+
+  test("browses a directory URL and opens a child file", async ({ page }) => {
+    const workspace = await openResourceChat(
+      page,
+      (root) => `[Open folder](file://${root}/nested)`,
+      async (root) => {
+        await mkdir(path.join(root, "nested"));
+        await writeFile(path.join(root, "nested/child.txt"), "Resource child content");
+      },
+    );
+    try {
+      await page.getByRole("link", { name: "Open folder" }).first().click();
+      const directory = page.getByTestId("directory-resource").filter({ visible: true });
+      await expect(directory).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath("directory-resource.png") });
+      await directory.getByText("child.txt", { exact: true }).click();
+      await expect(page.getByText("Resource child content", { exact: true })).toBeVisible();
+      await page.getByTestId("resource-parent").filter({ visible: true }).click();
+      await expect(directory).toBeVisible();
+    } finally {
+      await workspace.cleanup();
+    }
+  });
+
+  test("offers actions for a large file without reading its contents", async ({ page }) => {
+    const workspace = await openResourceChat(
+      page,
+      (root) => `[Open large](file://${root}/large.log)`,
+      async (root) => {
+        const handle = await open(path.join(root, "large.log"), "w");
+        try {
+          await handle.write("large log\n");
+          await handle.truncate(51 * 1024 * 1024);
+        } finally {
+          await handle.close();
+        }
+      },
+    );
+    try {
+      await page.getByRole("link", { name: "Open large" }).first().click();
+      const unavailable = page.getByTestId("file-preview-unavailable");
+      await expect(unavailable).toContainText("This file is too large to display");
+      await expect(unavailable.getByTestId("resource-download")).toBeVisible();
+      await expect(unavailable.getByTestId("resource-parent")).toBeVisible();
+      await page.screenshot({ path: test.info().outputPath("large-file-actions.png") });
+      await unavailable.getByTestId("resource-menu").click();
+      await expect(
+        page.getByText("Copy path", { exact: true }).filter({ visible: true }),
+      ).toBeVisible();
+    } finally {
+      await workspace.cleanup();
+    }
+  });
+
+  test("explains system and unknown protocols and permits copying", async ({ page }) => {
+    const workspace = await openResourceChat(
+      page,
+      () => "[Connect](ssh://user@example.com)\n\n[Custom](unknown-app://host/item)",
+      async () => {},
+    );
+    try {
+      await page.getByRole("link", { name: "Connect", exact: true }).first().click();
+      await expect(page.getByTestId("system-link-dialog")).toBeVisible();
+      await expect(page.getByTestId("system-link-open")).toBeVisible();
+      // The daemon and renderer are real; this adapter represents a missing OS application.
+      await page.evaluate(() => {
+        window.paseoDesktop = {
+          opener: {
+            openUrl: async () => {
+              throw new Error("No SSH application installed");
+            },
+          },
+        };
+      });
+      await page.getByTestId("system-link-open").click();
+      await expect(page.getByTestId("system-link-dialog").getByRole("alert")).toContainText(
+        "No SSH application installed",
+      );
+      await expect(page.getByTestId("system-link-open")).toBeEnabled();
+      await page.screenshot({ path: test.info().outputPath("system-link-error.png") });
+      await page.evaluate(() => {
+        delete window.paseoDesktop;
+      });
+      await page.getByTestId("system-link-copy").click();
+      await expect(
+        page.getByText("Copied", { exact: true }).filter({ visible: true }),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+      await page.getByRole("link", { name: "Custom", exact: true }).first().click();
+      await expect(page.getByTestId("system-link-dialog")).toContainText(
+        "This link cannot be opened here",
+      );
+      await expect(page.getByTestId("system-link-open")).toHaveCount(0);
+      await expect(page.getByTestId("system-link-copy")).toBeVisible();
+    } finally {
+      await workspace.cleanup();
+    }
   });
 });

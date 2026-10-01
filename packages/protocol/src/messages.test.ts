@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   FileExplorerRequestSchema,
+  FileExplorerResponseSchema,
   PaseoWorktreeArchiveRequestSchema,
   parseServerInfoStatusPayload,
   SessionInboundMessageSchema,
@@ -518,5 +519,36 @@ describe("viewed timeline subscription messages", () => {
         },
       },
     });
+  });
+});
+
+describe("file preview metadata compatibility", () => {
+  const payload = {
+    cwd: "/repo",
+    path: ".",
+    mode: "file",
+    directory: null,
+    file: null,
+    error: "directory",
+    requestId: "preview",
+  };
+  test("accepts older responses without preview metadata", () => {
+    expect(
+      FileExplorerResponseSchema.parse({ type: "file_explorer_response", payload }).payload,
+    ).toEqual(payload);
+  });
+  test("preserves metadata on new responses", () => {
+    const previewUnavailable = {
+      reason: "directory",
+      path: "/repo",
+      size: 4096,
+      mimeType: "inode/directory",
+    };
+    expect(
+      FileExplorerResponseSchema.parse({
+        type: "file_explorer_response",
+        payload: { ...payload, previewUnavailable },
+      }).payload.previewUnavailable,
+    ).toEqual(previewUnavailable);
   });
 });

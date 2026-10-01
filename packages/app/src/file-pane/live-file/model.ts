@@ -1,5 +1,8 @@
-import type { FileReadResult } from "@getpaseo/client/internal/daemon-client";
-import type { FileVersion } from "@getpaseo/protocol/messages";
+import {
+  FilePreviewUnavailableError,
+  type FileReadResult,
+} from "@getpaseo/client/internal/daemon-client";
+import type { FileVersion, FilePreviewUnavailable } from "@getpaseo/protocol/messages";
 
 export interface LiveFileTarget {
   cwd: string;
@@ -22,7 +25,7 @@ export interface LiveFileSession {
 export type LiveFileReadState =
   | { status: "idle" }
   | { status: "pending"; requested: boolean }
-  | { status: "error"; error: string };
+  | { status: "error"; error: string; resource?: FilePreviewUnavailable };
 
 export type LiveFileObservation =
   | {
@@ -222,7 +225,17 @@ export class LiveFileModel {
     const observation: LiveFileObservation = candidateDescribesFailure
       ? candidate
       : { status: "error", cwd: input.target.cwd, path: input.target.path, error: message };
-    this.setSnapshot({ ...this.snapshot, observation, read: { status: "error", error: message } });
+    this.setSnapshot({
+      ...this.snapshot,
+      observation,
+      read: {
+        status: "error",
+        error: message,
+        ...(input.error instanceof FilePreviewUnavailableError
+          ? { resource: input.error.resource }
+          : {}),
+      },
+    });
     this.startQueuedRead();
   }
 

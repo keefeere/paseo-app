@@ -78,6 +78,21 @@ Placement intent still controls existing tabs:
 Explicit **Open to Side** uses `pane`. Implicit opens use `prefer`, so a preference affects only a
 new target and never yanks an existing tab out of a user-selected pane.
 
+## Linked resources
+
+Resolve file links on the agent's daemon. A directory opens a Files view rooted at that directory;
+its navigation state stays separate from the workspace Explorer. Child file opens keep absolute
+host paths so a link outside the workspace cannot resolve against the wrong root.
+
+Preview requests carry a size budget. The daemon returns metadata for directories, oversized files,
+and unsupported types before transferring contents. Keep download, copy-path, and containing-folder
+actions available when a preview cannot be rendered. System editor and file-manager actions require
+a local daemon; never send a remote host path to the client's desktop bridge.
+
+HTTP(S) links follow the chat-link preference below. Other supported URL schemes go through an
+explicit system-application handoff with a copy-address action. Unknown schemes and remote-authority
+`file://host/path` links remain copyable; they must not be treated as local paths.
+
 ## Routing preferences
 
 Desktop **Settings → Layout → Open location** has independent Main panel or On the side choices for

@@ -28,6 +28,7 @@ import {
   deleteExplorerEntry,
   duplicateExplorerEntry,
   getDownloadableFileInfo,
+  getUnavailableFilePreview,
   listDirectoryEntries,
   readExplorerFile,
   renameExplorerEntry,
@@ -289,9 +290,34 @@ export class WorkspaceFilesSession {
         );
       } else {
         if (request.maxBytes) {
-          const file = await getDownloadableFileInfo({ root: cwd, relativePath: requestedPath });
-          if (file.size > request.maxBytes) {
-            throw new Error("File is too large to display");
+          const previewUnavailable = await getUnavailableFilePreview({
+            root: cwd,
+            relativePath: requestedPath,
+            maxBytes: request.maxBytes,
+          });
+          if (previewUnavailable) {
+            const messages = {
+              directory: "Requested path is a directory",
+              too_large: "File is too large to display",
+              unsupported: "Preview is unavailable for this file type",
+            };
+            this.host.emit(
+              {
+                type: "file_explorer_response",
+                payload: {
+                  cwd,
+                  path: requestedPath,
+                  mode,
+                  directory: null,
+                  file: null,
+                  previewUnavailable,
+                  error: messages[previewUnavailable.reason],
+                  requestId,
+                },
+              },
+              source,
+            );
+            return;
           }
         }
         if (request.acceptBinary && this.host.hasBinaryChannel()) {

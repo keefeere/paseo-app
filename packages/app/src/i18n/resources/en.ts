@@ -22,6 +22,17 @@ export const en = {
     total: "{{total}} matches",
   },
   common: {
+    links: {
+      title: "Open link",
+      systemHandler: "Open with an application installed on this device.",
+      unsupported:
+        "This link cannot be opened here. You can copy its address to another application.",
+      open: "Open in application",
+      copy: "Copy address",
+      failed:
+        "Could not open or copy the link. Check that an application for this link type is installed, or copy the address.",
+      opened: "Link sent to the system. In a browser, allow the prompt to open the application.",
+    },
     bottomSheetBackdrop: "Bottom sheet backdrop",
     back: "Back",
     loading: "Loading...",
@@ -1871,6 +1882,8 @@ export const en = {
       noPreview: "No preview available",
       binaryPreviewUnavailable: "Binary preview unavailable",
       tooLargeToDisplay: "This file is too large to display",
+      showDirectory: "Show containing folder",
+      resourceActions: "File actions",
       failedToLoad: "Failed to load file",
       failedToLoadPreview: "Failed to load file preview",
       editor: {
