@@ -1932,6 +1932,12 @@ export const ru: TranslationResources = {
     externalBrowser: "Внешний браузер",
     dontAskAgain: "Больше не спрашивать",
   },
+  chatLink: {
+    title: "Открыть URL",
+    message: "Открыть {{url}} в Paseo или во внешнем браузере?",
+    internalTab: "Встроенный браузер — вкладка",
+    externalBrowser: "Внешний браузер",
+  },
   downloads: {
     requestTokenFailed: "Не удалось запросить токен загрузки.",
     hostUnavailable: "Хост загрузки недоступен.",
@@ -2404,6 +2410,14 @@ export const ru: TranslationResources = {
         options: {
           ask: "Спрашивать",
           inApp: "В Paseo",
+          external: "Внешний браузер",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Спрашивать",
+          internalSide: "Встроенный браузер — сбоку",
+          internalTab: "Встроенный браузер — вкладка",
           external: "Внешний браузер",
         },
       },

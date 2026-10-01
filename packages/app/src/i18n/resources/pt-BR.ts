@@ -1933,6 +1933,12 @@ export const ptBR: TranslationResources = {
     externalBrowser: "Navegador externo",
     dontAskAgain: "Não perguntar novamente",
   },
+  chatLink: {
+    title: "Abrir URL",
+    message: "Abrir {{url}} no Paseo ou no navegador externo?",
+    internalTab: "Navegador interno — aba",
+    externalBrowser: "Navegador externo",
+  },
   downloads: {
     requestTokenFailed: "Falha ao solicitar token de download.",
     hostUnavailable: "Host de download indisponível.",
@@ -2401,6 +2407,14 @@ export const ptBR: TranslationResources = {
         options: {
           ask: "Perguntar",
           inApp: "No Paseo",
+          external: "Navegador externo",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Perguntar",
+          internalSide: "Navegador interno — lateral",
+          internalTab: "Navegador interno — aba",
           external: "Navegador externo",
         },
       },

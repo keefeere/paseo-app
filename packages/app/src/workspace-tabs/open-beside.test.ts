@@ -13,12 +13,15 @@ import { setPanelInstanceAttributes } from "@/panels/panel-instance-attributes";
 import {
   collectAllPanes,
   collectAllTabs,
+  DEFAULT_PANE_ID,
   findPaneById,
+  findPaneContainingTab,
   useWorkspaceLayoutStore,
 } from "@/stores/workspace-layout-store";
 import {
   openPreferredWorkspacePreview,
   openPreferredWorkspaceTarget,
+  openWorkspaceTargetAtLocation,
   openWorkspaceTargetBeside,
 } from "@/workspace-tabs/open-beside";
 
@@ -172,5 +175,37 @@ describe("opening beside", () => {
     expect(useWorkspaceLayoutStore.getState().sidePaneIdByWorkspace[WORKSPACE_KEY]).toBeFalsy();
     expect(paneIdHolding(preferredTabId)).toBe("main");
     expect(paneIdHolding(besideTabId)).toBe("main");
+  });
+});
+
+describe("openWorkspaceTargetAtLocation", () => {
+  it("opens a browser tab in the main panel", () => {
+    const tabId = openWorkspaceTargetAtLocation({
+      workspaceKey: WORKSPACE_KEY,
+      target: { kind: "browser", browserId: "browser-main" },
+      location: "main",
+    });
+
+    const state = useWorkspaceLayoutStore.getState();
+    const layout = state.layoutByWorkspace[WORKSPACE_KEY];
+    if (!tabId || !layout) throw new Error("Expected the browser tab to open");
+    expect(findPaneContainingTab(layout.root, tabId)?.id).toBe(DEFAULT_PANE_ID);
+    expect(state.sidePaneIdByWorkspace[WORKSPACE_KEY]).toBeUndefined();
+  });
+
+  it("opens a browser tab on the side", () => {
+    const tabId = openWorkspaceTargetAtLocation({
+      workspaceKey: WORKSPACE_KEY,
+      target: { kind: "browser", browserId: "browser-side" },
+      location: "side",
+    });
+
+    const state = useWorkspaceLayoutStore.getState();
+    const layout = state.layoutByWorkspace[WORKSPACE_KEY];
+    const sidePaneId = state.sidePaneIdByWorkspace[WORKSPACE_KEY];
+    if (!tabId || !layout || !sidePaneId) {
+      throw new Error("Expected the browser tab to open in a side pane");
+    }
+    expect(findPaneContainingTab(layout.root, tabId)?.id).toBe(sidePaneId);
   });
 });
