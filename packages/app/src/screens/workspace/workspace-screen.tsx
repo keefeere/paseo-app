@@ -131,7 +131,7 @@ import { useWorkspace } from "@/stores/session-store-hooks";
 import type { CheckoutStatusPayload } from "@/git/use-status-query";
 import { confirmDialog } from "@/utils/confirm-dialog";
 import { openExternalUrl } from "@/utils/open-external-url";
-import { openChatLink } from "@/assistant-file-links/open-chat-link";
+import { openChatLink, resolveChatLinkDialogChoice } from "@/assistant-file-links/open-chat-link";
 import { useArchiveAgent } from "@/hooks/use-archive-agent";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { removeResidentBrowserWebview } from "@/desktop/browser/resident-webviews";
@@ -1888,25 +1888,32 @@ function WorkspaceScreenContent({
       await openChatLink({
         url,
         behavior: chatLinkBehavior,
-        askToOpenInternal: () =>
-          confirmDialog({
+        askHowToOpen: async () => {
+          const choice = await getDesktopHost()?.dialog?.choose?.(t("chatLink.message", { url }), {
             title: t("chatLink.title"),
-            message: t("chatLink.message", { url }),
-            confirmLabel: t("chatLink.internalTab"),
-            cancelLabel: t("chatLink.externalBrowser"),
-          }),
+            buttons: [
+              t("common.actions.cancel"),
+              t("chatLink.externalBrowser"),
+              t("chatLink.internalTab"),
+            ],
+            defaultId: 2,
+            cancelId: 0,
+          });
+          return resolveChatLinkDialogChoice(choice ?? null);
+        },
         openInternal: (internalUrl, location) => {
           const { browserId } = createWorkspaceBrowser({ initialUrl: internalUrl });
           openWorkspaceTargetAtLocation({
             workspaceKey: persistenceKey,
             target: { kind: "browser", browserId },
             location: location === "side" ? "side" : "main",
+            preferredMainPaneId: lastMainPaneId,
           });
         },
         openExternal: openExternalUrl,
       });
     },
-    [chatLinkBehavior, isMobile, persistenceKey, t],
+    [chatLinkBehavior, isMobile, lastMainPaneId, persistenceKey, t],
   );
 
   useDesktopBrowserNewTabRequests({
