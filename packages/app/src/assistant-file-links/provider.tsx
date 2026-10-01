@@ -4,6 +4,9 @@ import {
   useContext,
   useMemo,
   useRef,
+  useState,
+  lazy,
+  Suspense,
   type MutableRefObject,
   type ReactNode,
 } from "react";
@@ -32,7 +35,10 @@ export interface AssistantFileLinkResolverProviderProps extends AssistantFileLin
   children: ReactNode;
 }
 
+const SystemLinkDialog = lazy(() => import("./system-link-dialog"));
+
 export interface AssistantFileLinkResolverContextValue {
+  showSystemLink: (url: string) => void;
   configRef: MutableRefObject<AssistantFileLinkResolverConfig>;
   getDirectorySuggestions: GetDirectorySuggestions;
 }
@@ -62,6 +68,8 @@ export function AssistantFileLinkResolverProvider({
   toast,
   children,
 }: AssistantFileLinkResolverProviderProps) {
+  const [systemLink, showSystemLink] = useState<string | null>(null);
+  const closeSystemLink = useCallback(() => showSystemLink(null), []);
   const configRef = useRef<AssistantFileLinkResolverConfig>({
     client,
     serverId,
@@ -92,13 +100,18 @@ export function AssistantFileLinkResolverProvider({
   }, []);
 
   const value = useMemo<AssistantFileLinkResolverContextValue>(
-    () => ({ configRef, getDirectorySuggestions }),
+    () => ({ configRef, getDirectorySuggestions, showSystemLink }),
     [getDirectorySuggestions],
   );
 
   return (
     <AssistantFileLinkResolverContext.Provider value={value}>
       {children}
+      {systemLink !== null ? (
+        <Suspense fallback={null}>
+          <SystemLinkDialog key={systemLink} url={systemLink} onClose={closeSystemLink} />
+        </Suspense>
+      ) : null}
     </AssistantFileLinkResolverContext.Provider>
   );
 }
@@ -113,6 +126,7 @@ export type { AssistantFileLinkContext };
 const EMPTY_CONTEXT: AssistantFileLinkResolverContextValue = {
   configRef: { current: {} },
   getDirectorySuggestions: async () => ({ entries: [], error: null }),
+  showSystemLink: () => {},
 };
 
 export function useAssistantFileLinkEnvironment() {

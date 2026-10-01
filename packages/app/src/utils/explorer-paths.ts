@@ -9,7 +9,11 @@ export function buildAbsoluteExplorerPath({
   workspaceRoot,
   entryPath,
 }: BuildAbsoluteExplorerPathInput): string {
-  const normalizedWorkspaceRoot = workspaceRoot.trim().replace(/[\\/]+$/, "");
+  const trimmedRoot = workspaceRoot.trim();
+  const isFilesystemRoot = trimmedRoot === "/" || /^[A-Za-z]:[\\/]$/.test(trimmedRoot);
+  const normalizedWorkspaceRoot = isFilesystemRoot
+    ? trimmedRoot
+    : trimmedRoot.replace(/[\\/]+$/, "");
   const normalizedEntryPath = entryPath.trim();
 
   if (!normalizedWorkspaceRoot) {
@@ -30,7 +34,10 @@ export function buildAbsoluteExplorerPath({
     return normalizedWorkspaceRoot;
   }
 
-  return `${normalizedWorkspaceRoot}${separator}${segments.join(separator)}`;
+  const prefix = normalizedWorkspaceRoot.endsWith(separator)
+    ? normalizedWorkspaceRoot
+    : `${normalizedWorkspaceRoot}${separator}`;
+  return `${prefix}${segments.join(separator)}`;
 }
 
 export function parentExplorerPath(entryPath: string): string {

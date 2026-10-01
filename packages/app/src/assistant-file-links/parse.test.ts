@@ -7,6 +7,25 @@ import {
   parseInlinePathToken,
 } from "./parse";
 
+describe("file URL ownership", () => {
+  it("does not discard the authority of a remote file URL", () => {
+    expect(parseFileProtocolUrl("file://other-host/share/code.ts")).toBeNull();
+    expect(classifyAssistantFileLink("file://other-host/share/code.ts")).toEqual({
+      kind: "external",
+      raw: "file://other-host/share/code.ts",
+    });
+  });
+  it("keeps the Windows drive authority shorthand local", () => {
+    expect(classifyAssistantFileLink("file://C:/Users/test/code.ts")).toMatchObject({
+      kind: "directFile",
+      target: { path: "C:/Users/test/code.ts" },
+    });
+  });
+  it("accepts localhost file URLs", () => {
+    expect(parseFileProtocolUrl("file://localhost/tmp/code.ts")?.path).toBe("/tmp/code.ts");
+  });
+});
+
 describe("parseInlinePathToken", () => {
   it("returns null for plain paths without a line number", () => {
     expect(parseInlinePathToken("src/app.ts")).toBeNull();

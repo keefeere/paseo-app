@@ -1,4 +1,5 @@
 import { usePaneContext } from "@/panels/pane-context";
+import { ResourceActions } from "./resource-actions";
 import { useEffect, useMemo, useState } from "react";
 import type { PluginFile, PluginTab } from "@getpaseo/plugin/client";
 import { Text, View } from "react-native";
@@ -75,6 +76,11 @@ export function FilePane({
     [location.lineEnd, location.lineStart, path],
   );
 
+  // Download, reveal and open-in-app stay reachable when no panel can show the file.
+  const resourceActions = target ? (
+    <ResourceActions key={targetKey} serverId={serverId} cwd={target.cwd} path={target.path} />
+  ) : null;
+
   let body;
   if (!connected && target) {
     body = <Text style={styles.errorText}>{t("workspace.terminal.hostDisconnected")}</Text>;
@@ -105,6 +111,7 @@ export function FilePane({
   } else {
     return (
       <View style={styles.container} testID="workspace-file-pane">
+        {resourceActions}
         <FilePanelPicker choice={choice} />
         <MountedFilePanel
           key={`${panel.id}:${targetKey}`}
@@ -119,6 +126,7 @@ export function FilePane({
   }
   return (
     <View style={styles.container} testID="workspace-file-pane">
+      {connected ? resourceActions : null}
       <View style={styles.centerState}>{body}</View>
     </View>
   );

@@ -373,6 +373,69 @@ describe("WorkspaceFilesSession", () => {
     ]);
   });
 
+  test("returns directory metadata instead of attempting a file transfer", async () => {
+    const cwd = makeDir("workspace-directory-preview-");
+    const { subsystem, emitted, binary } = makeSubsystem({ hasBinaryChannel: true });
+    await subsystem.handleFileExplorerRequest({
+      type: "file_explorer_request",
+      cwd,
+      path: ".",
+      mode: "file",
+      requestId: "directory",
+      acceptBinary: true,
+      maxBytes: 1024,
+    });
+    expect(binary).toEqual([]);
+    expect(emitted).toEqual([
+      {
+        type: "file_explorer_response",
+        payload: {
+          cwd,
+          path: ".",
+          mode: "file",
+          directory: null,
+          file: null,
+          error: "Requested path is a directory",
+          requestId: "directory",
+          previewUnavailable: {
+            reason: "directory",
+            path: cwd,
+            size: expect.any(Number),
+            mimeType: "inode/directory",
+          },
+        },
+      },
+    ]);
+  });
+
+  test("returns binary metadata without transferring its bytes", async () => {
+    const cwd = makeDir("workspace-binary-preview-");
+    writeFileSync(join(cwd, "data.bin"), Buffer.from([0, 1, 2, 3]));
+    const { subsystem, emitted, binary } = makeSubsystem({ hasBinaryChannel: true });
+    await subsystem.handleFileExplorerRequest({
+      type: "file_explorer_request",
+      cwd,
+      path: "data.bin",
+      mode: "file",
+      requestId: "binary",
+      acceptBinary: true,
+      maxBytes: 1024,
+    });
+    expect(binary).toEqual([]);
+    expect(emitted).toEqual([
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          previewUnavailable: {
+            reason: "unsupported",
+            path: join(cwd, "data.bin"),
+            size: 4,
+            mimeType: "application/octet-stream",
+          },
+        }),
+      }),
+    ]);
+  });
+
   test("rejects an over-budget file before opening a binary transfer", async () => {
     const cwd = makeDir("workspace-files-read-budget-");
     writeFileSync(join(cwd, "notes.txt"), "hello world");
@@ -392,7 +455,15 @@ describe("WorkspaceFilesSession", () => {
     expect(emitted).toEqual([
       expect.objectContaining({
         type: "file_explorer_response",
-        payload: expect.objectContaining({ error: "File is too large to display" }),
+        payload: expect.objectContaining({
+          error: "File is too large to display",
+          previewUnavailable: {
+            reason: "too_large",
+            path: join(cwd, "notes.txt"),
+            size: 11,
+            mimeType: "text/plain",
+          },
+        }),
       }),
     ]);
   });

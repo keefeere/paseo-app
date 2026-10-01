@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   DaemonClient,
   DaemonConnectionError,
+  FilePreviewUnavailableError,
   supportsUsageReports,
   type DaemonClientTrace,
   type CreateAgentRequestOptions,
@@ -8923,4 +8924,46 @@ test("routed channels inherit an origin without drain support", async () => {
   )({ url: "ws://route" });
   expect(route.supportsDrain).toBe(false);
   route.close();
+});
+
+test("readFile preserves preview metadata from the daemon", async () => {
+  const mock = createMockTransport();
+  const client = new DaemonClient({
+    url: "ws://test",
+    clientId: "preview-metadata",
+    logger: createMockLogger(),
+    reconnect: { enabled: false },
+    transportFactory: () => mock.transport,
+  });
+  clients.push(client);
+  const connected = client.connect();
+  mock.triggerOpen();
+  await connected;
+  const result = client.readFile("/tmp/project", ".", "preview-dir", 1024);
+  const resource = {
+    reason: "directory",
+    path: "/tmp/project",
+    size: 4096,
+    mimeType: "inode/directory",
+  } as const;
+  mock.triggerMessage(
+    JSON.stringify({
+      type: "session",
+      message: {
+        type: "file_explorer_response",
+        payload: {
+          cwd: "/tmp/project",
+          path: ".",
+          mode: "file",
+          directory: null,
+          file: null,
+          error: "directory",
+          previewUnavailable: resource,
+          requestId: "preview-dir",
+        },
+      },
+    }),
+  );
+  await expect(result).rejects.toBeInstanceOf(FilePreviewUnavailableError);
+  await expect(result).rejects.toMatchObject({ resource });
 });

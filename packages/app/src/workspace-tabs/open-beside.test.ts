@@ -181,7 +181,6 @@ describe("opening beside", () => {
 describe("openWorkspaceTargetAtLocation", () => {
   it("opens a browser tab in the main panel", () => {
     const sideTabId = openWorkspaceTargetAtLocation({
-      isCompact: false,
       workspaceKey: WORKSPACE_KEY,
       target: { kind: "browser", browserId: "browser-side-first" },
       location: "side",

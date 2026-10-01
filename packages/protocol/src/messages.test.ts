@@ -3,6 +3,7 @@ import {
   AgentTimelineItemPayloadSchema,
   SendAgentMessageRequestSchema,
   FileExplorerRequestSchema,
+  FileExplorerResponseSchema,
   PaseoWorktreeArchiveRequestSchema,
   parseServerInfoStatusPayload,
   SessionInboundMessageSchema,
@@ -571,3 +572,33 @@ test.each(["all", "base", "uncommitted"] as const)(
     expect(parsed.attachments).toEqual([attachment]);
   },
 );
+describe("file preview metadata compatibility", () => {
+  const payload = {
+    cwd: "/repo",
+    path: ".",
+    mode: "file",
+    directory: null,
+    file: null,
+    error: "directory",
+    requestId: "preview",
+  };
+  test("accepts older responses without preview metadata", () => {
+    expect(
+      FileExplorerResponseSchema.parse({ type: "file_explorer_response", payload }).payload,
+    ).toEqual(payload);
+  });
+  test("preserves metadata on new responses", () => {
+    const previewUnavailable = {
+      reason: "directory",
+      path: "/repo",
+      size: 4096,
+      mimeType: "inode/directory",
+    };
+    expect(
+      FileExplorerResponseSchema.parse({
+        type: "file_explorer_response",
+        payload: { ...payload, previewUnavailable },
+      }).payload.previewUnavailable,
+    ).toEqual(previewUnavailable);
+  });
+});
