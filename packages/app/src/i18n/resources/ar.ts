@@ -2535,6 +2535,12 @@ export const ar: TranslationResources = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "أرشفة مساحات عمل طلبات السحب المدمجة",
+          hint: "أرشفة مساحات عمل Paseo النظيفة تلقائيًا بعد دمج طلب السحب الخاص بها",
+          accessibilityLabel: "أرشفة مساحات عمل طلبات السحب المدمجة",
+          failedToUpdate: "تعذر تحديث مساحات العمل",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2663,6 +2669,15 @@ export const ar: TranslationResources = {
           errorTitle: "خطأ",
           errorMessage: "غير قادر على إزالة المضيف",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "وكلاء الطرفية",
+        enableHooks: {
+          title: "تفعيل خطافات وكلاء الطرفية",
+          hint: "الحصول على الإشعارات والحالة من وكلاء الطرفية. يؤدي ذلك إلى تثبيت خطافات في ملفات تكوين الوكيل.",
+          accessibilityLabel: "تفعيل خطافات وكلاء الطرفية",
+          failedToUpdate: "تعذر تحديث خطافات وكلاء الطرفية",
         },
       },
     },

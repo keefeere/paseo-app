@@ -2502,6 +2502,12 @@ export const zhCN: TranslationResources = {
       },
       workspaces: {
         unavailable: "连接到这个 Host 以管理 Workspace",
+        autoArchiveAfterMerge: {
+          title: "归档已合并 PR 的工作区",
+          hint: "在 Pull Request 合并后自动归档干净的 Paseo 工作区",
+          accessibilityLabel: "归档已合并 PR 的工作区",
+          failedToUpdate: "无法更新工作区",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2625,6 +2631,15 @@ export const zhCN: TranslationResources = {
           errorTitle: "错误",
           errorMessage: "无法移除 Host",
           localErrorMessage: "无法移除 localhost 连接",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "终端 Agent",
+        enableHooks: {
+          title: "启用终端 Agent hooks",
+          hint: "接收来自终端 Agent 的通知和状态。这会在您的 Agent 配置文件中安装 hooks。",
+          accessibilityLabel: "启用终端 Agent hooks",
+          failedToUpdate: "无法更新终端 Agent hooks",
         },
       },
     },

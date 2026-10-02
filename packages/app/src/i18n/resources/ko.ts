@@ -2546,6 +2546,12 @@ export const ko: TranslationResources = {
       },
       workspaces: {
         unavailable: "워크스페이스를 관리하려면 이 호스트에 연결하세요",
+        autoArchiveAfterMerge: {
+          title: "병합된 PR 워크스페이스 보관",
+          hint: "풀 리퀘스트가 병합된 후 변경사항이 없는 Paseo 워크스페이스를 자동으로 보관합니다",
+          accessibilityLabel: "병합된 PR 워크스페이스 보관",
+          failedToUpdate: "워크스페이스를 업데이트할 수 없습니다",
+        },
       },
       terminalProfiles: {
         unavailable: "터미널 프로필을 관리하려면 이 호스트에 연결하세요",
@@ -2677,6 +2683,15 @@ export const ko: TranslationResources = {
           errorTitle: "오류",
           errorMessage: "호스트를 제거할 수 없습니다",
           localErrorMessage: "localhost 연결을 제거할 수 없습니다",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "터미널 에이전트",
+        enableHooks: {
+          title: "터미널 에이전트 훅 활성화",
+          hint: "터미널 에이전트로부터 알림과 상태를 받습니다. 에이전트 설정 파일에 훅이 설치됩니다.",
+          accessibilityLabel: "터미널 에이전트 훅 활성화",
+          failedToUpdate: "터미널 에이전트 훅을 업데이트할 수 없습니다",
         },
       },
     },
