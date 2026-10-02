@@ -26,6 +26,16 @@ export const ar: TranslationResources = {
     total: "{{total}} تطابقات",
   },
   common: {
+    links: {
+      title: "فتح الرابط",
+      systemHandler: "الفتح باستخدام تطبيق مثبت على هذا الجهاز.",
+      unsupported: "لا يمكن فتح هذا الرابط هنا. يمكنك نسخ عنوانه إلى تطبيق آخر.",
+      open: "فتح في تطبيق",
+      copy: "نسخ العنوان",
+      failed:
+        "تعذر فتح الرابط أو نسخه. تحقق من تثبيت تطبيق يدعم هذا النوع من الروابط، أو انسخ العنوان.",
+      opened: "تم إرسال الرابط إلى النظام. في المتصفح، اسمح بفتح التطبيق.",
+    },
     bottomSheetBackdrop: "خلفية اللوحة السفلية",
     back: "خلف",
     loading: "تحميل...",
@@ -1846,6 +1856,8 @@ export const ar: TranslationResources = {
       noPreview: "لا تتوفر معاينة",
       binaryPreviewUnavailable: "المعاينة الثنائية غير متاحة",
       tooLargeToDisplay: "هذا الملف كبير جدًا بحيث لا يمكن عرضه",
+      showDirectory: "عرض المجلد الحاوي",
+      resourceActions: "إجراءات الملف",
       failedToLoad: "فشل تحميل الملف",
       failedToLoadPreview: "فشل تحميل معاينة الملف",
       editor: {

@@ -51,7 +51,7 @@ import {
   registerNotificationHandlers,
   ensureNotificationCenterRegistration,
 } from "./features/notifications.js";
-import { createExternalUrlOpener } from "./features/opener.js";
+import { createExternalUrlOpener, createLocalPathOpener } from "./features/opener.js";
 import { createBrowserCaptureService } from "./features/browser-capture.js";
 import { registerEditorTargetHandlers } from "./features/editor-targets/ipc.js";
 import { resolveAppIconPath } from "./features/stamped-icon.js";
@@ -969,6 +969,8 @@ async function bootstrap(): Promise<void> {
   registerNotificationHandlers();
   const openExternalUrl = createExternalUrlOpener({ open: shell.openExternal });
   ipcMain.handle("paseo:opener:openUrl", (_event, value: unknown) => openExternalUrl(value));
+  const openLocalPath = createLocalPathOpener({ open: shell.openPath });
+  ipcMain.handle("paseo:opener:openPath", (_event, value: unknown) => openLocalPath(value));
   registerEditorTargetHandlers();
   registerBrowserAutomationIpc();
 

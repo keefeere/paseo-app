@@ -1,3 +1,4 @@
+import { isHttpUrl } from "@/utils/http-url";
 import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -313,11 +314,19 @@ async function dispatchExternalUrl(input: {
   ) {
     return;
   }
-  if (current.onOpenExternalUrl) {
-    await current.onOpenExternalUrl(input.url);
+  if (!isHttpUrl(input.url)) {
+    input.context.showSystemLink(input.url);
     return;
   }
-  await openExternalUrl(input.url);
+  try {
+    if (current.onOpenExternalUrl) {
+      await current.onOpenExternalUrl(input.url);
+    } else {
+      await openExternalUrl(input.url);
+    }
+  } catch (error) {
+    current.toast?.error(error instanceof Error ? error.message : "Unable to open link");
+  }
 }
 
 async function dispatchUnresolvedError(input: {

@@ -1,21 +1,30 @@
+import { stat } from "node:fs/promises";
+import { isAbsolute } from "node:path";
+import { parseExternalUrl } from "@getpaseo/protocol/external-url";
 interface ExternalUrlOwner {
   open(url: string): Promise<void>;
 }
 
-const EXTERNAL_PROTOCOLS = new Set(["http:", "https:"]);
-
-const asExternalUrl = (input: unknown): URL | undefined => {
-  if (typeof input !== "string" || !URL.canParse(input)) return undefined;
-  const candidate = new URL(input);
-  return EXTERNAL_PROTOCOLS.has(candidate.protocol) ? candidate : undefined;
-};
-
 export function createExternalUrlOpener(owner: ExternalUrlOwner) {
   return async (candidate: unknown): Promise<void> => {
-    const url = asExternalUrl(candidate);
-    if (url === undefined) {
-      throw new Error("Only HTTP(S) URLs can open externally.");
+    const url = parseExternalUrl(candidate);
+    if (url === null) {
+      throw new Error("This URL scheme cannot open externally.");
     }
     return owner.open(url.href);
+  };
+}
+
+export function createLocalPathOpener(owner: { open(path: string): Promise<string> }) {
+  return async (input: unknown): Promise<void> => {
+    if (typeof input !== "string" || !isAbsolute(input) || input.includes("\0")) {
+      throw new Error("An absolute local path is required.");
+    }
+    const entry = await stat(input);
+    if (!entry.isFile() && !entry.isDirectory()) {
+      throw new Error("Only regular files and directories can open in an application.");
+    }
+    const error = await owner.open(input);
+    if (error) throw new Error(error);
   };
 }

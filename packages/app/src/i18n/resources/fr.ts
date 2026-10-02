@@ -27,6 +27,18 @@ export const fr: TranslationResources = {
     total: "{{total}} résultats",
   },
   common: {
+    links: {
+      title: "Ouvrir le lien",
+      systemHandler: "Ouvrir avec une application installée sur cet appareil.",
+      unsupported:
+        "Ce lien ne peut pas être ouvert ici. Vous pouvez copier son adresse dans une autre application.",
+      open: "Ouvrir dans une application",
+      copy: "Copier l’adresse",
+      failed:
+        "Impossible d’ouvrir ou de copier le lien. Vérifiez qu’une application adaptée est installée, ou copiez l’adresse.",
+      opened:
+        "Lien transmis au système. Dans un navigateur, autorisez l’ouverture de l’application.",
+    },
     bottomSheetBackdrop: "Arrière-plan du panneau inférieur",
     back: "Dos",
     loading: "Chargement...",
@@ -1898,6 +1910,8 @@ export const fr: TranslationResources = {
       noPreview: "Aucun aperçu disponible",
       binaryPreviewUnavailable: "Aperçu binaire indisponible",
       tooLargeToDisplay: "Ce fichier est trop volumineux pour être affiché",
+      showDirectory: "Afficher le dossier parent",
+      resourceActions: "Actions du fichier",
       failedToLoad: "Échec du chargement du fichier",
       failedToLoadPreview: "Échec du chargement de l'aperçu du fichier",
       editor: {

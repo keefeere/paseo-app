@@ -26,6 +26,15 @@ export const zhCN: TranslationResources = {
     total: "{{total}} 个匹配项",
   },
   common: {
+    links: {
+      title: "打开链接",
+      systemHandler: "使用此设备上安装的应用打开。",
+      unsupported: "无法在此处打开此链接。你可以将地址复制到其他应用。",
+      open: "在应用中打开",
+      copy: "复制地址",
+      failed: "无法打开或复制链接。请检查是否安装了支持此类链接的应用，或复制地址。",
+      opened: "链接已发送到系统。在浏览器中，请允许打开应用。",
+    },
     bottomSheetBackdrop: "底部面板背景",
     back: "返回",
     loading: "加载中...",
@@ -1824,6 +1833,8 @@ export const zhCN: TranslationResources = {
       noPreview: "没有可用预览",
       binaryPreviewUnavailable: "二进制预览不可用",
       tooLargeToDisplay: "此文件过大，无法显示",
+      showDirectory: "显示所在文件夹",
+      resourceActions: "文件操作",
       failedToLoad: "加载文件失败",
       failedToLoadPreview: "加载文件预览失败",
       editor: {

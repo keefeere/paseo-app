@@ -27,6 +27,16 @@ export const ja: TranslationResources = {
     total: "{{total}} 件の一致",
   },
   common: {
+    links: {
+      title: "リンクを開く",
+      systemHandler: "このデバイスにインストールされているアプリで開きます。",
+      unsupported: "このリンクはここでは開けません。アドレスを別のアプリにコピーできます。",
+      open: "アプリで開く",
+      copy: "アドレスをコピー",
+      failed:
+        "リンクを開くかコピーできませんでした。対応するアプリがインストールされているか確認するか、アドレスをコピーしてください。",
+      opened: "リンクをシステムに送信しました。ブラウザではアプリを開く許可を与えてください。",
+    },
     bottomSheetBackdrop: "ボトムシートの背景",
     back: "戻る",
     loading: "読み込み中...",
@@ -1865,6 +1875,8 @@ export const ja: TranslationResources = {
       noPreview: "プレビューが利用できません",
       binaryPreviewUnavailable: "バイナリプレビューが利用できません",
       tooLargeToDisplay: "このファイルは大きすぎて表示できません",
+      showDirectory: "親フォルダーを表示",
+      resourceActions: "ファイル操作",
       failedToLoad: "ファイルの読み込みに失敗しました",
       failedToLoadPreview: "ファイルプレビューの読み込みに失敗しました",
       editor: {

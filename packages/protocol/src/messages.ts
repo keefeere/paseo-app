@@ -5943,6 +5943,14 @@ export const CreatePaseoWorktreeResponseSchema = z.object({
   }),
 });
 
+export const FilePreviewUnavailableSchema = z.object({
+  reason: z.enum(["directory", "too_large", "unsupported"]),
+  path: z.string(),
+  size: z.number(),
+  mimeType: z.string(),
+});
+export type FilePreviewUnavailable = z.infer<typeof FilePreviewUnavailableSchema>;
+
 export const FileExplorerResponseSchema = z.object({
   type: z.literal("file_explorer_response"),
   payload: z.object({
@@ -5951,6 +5959,7 @@ export const FileExplorerResponseSchema = z.object({
     mode: z.enum(["list", "file"]),
     directory: FileExplorerDirectorySchema.nullable(),
     file: FileExplorerFileSchema.nullable(),
+    previewUnavailable: FilePreviewUnavailableSchema.optional(),
     error: z.string().nullable(),
     requestId: z.string(),
   }),

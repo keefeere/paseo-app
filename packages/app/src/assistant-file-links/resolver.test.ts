@@ -160,6 +160,30 @@ describe("classifyForResolution", () => {
     });
   });
 
+  it.each([
+    ["packages/app/src", "/Users/test/project/packages/app/src"],
+    ["docs/", "/Users/test/project/docs"],
+    ["./scripts", "/Users/test/project/scripts"],
+  ])("opens explicit relative directory link %s in the workspace", (href, path) => {
+    expect(classifyForResolution({ href, text: "folder" }, CONTEXT)).toEqual({
+      kind: "resolved",
+      value: { kind: "file", target: { raw: href, path } },
+    });
+  });
+
+  it("keeps extensionless bare text and domain-like hrefs out of the workspace", () => {
+    expect(
+      classifyForResolution(
+        { href: "packages/app/src", text: "packages/app/src", markup: "linkify" },
+        CONTEXT,
+      ),
+    ).toEqual({ kind: "resolved", value: { kind: "ignored" } });
+    expect(classifyForResolution({ href: "example.com/page", text: "x" }, CONTEXT)).toEqual({
+      kind: "resolved",
+      value: { kind: "ignored" },
+    });
+  });
+
   it("returns ignored for non-file-looking content", () => {
     const result = classifyForResolution({ href: "" }, CONTEXT);
 
@@ -273,4 +297,19 @@ describe("getAssistantFileLinkToken", () => {
       }),
     ).toBe("workspace-git-service.ts:1553");
   });
+});
+
+it("resolves a directory suggestion without pretending it is a missing file", async () => {
+  const target = { raw: "src/components", path: "/Users/test/project/src/components" };
+  const result = await fetchDaemonResolution({
+    ambiguousQuery: "src/components",
+    token: "src/components",
+    target,
+    workspaceRoot: CONTEXT.workspaceRoot,
+    getDirectorySuggestions: async (input) => {
+      expect(input.includeDirectories).toBe(true);
+      return resolvedSuggestions([{ path: "src/components", kind: "directory" }]);
+    },
+  });
+  expect(result).toEqual(target);
 });

@@ -66,6 +66,11 @@ import { usePanelStore, type ExpandedPathsUpdate, type SortOption } from "@/stor
 import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
 import { isHiddenExplorerPath } from "@/file-explorer/visibility";
 import {
+  buildExplorerRevealKey,
+  explorerRevealDirectories,
+  useExplorerRevealStore,
+} from "@/file-explorer/reveal-request";
+import {
   flattenExplorerTree,
   reconcileRestoredExpandedPaths,
   restoreExpandedDirectories,
@@ -520,6 +525,41 @@ export function FileExplorerPane({
     workspaceStateKey,
   ]);
 
+  const revealKey = workspaceStateKey ? buildExplorerRevealKey(serverId, workspaceStateKey) : null;
+  const revealRequest = useExplorerRevealStore((state) =>
+    revealKey ? state.requests[revealKey] : undefined,
+  );
+  const revealScrollPathRef = useRef<string | null>(null);
+  const directoriesRef = useRef(directories);
+  directoriesRef.current = directories;
+
+  useEffect(() => {
+    if (!revealRequest || !revealKey || !workspaceStateKey || !hasWorkspaceScope) {
+      return;
+    }
+    const revealDirectories = explorerRevealDirectories(revealRequest.path);
+    setExpandedPathsForWorkspace(workspaceStateKey, (currentPaths) =>
+      Array.from(new Set([...currentPaths, ...revealDirectories])),
+    );
+    selectExplorerEntry(revealRequest.path);
+    revealScrollPathRef.current = revealRequest.path;
+    useExplorerRevealStore.getState().complete(revealKey, revealRequest.id);
+    void (async () => {
+      for (const path of revealDirectories) {
+        if (directoriesRef.current.has(path)) continue;
+        await requestDirectoryListing(path, { recordHistory: false, setCurrentPath: false });
+      }
+    })();
+  }, [
+    hasWorkspaceScope,
+    requestDirectoryListing,
+    revealKey,
+    revealRequest,
+    selectExplorerEntry,
+    setExpandedPathsForWorkspace,
+    workspaceStateKey,
+  ]);
+
   const handleToggleDirectory = useCallback(
     (entry: ExplorerEntry) =>
       toggleDirectory({
@@ -935,6 +975,15 @@ export function FileExplorerPane({
     return rows;
   }, [pendingEdit, treeRows]);
 
+  useEffect(() => {
+    const path = revealScrollPathRef.current;
+    if (!path) return;
+    const index = listRows.findIndex((row) => row.type === "entry" && row.row.entry.path === path);
+    if (index < 0) return;
+    revealScrollPathRef.current = null;
+    treeListRef.current?.scrollToIndex({ index, viewPosition: 0.3, animated: false });
+  }, [listRows]);
+
   const showInitialLoading = resolveShowInitialLoading({
     directories,
     isExplorerLoading,
@@ -1176,6 +1225,16 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
 
   const showHiddenFiles = usePanelStore((state) => state.explorerShowHiddenFiles);
 
+  // Rows are measured lazily; jump near an unrendered revealed row instead of failing.
+  const handleScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) =>
+      treeListRef.current?.scrollToOffset({
+        offset: info.averageItemLength * info.index,
+        animated: false,
+      }),
+    [treeListRef],
+  );
+
   const handleNewFileAtRoot = useCallback(() => {
     onNewEntryAtRoot?.(".", "file");
   }, [onNewEntryAtRoot]);
@@ -1334,6 +1393,7 @@ function FileExplorerPaneContent(props: FileExplorerPaneContentProps) {
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={!scrollbar.enabled}
               initialNumToRender={24}
+              onScrollToIndexFailed={handleScrollToIndexFailed}
               maxToRenderPerBatch={40}
               windowSize={12}
             />

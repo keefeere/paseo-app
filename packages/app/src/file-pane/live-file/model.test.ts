@@ -1,4 +1,7 @@
-import type { FileReadResult } from "@getpaseo/client/internal/daemon-client";
+import {
+  FilePreviewUnavailableError,
+  type FileReadResult,
+} from "@getpaseo/client/internal/daemon-client";
 import type { FileVersion } from "@getpaseo/protocol/messages";
 import { describe, expect, it, vi } from "vitest";
 import { LiveFileModel, type LiveFileSession, type LiveFileSubscription } from "./model";
@@ -117,6 +120,22 @@ async function waitForRead(
 }
 
 describe("LiveFileModel", () => {
+  it("retains resource metadata so a directory can be browsed after the read refusal", async () => {
+    const model = new LiveFileModel();
+    const session = new TestLiveFileSession();
+    const resource = {
+      reason: "directory",
+      path: "/workspace",
+      size: 0,
+      mimeType: "inode/directory",
+    } as const;
+    model.open({ session, target: { cwd: "/workspace", path: "." }, liveUpdates: false });
+    session.reads[0].reject(new FilePreviewUnavailableError("directory", resource));
+    await vi.waitFor(() =>
+      expect(model.getSnapshot().read).toEqual({ status: "error", error: "directory", resource }),
+    );
+    model.close();
+  });
   it("reports initial and read-pending work before any terminal observation", async () => {
     const session = new TestLiveFileSession();
     const model = new LiveFileModel();

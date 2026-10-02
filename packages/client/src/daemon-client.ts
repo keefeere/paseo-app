@@ -39,6 +39,7 @@ import type {
   FileDownloadTokenResponse,
   FileUploadResponse,
   FileExplorerResponse,
+  FilePreviewUnavailable,
   FileVersion,
   FileWriteResult,
   FetchAgentTimelineResponseMessage,
@@ -535,6 +536,16 @@ type WorkspaceCreatePayload = Extract<
 type FileExplorerPayload = FileExplorerResponse["payload"];
 export type FileExplorerDirectoryPayload = NonNullable<FileExplorerPayload["directory"]>;
 type LegacyFileExplorerFilePayload = NonNullable<FileExplorerPayload["file"]>;
+export class FilePreviewUnavailableError extends Error {
+  constructor(
+    message: string,
+    readonly resource: FilePreviewUnavailable,
+  ) {
+    super(message);
+    this.name = "FilePreviewUnavailableError";
+  }
+}
+
 export interface FileReadResult {
   bytes: Uint8Array;
   mime: string;
@@ -4741,6 +4752,9 @@ export class DaemonClient {
         maxBytes,
       );
       if (payload.error) {
+        if (payload.previewUnavailable) {
+          throw new FilePreviewUnavailableError(payload.error, payload.previewUnavailable);
+        }
         throw new Error(payload.error);
       }
       const binaryResult = this.completedBinaryFileReads.get(resolvedRequestId);

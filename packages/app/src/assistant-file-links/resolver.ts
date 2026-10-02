@@ -33,7 +33,7 @@ export type GetDirectorySuggestions = (input: {
   query: string;
   cwd: string;
   includeFiles: true;
-  includeDirectories: false;
+  includeDirectories: true;
   matchMode: "suffix";
   limit: number;
 }) => Promise<DirectorySuggestionResult>;
@@ -85,7 +85,7 @@ export async function fetchDaemonResolution({
       query: ambiguousQuery,
       cwd: trimmedRoot,
       includeFiles: true,
-      includeDirectories: false,
+      includeDirectories: true,
       matchMode: "suffix",
       limit: 1,
     });
@@ -93,7 +93,7 @@ export async function fetchDaemonResolution({
     throw new UnresolvedFileLinkError(token);
   }
 
-  const match = suggestions.entries.find((entry) => entry.kind === "file");
+  const match = suggestions.entries[0];
   if (!match || suggestions.error) {
     throw new UnresolvedFileLinkError(token);
   }
@@ -115,6 +115,8 @@ export function classifyForResolution(
 
   const classification = classifyAssistantFileLink(token, {
     workspaceRoot: context.workspaceRoot,
+    explicitLink:
+      token === source.href && !isLinkifiedSource(source) && source.sourceType !== "inline-code",
   });
   if (!classification) {
     return { kind: "resolved", value: { kind: "ignored" } };

@@ -27,6 +27,17 @@ export const ptBR: TranslationResources = {
     total: "{{total}} correspondências",
   },
   common: {
+    links: {
+      title: "Abrir link",
+      systemHandler: "Abrir com um aplicativo instalado neste dispositivo.",
+      unsupported:
+        "Este link não pode ser aberto aqui. Você pode copiar o endereço para outro aplicativo.",
+      open: "Abrir em um aplicativo",
+      copy: "Copiar endereço",
+      failed:
+        "Não foi possível abrir ou copiar o link. Verifique se há um aplicativo compatível instalado ou copie o endereço.",
+      opened: "Link enviado ao sistema. No navegador, permita a abertura do aplicativo.",
+    },
     bottomSheetBackdrop: "Fundo do painel inferior",
     back: "Voltar",
     loading: "Carregando...",
@@ -1879,6 +1890,8 @@ export const ptBR: TranslationResources = {
       noPreview: "Nenhuma prévia disponível",
       binaryPreviewUnavailable: "Prévia binária indisponível",
       tooLargeToDisplay: "Este arquivo é grande demais para exibir",
+      showDirectory: "Mostrar pasta do arquivo",
+      resourceActions: "Ações do arquivo",
       failedToLoad: "Falha ao carregar arquivo",
       failedToLoadPreview: "Falha ao carregar prévia do arquivo",
       editor: {

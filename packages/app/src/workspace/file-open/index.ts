@@ -22,7 +22,9 @@ export function normalizeWorkspaceFileLocation(
     return null;
   }
 
-  const path = location.path.trim().replace(/\\/g, "/");
+  const rawPath = location.path.trim().replace(/\\/g, "/");
+  // `docs/` and `docs` name the same resource and must share one tab.
+  const path = rawPath ? trimTrailingSlashes(rawPath) : "";
   if (!path) {
     return null;
   }

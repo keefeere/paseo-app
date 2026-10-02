@@ -1,3 +1,5 @@
+import { UnavailableResource } from "./unavailable-resource";
+import { ResourceActions } from "./resource-actions";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import React, {
@@ -294,29 +296,51 @@ export function FilePane({
     previewLifecycle.status === "read_pending" ||
     previewLifecycle.status === "preparing";
 
+  if (previewLifecycle.status === "unavailable" && readTarget) {
+    return (
+      <UnavailableResource
+        key={targetKey}
+        serverId={serverId}
+        cwd={readTarget.cwd}
+        requestedPath={readTarget.path}
+        resource={previewLifecycle.resource}
+      />
+    );
+  }
+
   return (
-    <FilePanePresentation
-      serverId={serverId}
-      client={client}
-      readTarget={readTarget}
-      preview={preview}
-      liveFile={liveFile.model}
-      onRetryRead={liveFile.refresh}
-      retryingRead={liveFile.isRetrying}
-      retryLabel={t("common.actions.retry")}
-      filename={getFileNameFromPath(location.path) ?? location.path}
-      previewMode={canTogglePreviewMode ? previewMode : undefined}
-      onPreviewModeChange={canTogglePreviewMode ? setPreviewMode : undefined}
-      lineCount={lineCount}
-      editable={editable}
-      disconnectedMessage={t("workspace.terminal.hostDisconnected")}
-      errorMessage={errorMessage}
-      isLoading={isLoading}
-      isMobile={isMobile}
-      location={location}
-      navigationRevision={navigationRevision}
-      imagePreviewUri={imagePreviewUri}
-    />
+    <View style={styles.container}>
+      {readTarget ? (
+        <ResourceActions
+          key={targetKey}
+          serverId={serverId}
+          cwd={readTarget.cwd}
+          path={readTarget.path}
+        />
+      ) : null}
+      <FilePanePresentation
+        serverId={serverId}
+        client={client}
+        readTarget={readTarget}
+        preview={preview}
+        liveFile={liveFile.model}
+        onRetryRead={liveFile.refresh}
+        retryingRead={liveFile.isRetrying}
+        retryLabel={t("common.actions.retry")}
+        filename={getFileNameFromPath(location.path) ?? location.path}
+        previewMode={canTogglePreviewMode ? previewMode : undefined}
+        onPreviewModeChange={canTogglePreviewMode ? setPreviewMode : undefined}
+        lineCount={lineCount}
+        editable={editable}
+        disconnectedMessage={t("workspace.terminal.hostDisconnected")}
+        errorMessage={errorMessage}
+        isLoading={isLoading}
+        isMobile={isMobile}
+        location={location}
+        navigationRevision={navigationRevision}
+        imagePreviewUri={imagePreviewUri}
+      />
+    </View>
   );
 }
 

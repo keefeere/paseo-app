@@ -79,6 +79,32 @@ function source(
   return { targetKey, liveFileSnapshot: snapshot };
 }
 
+describe("resource preview decisions", () => {
+  it("shows metadata instead of a generic error and refreshes it when the size changes", () => {
+    const model = new FilePreviewLifecycleModel(async () => null);
+    const resource = {
+      reason: "too_large",
+      path: "/workspace/big.log",
+      size: 100,
+      mimeType: "text/plain",
+    } as const;
+    model.setSource({
+      targetKey: "/workspace:big.log",
+      liveFileSnapshot: { observation: null, read: { status: "error", error: "large", resource } },
+    });
+    expect(model.getSnapshot()).toEqual({ status: "unavailable", resource });
+    const updated = { ...resource, size: 200 };
+    model.setSource({
+      targetKey: "/workspace:big.log",
+      liveFileSnapshot: {
+        observation: null,
+        read: { status: "error", error: "large", resource: updated },
+      },
+    });
+    expect(model.getSnapshot()).toEqual({ status: "unavailable", resource: updated });
+  });
+});
+
 describe("FilePreviewLifecycleModel", () => {
   it("represents pending raw reads, preparation, ready previews, unsupported files, and conversion failures", async () => {
     const first = deferred<FilePanePreview | null>();
