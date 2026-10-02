@@ -1624,6 +1624,12 @@ export const es: TranslationResources = {
       },
     },
   },
+  hostPicker: {
+    addHost: "Agregar anfitrión",
+    allHosts: "Todos los hosts",
+    enableBuiltInDaemon: "Activar el demonio integrado",
+    fallback: "Host",
+  },
   projectPicker: {
     placeholder: "Escriba para buscar...",
     browse: "Explorar…",
