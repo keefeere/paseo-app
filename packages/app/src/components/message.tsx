@@ -2054,9 +2054,12 @@ export const AssistantMessage = memo(function AssistantMessage({
 
   const blocks = useMemo(() => splitMarkdownBlocks(revealedMessage), [revealedMessage]);
   const actionsPhase: MarkdownPhase =
-    (codeActionsPhase ?? phase) === "complete" && revealedMessage === message
+    (codeActionsPhase ?? phase) === "complete" && revealedMessage === renderedMessage.text
       ? "complete"
       : "streaming";
+  // The render cap cuts at an arbitrary character, so the final block may hold a truncated fence.
+  const blockActionsPhase = (index: number): MarkdownPhase =>
+    renderedMessage.capped && index === keyedBlocks.length - 1 ? "streaming" : actionsPhase;
   const keyedBlocks = useMemo(
     () =>
       indexMarkdownFences(blocks).map(({ block, fenceOffset }, index) => ({
@@ -2102,7 +2105,7 @@ export const AssistantMessage = memo(function AssistantMessage({
             agentId={agentId}
             messageId={messageId}
             fenceOffset={sourceFenceOffset + fenceOffset}
-            phase={actionsPhase}
+            phase={blockActionsPhase(index)}
           >
             <MemoizedMarkdownBlock
               text={block}

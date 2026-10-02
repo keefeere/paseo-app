@@ -1,8 +1,21 @@
+import type { UsageProblem } from "@getpaseo/protocol/messages";
 import { i18n } from "@/i18n/i18next";
+import { formatCompactTimeAgo, formatCompactTimeAgoAsProse } from "@/utils/time";
 
 // User-facing copy for the usage surfaces, kept in one file so localization is a
 // single-file change.
 export const usageCopy = {
+  problem: (problem: UsageProblem, now: Date = new Date()): string => {
+    if (problem.kind === "no_quota") return problem.detail;
+    const remedy = problem.refreshedBy
+      ? i18n.t("usage.problem.runToRefresh", { command: problem.refreshedBy })
+      : i18n.t("usage.problem.signInAgain");
+    if (problem.kind === "rejected") {
+      return i18n.t("usage.problem.rejected", { status: problem.status, remedy });
+    }
+    const ago = formatCompactTimeAgoAsProse(formatCompactTimeAgo(new Date(problem.expiresAt), now));
+    return i18n.t("usage.problem.expired", { ago, remedy });
+  },
   get title() {
     return i18n.t("usage.title");
   },
@@ -14,6 +27,9 @@ export const usageCopy = {
   },
   get refresh() {
     return i18n.t("usage.refresh");
+  },
+  get refreshAll() {
+    return i18n.t("usage.refreshAll");
   },
   get refreshing() {
     return i18n.t("usage.refreshing");
@@ -47,6 +63,9 @@ export const usageCopy = {
   get pin() {
     return i18n.t("usage.pin");
   },
+  get unpin() {
+    return i18n.t("usage.unpin");
+  },
   get displayAs() {
     return i18n.t("usage.displayAs");
   },
@@ -58,5 +77,8 @@ export const usageCopy = {
   },
   get showInSidebar() {
     return i18n.t("usage.showInSidebar");
+  },
+  get showInSidebarHint() {
+    return i18n.t("usage.showInSidebarHint");
   },
 } as const;
