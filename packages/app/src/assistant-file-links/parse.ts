@@ -80,6 +80,11 @@ const ASSISTANT_FILE_EXTENSIONS = new Set([
 
 export interface AssistantHrefParseOptions {
   workspaceRoot?: string;
+  /**
+   * The value is a Markdown link destination the agent wrote on purpose, so a relative
+   * directory such as `packages/app/src` is a target even without a file extension.
+   */
+  explicitLink?: boolean;
 }
 
 export type AssistantFileLinkClassification =
@@ -335,9 +340,7 @@ export function parseAssistantFileLink(
     };
   }
 
-  const relativeTarget = parseWorkspaceRelativeFileLink(trimmed, {
-    workspaceRoot: options.workspaceRoot,
-  });
+  const relativeTarget = parseWorkspaceRelativeFileLink(trimmed, options);
   if (relativeTarget) {
     return relativeTarget;
   }
@@ -393,7 +396,7 @@ function parseWorkspaceRelativeFileLink(
   value: string,
   options: AssistantHrefParseOptions,
 ): InlinePathTarget | null {
-  const parsed = parseLocalPathParts(value);
+  const parsed = parseLocalPathParts(value, options.explicitLink === true);
   if (!parsed || isAbsolutePath(parsed.path)) {
     return null;
   }
@@ -425,6 +428,7 @@ function parseWorkspaceRelativeFileLink(
 
 function parseLocalPathParts(
   value: string,
+  explicitLink = false,
 ): { path: string; lines: Pick<InlinePathTarget, "lineStart" | "lineEnd"> } | null {
   const normalized = normalizePathToken(value);
   if (!normalized || normalized.includes("?")) {
@@ -458,7 +462,10 @@ function parseLocalPathParts(
     return null;
   }
 
-  if (!isPlausibleAssistantLocalPath(beforeHash)) {
+  const isPlausible = explicitLink
+    ? isPlausibleExplicitLinkPath(beforeHash)
+    : isPlausibleAssistantLocalPath(beforeHash);
+  if (!isPlausible) {
     return null;
   }
 
@@ -617,6 +624,12 @@ function isPlausibleAssistantLocalPath(pathValue: string): boolean {
   }
 
   return isPlausibleAssistantFileName(firstSegment);
+}
+
+function isPlausibleExplicitLinkPath(pathValue: string): boolean {
+  if (isPlausibleAssistantLocalPath(pathValue)) return true;
+  const firstSegment = pathValue.split("/").find(Boolean);
+  return firstSegment !== undefined && !isDomainLikePathSegment(firstSegment);
 }
 
 function isPlausibleAssistantFileName(fileName: string | undefined): boolean {

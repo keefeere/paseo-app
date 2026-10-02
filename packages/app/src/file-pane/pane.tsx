@@ -302,6 +302,7 @@ export function FilePane({
         key={targetKey}
         serverId={serverId}
         cwd={readTarget.cwd}
+        requestedPath={readTarget.path}
         resource={previewLifecycle.resource}
       />
     );

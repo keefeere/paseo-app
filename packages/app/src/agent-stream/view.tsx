@@ -27,8 +27,6 @@ import { useIsCompactFormFactor } from "@/constants/layout";
 import { useMutation } from "@tanstack/react-query";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Check, ChevronDown, X } from "lucide-react-native";
-import { buildWorkspaceTabPersistenceKey } from "@/workspace-tabs/model";
-import { openExplorerSidebarView } from "@/workspace-tabs/explorer-sidebar";
 import {
   AssistantMessage,
   SpeakMessage,
@@ -53,7 +51,6 @@ import type {
 import type { AgentScreenAgent } from "@/hooks/use-agent-screen-state-machine";
 import { useSessionStore } from "@/stores/session-store";
 import { useRevealedText } from "@/hooks/use-revealed-text";
-import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
 import { useLoadOlderAgentHistory } from "@/hooks/use-load-older-agent-history";
 import { resolveContentMaxWidth, useSettings } from "@/hooks/use-settings";
 import type { ToastApi } from "@/components/toast-host";
@@ -400,11 +397,6 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
     );
 
     const workspaceRoot = context.cwd?.trim() || "";
-    const { requestDirectoryListing } = useFileExplorerActions({
-      serverId: resolvedServerId,
-      workspaceId: context.workspaceId,
-      workspaceRoot,
-    });
     const agentHistoryPagination = useLoadOlderAgentHistory({
       serverId: resolvedServerId,
       agentId,
@@ -450,52 +442,32 @@ const AgentStreamViewComponent = forwardRef<AgentStreamViewHandle, AgentStreamVi
           return;
         }
 
-        if (normalized.file) {
-          const location = normalizeWorkspaceFileLocation({
-            path: normalized.file,
-            lineStart: target.lineStart,
-            lineEnd: target.lineEnd,
-          });
-          if (!location) {
-            return;
-          }
-
-          if (onOpenWorkspaceFile) {
-            onOpenWorkspaceFile({
-              location,
-              disposition,
-            });
-            return;
-          }
-
-          if (context.workspaceId) {
-            navigateToWorkspace({
-              serverId: resolvedServerId,
-              workspaceId: context.workspaceId,
-              target: createWorkspaceFileTabTarget(location),
-            });
-          }
+        // Directories open like files: the file pane learns the resource kind from the daemon
+        // and moves workspace directories into the Files sidebar.
+        const location = normalizeWorkspaceFileLocation({
+          path: normalized.file ?? target.path,
+          lineStart: target.lineStart,
+          lineEnd: target.lineEnd,
+        });
+        if (!location) {
           return;
         }
 
-        void requestDirectoryListing(normalized.directory, {
-          recordHistory: false,
-          setCurrentPath: false,
-        });
+        if (onOpenWorkspaceFile) {
+          onOpenWorkspaceFile({
+            location,
+            disposition,
+          });
+          return;
+        }
 
-        openExplorerSidebarView({
-          isCompact: isMobile,
-          workspaceKey: buildWorkspaceTabPersistenceKey({
+        if (context.workspaceId) {
+          navigateToWorkspace({
             serverId: resolvedServerId,
-            workspaceId: context.workspaceId ?? "",
-          }),
-          checkout: {
-            serverId: resolvedServerId,
-            cwd: context.cwd,
-            isGit: context.projectPlacement?.checkout?.isGit ?? true,
-          },
-          view: "files",
-        });
+            workspaceId: context.workspaceId,
+            target: createWorkspaceFileTabTarget(location),
+          });
+        }
       },
     );
 

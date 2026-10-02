@@ -1,5 +1,8 @@
 import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
+import { useIsCompactFormFactor } from "@/constants/layout";
+import { useWorkspaceDirectory } from "@/stores/session-store-hooks";
+import { revealDirectoryInExplorerSidebar } from "@/workspace-tabs/explorer-sidebar";
 import { Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
 import { useTranslation } from "react-i18next";
@@ -11,14 +14,45 @@ import { ResourceActions } from "./resource-actions";
 export function UnavailableResource({
   serverId,
   cwd,
+  requestedPath,
   resource,
 }: {
   serverId: string;
   cwd: string;
+  /** The path the tab asked for; `resource.path` is canonical and may leave a symlinked root. */
+  requestedPath: string;
   resource: FilePreviewUnavailable;
 }) {
   const { t } = useTranslation();
-  const { openPreferredTarget } = usePaneContext();
+  const { openPreferredTarget, workspaceId, closeCurrentTab } = usePaneContext();
+  const isCompact = useIsCompactFormFactor();
+  const workspaceRoot = useWorkspaceDirectory(serverId, workspaceId);
+  const isDirectory = resource.reason === "directory";
+  const [revealedInSidebar, setRevealedInSidebar] = useState(false);
+  // A workspace directory belongs in the sidebar tree, so the tab that discovered it closes.
+  useLayoutEffect(() => {
+    if (!isDirectory || !workspaceRoot) return;
+    const absoluteRequestedPath = buildAbsoluteExplorerPath({
+      workspaceRoot: cwd,
+      entryPath: requestedPath,
+    });
+    const revealed = [absoluteRequestedPath, resource.path].some((path) =>
+      revealDirectoryInExplorerSidebar({ isCompact, serverId, workspaceId, workspaceRoot, path }),
+    );
+    if (!revealed) return;
+    setRevealedInSidebar(true);
+    closeCurrentTab();
+  }, [
+    closeCurrentTab,
+    cwd,
+    isCompact,
+    isDirectory,
+    requestedPath,
+    resource.path,
+    serverId,
+    workspaceId,
+    workspaceRoot,
+  ]);
   const openFile = useCallback(
     (path: string) => {
       const absolutePath = buildAbsoluteExplorerPath({
@@ -29,7 +63,8 @@ export function UnavailableResource({
     },
     [resource.path, openPreferredTarget],
   );
-  if (resource.reason === "directory") {
+  if (revealedInSidebar) return null;
+  if (isDirectory) {
     return (
       <View style={styles.container} testID="directory-resource">
         <ResourceActions serverId={serverId} cwd={resource.path} path={resource.path} directory />

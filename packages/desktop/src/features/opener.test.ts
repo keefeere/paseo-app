@@ -13,6 +13,11 @@ describe("desktop opener", () => {
     "sftp://host/file",
     "ssh://user@host",
     "scp://user@host/file",
+    "smb://server/share",
+    "vnc://localhost:5900",
+    "rdp://host",
+    "magnet:?xt=urn:btih:abc",
+    "vscode://file/tmp/file.ts",
   ])("dispatches %s to the system handler", async (url) => {
     const opened: string[] = [];
     await createExternalUrlOpener({

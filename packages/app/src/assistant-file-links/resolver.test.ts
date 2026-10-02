@@ -160,6 +160,30 @@ describe("classifyForResolution", () => {
     });
   });
 
+  it.each([
+    ["packages/app/src", "/Users/test/project/packages/app/src"],
+    ["docs/", "/Users/test/project/docs"],
+    ["./scripts", "/Users/test/project/scripts"],
+  ])("opens explicit relative directory link %s in the workspace", (href, path) => {
+    expect(classifyForResolution({ href, text: "folder" }, CONTEXT)).toEqual({
+      kind: "resolved",
+      value: { kind: "file", target: { raw: href, path } },
+    });
+  });
+
+  it("keeps extensionless bare text and domain-like hrefs out of the workspace", () => {
+    expect(
+      classifyForResolution(
+        { href: "packages/app/src", text: "packages/app/src", markup: "linkify" },
+        CONTEXT,
+      ),
+    ).toEqual({ kind: "resolved", value: { kind: "ignored" } });
+    expect(classifyForResolution({ href: "example.com/page", text: "x" }, CONTEXT)).toEqual({
+      kind: "resolved",
+      value: { kind: "ignored" },
+    });
+  });
+
   it("returns ignored for non-file-looking content", () => {
     const result = classifyForResolution({ href: "" }, CONTEXT);
 

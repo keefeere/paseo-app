@@ -1,4 +1,5 @@
-import { mkdir, open, readFile, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, open, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { expect, test, type Page } from "../support/fixtures";
 import {
@@ -750,14 +751,39 @@ test.describe("Resource links", () => {
     }
   }
 
-  test("browses a directory URL and opens a child file", async ({ page }) => {
+  test("reveals a workspace directory in the Files sidebar", async ({ page }) => {
     const workspace = await openResourceChat(
       page,
-      (root) => `[Open folder](file://${root}/nested)`,
+      (root) => `[Open folder](file://${root}/nested/deep/) and [Relative folder](nested)`,
       async (root) => {
-        await mkdir(path.join(root, "nested"));
-        await writeFile(path.join(root, "nested/child.txt"), "Resource child content");
+        await mkdir(path.join(root, "nested/deep"), { recursive: true });
+        await writeFile(path.join(root, "nested/deep/child.txt"), "Resource child content");
       },
+    );
+    try {
+      await page.getByRole("link", { name: "Open folder" }).first().click();
+      const selected = page
+        .locator('[data-testid^="file-explorer-row-"][aria-selected="true"]')
+        .filter({ visible: true });
+      await expect(selected).toContainText("deep");
+      await expect(page.getByText("child.txt", { exact: true }).first()).toBeVisible();
+      await expect(page.getByTestId("directory-resource").filter({ visible: true })).toHaveCount(0);
+      await page.screenshot({ path: test.info().outputPath("directory-sidebar.png") });
+      await page.getByRole("link", { name: "Relative folder" }).first().click();
+      await expect(selected).toContainText("nested");
+    } finally {
+      await workspace.cleanup();
+    }
+  });
+
+  test("browses a directory outside the workspace and opens a child file", async ({ page }) => {
+    const outside = await mkdtemp(path.join(tmpdir(), "paseo-outside-"));
+    await mkdir(path.join(outside, "nested"));
+    await writeFile(path.join(outside, "nested/child.txt"), "Resource child content");
+    const workspace = await openResourceChat(
+      page,
+      () => `[Open folder](file://${outside}/nested/) and [Filesystem root](file:///)`,
+      async () => {},
     );
     try {
       await page.getByRole("link", { name: "Open folder" }).first().click();
@@ -768,8 +794,15 @@ test.describe("Resource links", () => {
       await expect(page.getByText("Resource child content", { exact: true })).toBeVisible();
       await page.getByTestId("resource-parent").filter({ visible: true }).click();
       await expect(directory).toBeVisible();
+      await page
+        .getByTestId(/^workspace-tab-agent_/)
+        .first()
+        .click();
+      await page.getByRole("link", { name: "Filesystem root" }).first().click();
+      await expect(directory.getByText("tmp", { exact: true })).toBeVisible();
     } finally {
       await workspace.cleanup();
+      await rm(outside, { recursive: true, force: true });
     }
   });
 
