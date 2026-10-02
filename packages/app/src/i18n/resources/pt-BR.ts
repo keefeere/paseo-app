@@ -1533,6 +1533,12 @@ export const ptBR: TranslationResources = {
       },
     },
   },
+  hostPicker: {
+    addHost: "Adicionar host",
+    allHosts: "Todos os hosts",
+    enableBuiltInDaemon: "Ativar o daemon integrado",
+    fallback: "Host",
+  },
   projectPicker: {
     placeholder: "Digite para pesquisar...",
     browse: "Procurar…",

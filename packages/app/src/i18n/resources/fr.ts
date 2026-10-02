@@ -1552,6 +1552,12 @@ export const fr: TranslationResources = {
       },
     },
   },
+  hostPicker: {
+    addHost: "Ajouter un hôte",
+    allHosts: "Tous les hôtes",
+    enableBuiltInDaemon: "Activer le démon intégré",
+    fallback: "Hôte",
+  },
   projectPicker: {
     placeholder: "Tapez pour rechercher...",
     browse: "Parcourir…",

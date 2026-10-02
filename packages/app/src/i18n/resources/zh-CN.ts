@@ -1484,6 +1484,12 @@ export const zhCN: TranslationResources = {
       },
     },
   },
+  hostPicker: {
+    addHost: "添加主机",
+    allHosts: "所有主机",
+    enableBuiltInDaemon: "启用内置 daemon",
+    fallback: "主机",
+  },
   projectPicker: {
     placeholder: "输入以搜索...",
     browse: "浏览…",
