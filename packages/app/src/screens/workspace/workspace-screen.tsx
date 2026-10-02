@@ -49,9 +49,12 @@ import { toggleDesktopSidebarsWithCheckoutIntent } from "@/utils/desktop-sidebar
 import {
   isExplorerSidebarOpen,
   openExplorerSidebarView,
+  revealDirectoryInExplorerSidebar,
   toggleExplorerSidebar,
   useIsExplorerSidebarOpen,
 } from "@/workspace-tabs/explorer-sidebar";
+import { probeDirectory } from "@/workspace/file-open/directory-probe";
+import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
 import {
   openPreferredWorkspacePreview,
   openPreferredWorkspaceTarget,
@@ -2288,6 +2291,42 @@ function WorkspaceScreenContent({
     if (focusPaneBeforeOpen && paneId && persistenceKey) {
       focusWorkspacePane(persistenceKey, paneId);
     }
+    const openAsTab = () => openWorkspaceFileTab({ request, parentTabId });
+    const location = normalizeWorkspaceFileLocation(request.location);
+    if (!location || !client || !workspaceDirectory) {
+      openAsTab();
+      return;
+    }
+    // A directory inside the workspace belongs in the Files sidebar. Ask the daemon before
+    // creating a tab, otherwise the tab flashes open and closes again.
+    void (async () => {
+      const directoryPath = await probeDirectory({
+        client,
+        workspaceRoot: workspaceDirectory,
+        path: location.path,
+      });
+      const revealed =
+        directoryPath !== null &&
+        [location.path, directoryPath].some((path) =>
+          revealDirectoryInExplorerSidebar({
+            isCompact: isMobile,
+            serverId: normalizedServerId,
+            workspaceId: normalizedWorkspaceId,
+            workspaceRoot: workspaceDirectory,
+            path: buildAbsoluteExplorerPath({ workspaceRoot: workspaceDirectory, entryPath: path }),
+          }),
+        );
+      if (!revealed) openAsTab();
+    })();
+  });
+
+  const openWorkspaceFileTab = useStableEvent(function openWorkspaceFileTab({
+    request,
+    parentTabId,
+  }: {
+    request: WorkspaceFileOpenRequest;
+    parentTabId: string;
+  }) {
     if (request.disposition === "side") {
       const location = normalizeWorkspaceFileLocation(request.location);
       if (!location || !persistenceKey) return;

@@ -754,13 +754,16 @@ test.describe("Resource links", () => {
   test("reveals a workspace directory in the Files sidebar", async ({ page }) => {
     const workspace = await openResourceChat(
       page,
-      (root) => `[Open folder](file://${root}/nested/deep/) and [Relative folder](nested)`,
+      (root) =>
+        `[Open folder](file://${root}/nested/deep/) and [Relative folder](nested) and \`${root}/nested\``,
       async (root) => {
         await mkdir(path.join(root, "nested/deep"), { recursive: true });
         await writeFile(path.join(root, "nested/deep/child.txt"), "Resource child content");
       },
     );
     try {
+      const tabs = page.locator('[data-testid^="workspace-tab-"]');
+      await expect(tabs).toHaveCount(1);
       await page.getByRole("link", { name: "Open folder" }).first().click();
       const selected = page
         .locator('[data-testid^="file-explorer-row-"][aria-selected="true"]')
@@ -771,6 +774,11 @@ test.describe("Resource links", () => {
       await page.screenshot({ path: test.info().outputPath("directory-sidebar.png") });
       await page.getByRole("link", { name: "Relative folder" }).first().click();
       await expect(selected).toContainText("nested");
+      await expect(page.getByText("child.txt", { exact: true }).first()).toBeVisible();
+      await page.getByText(`${workspace.repoPath}/nested`, { exact: true }).click();
+      await expect(selected).toContainText("nested");
+      // A directory link never creates a tab, not even briefly.
+      await expect(tabs).toHaveCount(1);
     } finally {
       await workspace.cleanup();
     }
