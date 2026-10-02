@@ -1,5 +1,6 @@
 import type { ScheduleCadence } from "@getpaseo/protocol/schedule/types";
 import { everyMsToParts } from "@/utils/schedule-format";
+import { i18n } from "@/i18n/i18next";
 
 type CronCadence = Extract<ScheduleCadence, { type: "cron" }>;
 
@@ -12,11 +13,11 @@ export interface CadencePresetOption {
 export const CUSTOM_CRON_PRESET_ID = "custom";
 
 export const CADENCE_PRESET_OPTIONS: CadencePresetOption[] = [
-  { id: "every-minute", label: "Every minute", expression: "* * * * *" },
-  { id: "every-hour", label: "Every hour", expression: "0 * * * *" },
-  { id: "daily-9", label: "Daily 9:00", expression: "0 9 * * *" },
-  { id: "weekdays-9", label: "Weekdays 9:00", expression: "0 9 * * 1-5" },
-  { id: "mondays-9", label: "Mondays 9:00", expression: "0 9 * * 1" },
+  { id: "every-minute", label: i18n.t("schedules.cadence.every_minute"), expression: "* * * * *" },
+  { id: "every-hour", label: i18n.t("schedules.cadence.every_hour"), expression: "0 * * * *" },
+  { id: "daily-9", label: i18n.t("schedules.cadence.daily_9"), expression: "0 9 * * *" },
+  { id: "weekdays-9", label: i18n.t("schedules.cadence.weekdays_9"), expression: "0 9 * * 1-5" },
+  { id: "mondays-9", label: i18n.t("schedules.cadence.mondays_9"), expression: "0 9 * * 1" },
 ];
 
 export function resolveCronPresetId(cadence: CronCadence): string {

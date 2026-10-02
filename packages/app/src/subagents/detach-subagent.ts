@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import type { Agent } from "@/stores/session-store";
 import type { ConfirmDialogInput } from "@/utils/confirm-dialog";
 
@@ -22,13 +23,14 @@ function resolveSubagentLabel(title: Agent["title"] | null | undefined): string 
 export function resolveDetachSubagentDialog(
   input: ResolveDetachSubagentDialogInput,
 ): ConfirmDialogInput {
-  const subagentLabel = resolveSubagentLabel(input.title) ?? "This subagent";
+  const subagentLabel =
+    resolveSubagentLabel(input.title) ?? i18n.t("subagents.dialog.thisSubagent");
 
   return {
-    title: "Detach subagent?",
-    message: `${subagentLabel} will leave this track and continue as a standalone agent.`,
-    confirmLabel: "Detach",
-    cancelLabel: "Cancel",
+    title: i18n.t("subagents.dialog.detachTitle"),
+    message: i18n.t("subagents.dialog.detachMessage", { label: subagentLabel }),
+    confirmLabel: i18n.t("subagents.dialog.detachConfirm"),
+    cancelLabel: i18n.t("common.actions.cancel"),
     destructive: false,
   };
 }

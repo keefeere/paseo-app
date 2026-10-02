@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import { MoreVertical, Pause, Pencil, Play, RotateCw, Trash2 } from "lucide-react-native";
 import { useCallback, useState, type ReactElement } from "react";
 import { Pressable, Text, View, type PressableStateCallbackType } from "react-native";
@@ -81,15 +82,15 @@ function stateBadge(state: ScheduleDerivedState): {
 } {
   switch (state) {
     case "active":
-      return { label: "Active", variant: "success" };
+      return { label: i18n.t("schedules.status.active"), variant: "success" };
     case "paused":
-      return { label: "Paused", variant: "muted" };
+      return { label: i18n.t("schedules.status.paused"), variant: "muted" };
     case "expired":
-      return { label: "Expired", variant: "muted" };
+      return { label: i18n.t("schedules.status.expired"), variant: "muted" };
     case "finished":
-      return { label: "Finished", variant: "muted" };
+      return { label: i18n.t("schedules.status.finished"), variant: "muted" };
     case "targetGone":
-      return { label: "Target gone", variant: "error" };
+      return { label: i18n.t("schedules.status.target_gone"), variant: "error" };
   }
 }
 
@@ -108,7 +109,9 @@ function buildMeta(input: {
   const parts = [
     formatCadence(schedule.cadence),
     `Created ${input.createdAgo}`,
-    schedule.lastRunAt ? `Last run ${input.lastRunAgo}` : "Never run",
+    schedule.lastRunAt
+      ? i18n.t("schedules.row.last_run", { timeAgo: input.lastRunAgo })
+      : i18n.t("schedules.row.never_run"),
   ];
   if (state === "active") {
     const next = formatNextRun(schedule.nextRunAt);

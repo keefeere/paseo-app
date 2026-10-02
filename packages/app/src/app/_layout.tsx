@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import "@/styles/unistyles";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { PortalProvider } from "@gorhom/portal";
@@ -764,7 +765,7 @@ function OpenProjectListener() {
       }
 
       chooseHost({
-        title: "Choose host",
+        title: i18n.t("misc.chooseHost"),
         onChooseHost: (serverId) => {
           setRequest({
             id: nextOpenProjectRequestId++,

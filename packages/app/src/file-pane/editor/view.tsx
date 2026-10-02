@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { StyleSheet } from "react-native-unistyles";
+import { useTranslation } from "react-i18next";
 import type { HighlightStyle } from "@getpaseo/highlight";
 import type { WorkspaceFileLocation } from "@/workspace/file-open";
 import type { FileEditorModel } from "./model";
@@ -23,9 +24,10 @@ export function FileEditorView(_props: {
   onCursorChange(position: { line: number; column: number }): void;
   onVimModeChange(mode: string | null): void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Source editing is available on web and desktop.</Text>
+      <Text style={styles.text}>{t("filePane.editor.availableOnWebAndDesktop")}</Text>
     </View>
   );
 }

@@ -201,7 +201,8 @@ function KeyboardToggleButton({
   iconColor,
   onToggle,
 }: KeyboardToggleButtonProps) {
-  const label = isKeyboardVisible ? "Hide keyboard" : "Show keyboard";
+  const { t } = useTranslation();
+  const label = isKeyboardVisible ? t("terminal.keyboard.hide") : t("terminal.keyboard.show");
   const Icon = isKeyboardVisible ? KeyboardOffIcon : KeyboardIcon;
   const pressableStyle = useCallback(
     ({ hovered, pressed }: PressableStateCallbackType & { hovered?: boolean }) => [

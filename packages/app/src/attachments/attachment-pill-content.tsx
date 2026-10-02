@@ -28,12 +28,15 @@ function getReviewSubtitle(count: number, t: TFunction): string {
     : t("message.attachments.commentsMany", { count });
 }
 
-function getPullRequestContextSubtitle(attachment: WorkspaceComposerAttachment): string {
+function getPullRequestContextSubtitle(
+  attachment: WorkspaceComposerAttachment,
+  t: TFunction,
+): string {
   if (
     attachment.kind === "forge.change_request_check" ||
     attachment.kind === "github.pull_request_check"
   ) {
-    return "Check logs";
+    return t("misc.checkLogs");
   }
   if (
     attachment.kind === "forge.change_request_comment" ||
@@ -49,7 +52,7 @@ function getTextAttachmentSubtitle(
   t: TFunction,
 ): string {
   if (attachment.contextKind === "chat_history") {
-    return "Previous conversation";
+    return t("misc.previousConversation");
   }
   return t("message.attachments.text");
 }
@@ -123,7 +126,7 @@ export function getWorkspaceAttachmentPillContent(
     return {
       icon: attachmentFileIcon,
       title: attachment.title,
-      subtitle: getPullRequestContextSubtitle(attachment),
+      subtitle: getPullRequestContextSubtitle(attachment, t),
     };
   }
   if (attachment.kind === "chat_history") {

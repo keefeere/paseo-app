@@ -57,6 +57,7 @@ import type {
 import { validateCron } from "@/utils/schedule-format";
 import { toErrorMessage } from "@/utils/error-messages";
 import { getDeviceTimeZone } from "@/utils/device-timezone";
+import { useTranslation } from "react-i18next";
 
 export interface ScheduleFormSheetProps {
   serverId?: string;
@@ -239,6 +240,7 @@ function OpenScheduleFormSheet({
   mode,
   schedule,
 }: ScheduleFormSheetProps & { onDismiss: () => void }): ReactElement {
+  const { t } = useTranslation();
   const controlSize: FieldControlSize = useIsCompactFormFactor() ? "md" : "sm";
   const { projects } = useProjects();
   const hostProfiles = useHosts();
@@ -285,10 +287,10 @@ function OpenScheduleFormSheet({
       (entry) => entry.serverId === (state.selectedServerId ?? serverId) && entry.id === agentId,
     );
     if (!agent) {
-      return "Agent unavailable";
+      return t("schedules.form.agent_unavailable");
     }
     return agent.title?.trim() || "Untitled agent";
-  }, [agents, schedule, serverId, state.selectedServerId]);
+  }, [agents, schedule, serverId, state.selectedServerId, t]);
 
   const persistPreferences = useCallback(async () => {
     const provider = state.selectedProvider;
@@ -402,10 +404,15 @@ function OpenScheduleFormSheet({
 
   const header = useMemo<SheetHeader>(() => {
     if (mode !== "edit") {
-      return { title: "New schedule" };
+      return { title: t("schedules.form.title_new") };
     }
-    return { title: schedule?.target.type === "agent" ? "Edit heartbeat" : "Edit schedule" };
-  }, [mode, schedule?.target.type]);
+    return {
+      title:
+        schedule?.target.type === "agent"
+          ? t("schedules.form.title_edit_heartbeat")
+          : t("schedules.form.title_edit_schedule"),
+    };
+  }, [mode, schedule?.target.type, t]);
 
   const footer = useMemo(
     () => (
@@ -416,7 +423,7 @@ function OpenScheduleFormSheet({
           onPress={onClose}
           disabled={isSubmitting}
         >
-          Cancel
+          {t("common.actions.cancel")}
         </Button>
         <Button
           style={styles.footerButton}
@@ -426,11 +433,11 @@ function OpenScheduleFormSheet({
           loading={isSubmitting}
           testID="schedule-form-submit"
         >
-          {mode === "edit" ? "Save changes" : "Create schedule"}
+          {mode === "edit" ? t("schedules.form.save_changes") : t("schedules.form.create_schedule")}
         </Button>
       </View>
     ),
-    [canSubmit, handleSubmitPress, isSubmitting, mode, onClose],
+    [canSubmit, handleSubmitPress, isSubmitting, mode, onClose, t],
   );
 
   return (
@@ -474,6 +481,7 @@ function ScheduleFormFields({
   cadenceError,
   mutationServerId,
 }: ScheduleFormFieldsProps): ReactElement {
+  const { t } = useTranslation();
   if (state.targetKind === "agent") {
     return (
       <>
@@ -491,27 +499,27 @@ function ScheduleFormFields({
 
   return (
     <>
-      <Field label="Name">
+      <Field label={t("schedules.form.fields.name")}>
         <FormTextInput
           size={controlSize}
           testID="schedule-name-input"
           accessibilityLabel="Schedule name"
           initialValue={state.name}
           onChangeText={model.setName}
-          placeholder="Optional"
+          placeholder={t("schedules.form.placeholders.optional")}
           autoCapitalize="none"
           autoCorrect={false}
         />
       </Field>
 
-      <Field label="Prompt">
+      <Field label={t("schedules.form.fields.prompt")}>
         <FormTextInput
           size={controlSize}
           testID="schedule-prompt-input"
           accessibilityLabel="Prompt"
           initialValue={state.prompt}
           onChangeText={model.setPrompt}
-          placeholder="What should the agent do each run?"
+          placeholder={t("schedules.form.placeholders.prompt")}
           style={styles.multilineInput}
           multiline
           numberOfLines={4}
@@ -535,14 +543,14 @@ function ScheduleFormFields({
         size={controlSize}
       />
 
-      <Field label="Max runs">
+      <Field label={t("schedules.form.fields.max_runs")}>
         <FormTextInput
           size={controlSize}
           testID="schedule-max-runs-input"
           accessibilityLabel="Max runs"
           initialValue={state.maxRuns}
           onChangeText={model.setMaxRuns}
-          placeholder="Unlimited"
+          placeholder={t("schedules.form.placeholders.unlimited")}
           keyboardType="number-pad"
         />
       </Field>
@@ -569,6 +577,7 @@ function ScheduleTargetFields({
   controlSize,
   mutationServerId,
 }: ScheduleTargetFieldsProps): ReactElement {
+  const { t } = useTranslation();
   const hostOptions = useMemo<SelectFieldOption<string>[]>(
     () =>
       state.hosts.map((host) => ({
@@ -704,13 +713,13 @@ function ScheduleTargetFields({
     <>
       {state.mode === "edit" || state.hosts.length > 1 ? (
         <SelectField
-          label="Host"
+          label={t("schedules.form.fields.host")}
           value={state.selectedServerId}
           selectedDisplay={selectedHostDisplay}
           options={hostOptions}
           onChange={handleSelectHost}
-          placeholder="Select host"
-          emptyText="No hosts found"
+          placeholder={t("schedules.form.placeholders.select_host")}
+          emptyText={t("schedules.form.placeholders.no_hosts_found")}
           disabled={state.mode === "edit"}
           searchable={false}
           title="Host"
@@ -722,13 +731,13 @@ function ScheduleTargetFields({
 
       {state.disclosure.showProjectField ? (
         <SelectField
-          label="Project"
+          label={t("schedules.form.fields.project")}
           value={state.selectedProjectOptionId || null}
           selectedDisplay={state.projectDisplay}
           options={projectOptions}
           onChange={handleSelectProject}
-          placeholder="Select project"
-          emptyText="No projects found"
+          placeholder={t("schedules.form.placeholders.select_project")}
+          emptyText={t("schedules.form.placeholders.no_projects_found")}
           disabled={!state.selectedServerId}
           hint={!state.selectedServerId ? "Choose a host first." : undefined}
           searchable
@@ -741,7 +750,7 @@ function ScheduleTargetFields({
       ) : null}
 
       {state.disclosure.showModelField ? (
-        <Field label="Model">
+        <Field label={t("schedules.form.fields.model")}>
           <CombinedModelSelector
             providers={state.modelSelectorProviders}
             selectedProvider={state.selectedProvider ?? ""}
@@ -761,13 +770,13 @@ function ScheduleTargetFields({
 
       {state.disclosure.showThinkingField ? (
         <SelectField
-          label="Thinking"
+          label={t("schedules.form.fields.thinking")}
           value={state.selectedThinkingOptionId || null}
           selectedDisplay={state.selectedThinkingDisplay}
           options={thinkingOptions}
           onChange={handleSelectThinking}
-          placeholder="Select thinking"
-          emptyText="No thinking options found"
+          placeholder={t("schedules.form.placeholders.select_thinking")}
+          emptyText={t("schedules.form.placeholders.no_thinking_options_found")}
           searchable={thinkingOptions.length > 6}
           title="Select thinking"
           size={controlSize}
@@ -778,13 +787,13 @@ function ScheduleTargetFields({
 
       {state.disclosure.showModeField ? (
         <SelectField
-          label="Mode"
+          label={t("schedules.form.fields.mode")}
           value={state.selectedMode || null}
           selectedDisplay={state.selectedModeDisplay}
           options={modeOptions}
           onChange={handleSelectMode}
-          placeholder="Default mode"
-          emptyText="No modes found"
+          placeholder={t("schedules.form.placeholders.default_mode")}
+          emptyText={t("schedules.form.placeholders.no_modes_found")}
           disabled={modeOptions.length === 0}
           hint={modeOptions.length === 0 ? "No modes are available for this model." : undefined}
           searchable={modeOptions.length > 6}
@@ -799,7 +808,7 @@ function ScheduleTargetFields({
       ) : null}
 
       {state.disclosure.showArchiveOnFinishField ? (
-        <Field label="Archive on finish">
+        <Field label={t("schedules.form.fields.archive_on_finish")}>
           <Switch
             value={state.archiveOnFinish}
             onValueChange={model.setArchiveOnFinish}
@@ -821,26 +830,32 @@ function ScheduleIsolationField({
   state: ScheduleFormState;
   size: FieldControlSize;
 }): ReactElement {
+  const { t } = useTranslation();
   const options = useMemo<SelectFieldOption<"local" | "worktree">[]>(
     () => [
       {
         id: "local",
         value: "local",
-        label: "Local",
+        label: t("schedules.form.isolation.local"),
         testID: "schedule-isolation-local",
       },
       {
         id: "worktree",
         value: "worktree",
-        label: "Worktree",
+        label: t("schedules.form.isolation.worktree"),
         testID: "schedule-isolation-worktree",
       },
     ],
-    [],
+    [t],
   );
   const selectedDisplay = useMemo<SelectFieldDisplay>(
-    () => ({ label: state.effectiveIsolation === "worktree" ? "Worktree" : "Local" }),
-    [state.effectiveIsolation],
+    () => ({
+      label:
+        state.effectiveIsolation === "worktree"
+          ? t("schedules.form.isolation.worktree")
+          : t("schedules.form.isolation.local"),
+    }),
+    [state.effectiveIsolation, t],
   );
   const triggerLeading = useMemo(
     () => (
@@ -869,13 +884,13 @@ function ScheduleIsolationField({
 
   return (
     <SelectField
-      label="Isolation"
+      label={t("schedules.form.fields.isolation")}
       value={state.effectiveIsolation}
       selectedDisplay={selectedDisplay}
       options={options}
       onChange={handleSelectIsolation}
-      placeholder="Select isolation"
-      emptyText="No isolation options found"
+      placeholder={t("schedules.form.placeholders.select_isolation")}
+      emptyText={t("schedules.form.placeholders.no_isolation_options_found")}
       searchable={false}
       title="Isolation"
       size={size}
@@ -894,6 +909,7 @@ function ScheduleAgentTargetField({
   label: string | null;
   size: FieldControlSize;
 }): ReactElement {
+  const { t } = useTranslation();
   const fieldStyle = useMemo(
     () => [styles.readonlyField, size === "sm" ? styles.readonlyFieldSm : styles.readonlyFieldMd],
     [size],
@@ -904,7 +920,7 @@ function ScheduleAgentTargetField({
   );
 
   return (
-    <Field label="Target">
+    <Field label={t("schedules.form.fields.target")}>
       <View style={fieldStyle} testID="schedule-agent-target">
         <Text style={textStyle} numberOfLines={1}>
           {label}

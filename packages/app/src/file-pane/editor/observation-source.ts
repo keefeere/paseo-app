@@ -1,4 +1,5 @@
 import { explorerFileFromReadResult } from "@/file-explorer/read-result";
+import { i18n } from "@/i18n/i18next";
 import type { LiveFileObservation } from "../live-file/model";
 import type { FileEditorObservation, FileObservationSource } from "./model";
 
@@ -36,7 +37,7 @@ function fileEditorObservation(
       status: "error",
       cwd: observation.version.cwd,
       path: observation.version.path,
-      error: "File is no longer text.",
+      error: i18n.t("filePane.editor.notText"),
     };
   }
   return {

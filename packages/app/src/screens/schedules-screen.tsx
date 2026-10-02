@@ -39,6 +39,7 @@ import {
   buildScheduleProjectTargets,
 } from "@/schedules/schedule-project-targets";
 import type { ScheduleSummary } from "@getpaseo/protocol/schedule/types";
+import { useTranslation } from "react-i18next";
 
 type FormState =
   | { mode: "closed" }
@@ -63,6 +64,7 @@ export function SchedulesScreen(): ReactElement {
 }
 
 function SchedulesScreenContent(): ReactElement {
+  const { t } = useTranslation();
   const { loadState, hostErrors, isError, refetch } = useSchedules();
   const schedules = loadState.status === "loaded" ? loadState.data : EMPTY_SCHEDULES;
   const { agents } = useAggregatedAgents({ includeArchived: true });
@@ -165,7 +167,7 @@ function SchedulesScreenContent(): ReactElement {
 
   return (
     <View style={styles.container}>
-      <MenuHeader title="Schedules" />
+      <MenuHeader title={t("schedules.screen.header")} />
       <SchedulesScreenBody
         rows={visibleRows}
         loadState={loadState}
@@ -221,6 +223,7 @@ function SchedulesScreenBody({
   onCreate: () => void;
   onEdit: (schedule: AggregatedSchedule) => void;
 }): ReactElement {
+  const { t } = useTranslation();
   const bodyState = resolveSchedulesScreenBodyState({ loadState, showLoadError });
 
   if (bodyState.kind === "loading") {
@@ -234,9 +237,9 @@ function SchedulesScreenBody({
   if (bodyState.kind === "load-error") {
     return (
       <View style={styles.centered}>
-        <Text style={styles.message}>Unable to load schedules</Text>
+        <Text style={styles.message}>{t("schedules.screen.unable_to_load")}</Text>
         <Button variant="ghost" onPress={onRetry} testID="schedules-retry">
-          Try again
+          {t("common.actions.retry")}
         </Button>
       </View>
     );
@@ -315,27 +318,32 @@ function SchedulesEmptyState({
   onCreate: () => void;
   testID?: string;
 }): ReactElement {
+  const { t } = useTranslation();
   return (
     <View style={styles.emptyState} testID={testID}>
       <CalendarClock size={styles.emptyIcon.width} color={styles.emptyIcon.color} />
       <View style={styles.emptyTextStack}>
-        <Text style={styles.emptyTitle}>No active schedules</Text>
-        <Text style={styles.emptyDescription}>Schedules run agents on a cadence.</Text>
-        <ExternalLink href="https://paseo.sh/docs/schedules" label="See docs" />
+        <Text style={styles.emptyTitle}>{t("schedules.screen.no_active")}</Text>
+        <Text style={styles.emptyDescription}>{t("schedules.screen.schedules_run_agents")}</Text>
+        <ExternalLink
+          href="https://paseo.sh/docs/schedules"
+          label={t("schedules.screen.see_docs")}
+        />
       </View>
       <Button variant="outline" leftIcon={Plus} onPress={onCreate} testID="schedules-empty-new">
-        New schedule
+        {t("schedules.form.title_new")}
       </Button>
     </View>
   );
 }
 
 function SchedulesEndedEmptyState(): ReactElement {
+  const { t } = useTranslation();
   return (
     <View style={styles.filterEmpty}>
       <View style={styles.endedEmptyState}>
         <CalendarClock size={styles.emptyIcon.width} color={styles.emptyIcon.color} />
-        <Text style={styles.emptyTitle}>No ended schedules</Text>
+        <Text style={styles.emptyTitle}>{t("schedules.screen.no_ended")}</Text>
       </View>
     </View>
   );

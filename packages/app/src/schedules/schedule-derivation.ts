@@ -1,5 +1,6 @@
 import type { ScheduleSummary } from "@getpaseo/protocol/schedule/types";
 import { describeScheduleCwd } from "@/schedules/schedule-project-targets";
+import { i18n } from "@/i18n/i18next";
 
 // Derived from existing fields only — no new protocol state. "active"/"paused"
 // mirror the stored status; the rest are computed truths the daemon does not
@@ -68,7 +69,7 @@ function resolveTarget(input: ResolveScheduleInput): ScheduleTargetResolution {
     if (agent) {
       return { label: agent.title?.trim() || "Untitled agent", provider: agent.provider };
     }
-    return { label: "Agent unavailable", provider: null };
+    return { label: i18n.t("schedules.form.agent_unavailable"), provider: null };
   }
   return {
     label: describeScheduleCwd({ serverId, cwd: schedule.target.config.cwd, projectNameByCwd }),

@@ -13,6 +13,7 @@ import {
 } from "@/schedules/schedule-cadence-options";
 import { getDeviceTimeZone } from "@/utils/device-timezone";
 import { describeCron, validateCron } from "@/utils/schedule-format";
+import { useTranslation } from "react-i18next";
 
 type CronCadence = Extract<ScheduleCadence, { type: "cron" }>;
 
@@ -42,6 +43,7 @@ function buildCronCadence(expression: string, timezone: string): CronCadence {
 }
 
 export function CadenceEditor({ value, onChange, error, size = "md" }: CadenceEditorProps) {
+  const { t } = useTranslation();
   const deviceTimeZone = useMemo(getDeviceTimeZone, []);
   const normalizedValue = normalizeScheduleFormCadence(value, deviceTimeZone);
   const [cronText, setCronText] = useState(() => normalizedValue.expression);
@@ -87,16 +89,16 @@ export function CadenceEditor({ value, onChange, error, size = "md" }: CadenceEd
   }
 
   return (
-    <Field label="Cadence">
+    <Field label={t("schedules.cadence_editor.label")}>
       <View style={styles.stack}>
         <SelectField
-          label="Cadence"
+          label={t("schedules.cadence_editor.label")}
           value={selectedPresetId === "custom" ? null : selectedPresetId}
           selectedDisplay={selectedPresetDisplay}
           options={PRESET_OPTIONS}
           onChange={handlePresetChange}
-          placeholder="Select cadence"
-          emptyText="No cadences found"
+          placeholder={t("schedules.cadence_editor.placeholder")}
+          emptyText={t("schedules.cadence_editor.empty_text")}
           searchable={false}
           title="Cadence"
           size={size}
@@ -107,7 +109,7 @@ export function CadenceEditor({ value, onChange, error, size = "md" }: CadenceEd
         <FormTextInput
           size={size}
           testID="cadence-cron-expression"
-          accessibilityLabel="Cron expression"
+          accessibilityLabel={t("schedules.cadence_editor.accessibility_label")}
           initialValue={cronText}
           resetKey={`cadence-cron-${fieldResetKey}`}
           onChangeText={handleCronChange}

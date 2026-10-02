@@ -1,5 +1,6 @@
 import type { FilePreviewUnavailable } from "@getpaseo/protocol/messages";
 import type { FileReadResult } from "@getpaseo/client/internal/daemon-client";
+import { i18n } from "@/i18n/i18next";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { persistAttachmentFromBytes } from "@/attachments/service";
 import { createPreviewAttachmentId, getFileNameFromPath } from "@/attachments/utils";
@@ -173,7 +174,7 @@ function getNonReadySnapshot(snapshot: LiveFileSnapshot): FilePreviewLifecycleSn
     return { status: "error", message: snapshot.observation.error };
   }
   if (snapshot.observation?.status === "missing") {
-    return { status: "error", message: "File not found" };
+    return { status: "error", message: i18n.t("filePane.preview.fileNotFound") };
   }
   return initialSnapshot;
 }
@@ -197,5 +198,5 @@ function sameNonReadyState(
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Failed to prepare preview";
+  return error instanceof Error ? error.message : i18n.t("filePane.preview.failedToPrepare");
 }

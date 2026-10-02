@@ -1,5 +1,6 @@
 import type { ScheduleCadence, ScheduleSummary } from "@getpaseo/protocol/schedule/types";
 import { validateCronExpression } from "@getpaseo/protocol/schedule/cron-expression";
+import { i18n } from "@/i18n/i18next";
 
 export type IntervalUnit = "minutes" | "hours" | "days";
 type CronCadence = Extract<ScheduleCadence, { type: "cron" }>;
@@ -111,19 +112,21 @@ export function describeCron(cadence: CronCadence): string | null {
   const isWildcardDom = dayOfMonth === "*";
 
   if (minute === "*" && hour === "*" && isWildcardMonth && isWildcardDom && dayOfWeek === "*") {
-    return "Every minute";
+    return i18n.t("schedules.cadence.every_minute");
   }
 
   if (!isLiteralMinute || !isWildcardMonth || !isWildcardDom) {
     return null;
   }
 
-  // "Every hour" / "Every hour at :MM"
+  // i18n.t("schedules.cadence.every_hour") / "Every hour at :MM"
   if (hour === "*") {
     if (dayOfWeek !== "*") {
       return null;
     }
-    return minuteNum === 0 ? "Every hour" : `Every hour at :${pad2(minuteNum)}`;
+    return minuteNum === 0
+      ? i18n.t("schedules.cadence.every_hour")
+      : i18n.t("schedules.cadence.every_hour_at", { minute: pad2(minuteNum) });
   }
 
   if (!/^\d+$/.test(hour)) {
@@ -155,7 +158,7 @@ function describeCronDay(dayOfWeek: string): string | null {
 export function validateCron(expr: string): string | null {
   const trimmed = expr.trim();
   if (!trimmed) {
-    return "Enter a cron expression";
+    return i18n.t("schedules.format.enter_cron");
   }
 
   const error = validateCronExpression(trimmed);

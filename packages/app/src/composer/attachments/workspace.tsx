@@ -59,10 +59,10 @@ function getOpenAccessibilityLabel(
     return t("composer.attachments.openBrowserElement");
   }
   if (isPullRequestContextAttachment(attachment)) {
-    return "Open context attachment";
+    return t("composer.attachments.openContext");
   }
   if (attachment.kind === "chat_history") {
-    return "Open chat history attachment";
+    return t("composer.attachments.openChatHistory");
   }
   return t("composer.attachments.openReview");
 }
@@ -75,10 +75,10 @@ function getRemoveAccessibilityLabel(
     return t("composer.attachments.removeBrowserElement");
   }
   if (isPullRequestContextAttachment(attachment)) {
-    return "Remove context attachment";
+    return t("composer.attachments.removeContext");
   }
   if (attachment.kind === "chat_history") {
-    return "Remove chat history attachment";
+    return t("composer.attachments.removeChatHistory");
   }
   return t("composer.attachments.removeReview");
 }

@@ -6,6 +6,7 @@ import type { PluginAttachmentItem, PluginAttachmentSourceContribution } from "@
 import { searchPluginAttachments } from "@getpaseo/plugin/client/host";
 import type { LucideIcon } from "lucide-react-native";
 import type { UserComposerAttachment } from "@/attachments/types";
+import { i18n } from "@/i18n/i18next";
 import type { AttachmentMenuItem } from "@/composer/input/input";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import { useFetchQuery } from "@/data/query";
@@ -48,7 +49,7 @@ interface PluginAttachmentPickerBinding {
 function searchEmptyText(error: unknown, isFetching: boolean): string {
   if (error instanceof Error) return error.message;
   if (error) return String(error);
-  return isFetching ? "Searching..." : "No results";
+  return isFetching ? i18n.t("agentControls.searching") : i18n.t("common.empty.noResults");
 }
 
 function installedAttachmentSources(

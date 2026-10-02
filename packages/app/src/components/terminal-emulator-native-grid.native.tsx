@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Keyboard,
   type LayoutChangeEvent,
@@ -180,6 +181,7 @@ function NativeTerminalEmulator({
   focusRequestToken = 0,
   resizeRequestToken = 0,
 }: TerminalEmulatorProps) {
+  const { t } = useTranslation();
   const terminalRef = useRef<NativeHeadlessTerminal | null>(null);
   const mountInputRef = useRef({ streamKey, initialSnapshot });
   if (
@@ -1002,13 +1004,13 @@ function NativeTerminalEmulator({
       </View>
       {isScrolled ? (
         <Pressable
-          accessibilityLabel="Bottom"
+          accessibilityLabel={t("misc.bottom")}
           accessibilityRole="button"
           onPress={returnToBottom}
           style={styles.followButton}
           testID="terminal-follow-bottom"
         >
-          <Text style={styles.followButtonText}>Bottom</Text>
+          <Text style={styles.followButtonText}>{t("misc.bottom")}</Text>
         </Pressable>
       ) : null}
     </View>

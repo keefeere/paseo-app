@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import type { Agent } from "@/stores/session-store";
 import type { ConfirmDialogInput } from "@/utils/confirm-dialog";
 
@@ -23,16 +24,19 @@ function resolveSubagentLabel(title: Agent["title"] | null | undefined): string 
 export function resolveArchiveSubagentDialog(
   input: ResolveArchiveSubagentDialogInput,
 ): ConfirmDialogInput {
-  const subagentLabel = resolveSubagentLabel(input.title) ?? "this subagent";
+  const subagentLabel =
+    resolveSubagentLabel(input.title) ?? i18n.t("subagents.dialog.thisSubagentLower");
   const isRunning = input.status === "running";
 
   return {
-    title: isRunning ? "Archive running subagent?" : "Archive subagent?",
+    title: isRunning
+      ? i18n.t("subagents.dialog.archiveRunningTitle")
+      : i18n.t("subagents.dialog.archiveTitle"),
     message: isRunning
-      ? `${subagentLabel} is still running. Archiving it will stop the subagent and remove it from the track.`
-      : `Remove ${subagentLabel} from the track. The subagent will be archived.`,
-    confirmLabel: "Archive",
-    cancelLabel: "Cancel",
+      ? i18n.t("subagents.dialog.archiveRunningMessage", { label: subagentLabel })
+      : i18n.t("subagents.dialog.archiveMessage", { label: subagentLabel }),
+    confirmLabel: i18n.t("subagents.dialog.archiveConfirm"),
+    cancelLabel: i18n.t("common.actions.cancel"),
     destructive: true,
   };
 }

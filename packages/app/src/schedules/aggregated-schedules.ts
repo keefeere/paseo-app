@@ -1,10 +1,11 @@
 import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
 import type { ScheduleSummary } from "@getpaseo/protocol/schedule/types";
 import { toErrorMessage } from "@/utils/error-messages";
+import { i18n } from "@/i18n/i18next";
 
 export const schedulesQueryBaseKey = ["schedules"] as const;
 
-export const ALL_SCHEDULE_HOSTS_FAILED_MESSAGE = "No connected hosts could load schedules";
+export const ALL_SCHEDULE_HOSTS_FAILED_MESSAGE = i18n.t("schedules.aggregated.no_hosts");
 
 export interface ScheduleHostInput {
   serverId: string;

@@ -8,6 +8,7 @@ import type { ScheduleDerivedState } from "@/schedules/schedule-derivation";
 import { settingsStyles } from "@/styles/settings";
 import { confirmDialog } from "@/utils/confirm-dialog";
 import { resolveScheduleTitle, scheduleProductName } from "@/utils/schedule-format";
+import { useTranslation } from "react-i18next";
 
 /** A schedule plus the client-derived fields the row renders. */
 export interface ScheduleRowView {
@@ -72,6 +73,7 @@ function SchedulesTableRow({
   onEditSchedule: (schedule: AggregatedSchedule) => void;
 }): ReactElement {
   const { schedule } = row;
+  const { t } = useTranslation();
   const { id, serverId } = schedule;
   const mutations = useScheduleMutations({ serverId });
   const [pending, setPending] = useState<ScheduleRowPending>(NO_PENDING);
@@ -117,7 +119,7 @@ function SchedulesTableRow({
       const confirmed = await confirmDialog({
         title: `Delete ${productName.toLowerCase()}`,
         message: `Delete "${resolveScheduleTitle(schedule)}"? This cannot be undone.`,
-        confirmLabel: "Delete",
+        confirmLabel: t("common.actions.delete"),
         destructive: true,
       });
       if (!confirmed) {
@@ -125,7 +127,7 @@ function SchedulesTableRow({
       }
       await runAction("delete", () => mutations.deleteSchedule(id));
     })();
-  }, [runAction, mutations, id, schedule]);
+  }, [runAction, mutations, id, schedule, t]);
 
   return (
     <ScheduleRow

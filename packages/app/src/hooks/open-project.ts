@@ -5,6 +5,7 @@ import type {
   WorkspaceProjectDescriptorPayload,
 } from "@getpaseo/protocol/messages";
 import { normalizeProjectDescriptor, type ProjectDescriptor } from "@/stores/session-store";
+import { i18n } from "@/i18n/i18next";
 
 type OpenProjectPayload = ProjectAddResponse["payload"];
 type OpenProjectErrorCode = NonNullable<OpenProjectPayload["errorCode"]>;
@@ -90,7 +91,7 @@ export async function openProjectDirectly(
     return {
       ok: false,
       errorCode: null,
-      error: "Update the host to add projects without creating a workspace.",
+      error: i18n.t("addProject.error.updateHostToAddProjectWithoutWorkspace"),
     };
   }
 
@@ -111,7 +112,7 @@ export async function openProjectDirectly(
   });
   return registered
     ? { ok: true, project: payload.project }
-    : { ok: false, errorCode: null, error: "Unable to register project" };
+    : { ok: false, errorCode: null, error: i18n.t("addProject.error.registerProject") };
 }
 
 export async function cloneGithubProjectDirectly(
@@ -147,5 +148,5 @@ export async function cloneGithubProjectDirectly(
   });
   return registered
     ? { ok: true, project: payload.project }
-    : { ok: false, errorCode: null, error: "Unable to register project" };
+    : { ok: false, errorCode: null, error: i18n.t("addProject.error.registerProject") };
 }

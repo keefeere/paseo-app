@@ -2,6 +2,7 @@ import { isHttpUrl } from "@/utils/http-url";
 import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { i18n } from "@/i18n/i18next";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import type { OpenFileDisposition } from "@/workspace/file-open";
 import { openExternalUrl } from "@/utils/open-external-url";
@@ -325,7 +326,7 @@ async function dispatchExternalUrl(input: {
       await openExternalUrl(input.url);
     }
   } catch (error) {
-    current.toast?.error(error instanceof Error ? error.message : "Unable to open link");
+    current.toast?.error(error instanceof Error ? error.message : i18n.t("misc.unableToOpenLink"));
   }
 }
 

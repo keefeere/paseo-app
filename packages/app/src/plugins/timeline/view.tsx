@@ -5,6 +5,7 @@ import React, { type ComponentType, useMemo } from "react";
 import { Text } from "react-native";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { useIsCompactFormFactor } from "@/constants/layout";
+import { useTranslation } from "react-i18next";
 import { useHostRuntimeClient, useHosts } from "@/runtime/host-runtime";
 import type { Theme } from "@/styles/theme";
 import type { PluginTimelineStreamItem } from "@/types/stream";
@@ -18,7 +19,8 @@ import { resolvePluginPlatform } from "../platform";
 const pluginThemeMapping = (theme: Theme) => ({ theme: toPluginTheme(theme) });
 
 function TimelineItemUnavailable() {
-  return <Text style={styles.unavailable}>Plugin timeline item unavailable.</Text>;
+  const { t } = useTranslation();
+  return <Text style={styles.unavailable}>{t("plugins.timeline.unavailable")}</Text>;
 }
 
 function parseRendererData(

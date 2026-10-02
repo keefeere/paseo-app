@@ -1,3 +1,4 @@
+import { i18n } from "@/i18n/i18next";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Keyboard, ScrollView, StyleSheet as RNStyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -257,7 +258,7 @@ function buildDraftAgentSnapshot(input: {
     pendingPermissions: [],
     persistence: null,
     runtimeInfo: { provider, sessionId: null, model, modeId },
-    title: "Agent",
+    title: i18n.t("misc.agent"),
     cwd: workspaceDirectory,
     model,
     features: composerState.agentControls.features,

@@ -28,6 +28,7 @@ import { buildProviderDefinitions } from "@/utils/provider-definitions";
 import { shortenPath } from "@/utils/shorten-path";
 import { normalizeScheduleFormCadence } from "./schedule-cadence-options";
 import { PROJECT_OPTION_PREFIX, type ScheduleProjectTarget } from "./schedule-project-targets";
+import { i18n } from "@/i18n/i18next";
 
 export interface ScheduleFormDisplay {
   label: string;
@@ -298,7 +299,7 @@ function resolveModeDisplay(input: {
 }): ScheduleFormDisplay {
   const modeId = input.modeId.trim();
   if (!modeId) {
-    return { label: "Default mode" };
+    return { label: i18n.t("schedules.form.placeholders.default_mode") };
   }
   return { label: input.modeOptions.find((mode) => mode.id === modeId)?.label ?? modeId };
 }
@@ -415,7 +416,7 @@ function buildInitialModelDisplay(modelId: string): ScheduleFormDisplay | null {
 
 function buildInitialModeDisplay(modeId: string): ScheduleFormDisplay {
   if (!modeId) {
-    return { label: "Default mode" };
+    return { label: i18n.t("schedules.form.placeholders.default_mode") };
   }
   return { label: modeId };
 }
@@ -908,7 +909,7 @@ export function openScheduleForm(snapshot: ScheduleFormSnapshot): ScheduleFormMo
       modeOptions: [],
       availableThinkingOptions: [],
       selectedModelDisplay: null,
-      selectedModeDisplay: { label: "Default mode" },
+      selectedModeDisplay: { label: i18n.t("schedules.form.placeholders.default_mode") },
       selectedThinkingDisplay: null,
       providerSnapshotRequest: null,
     };

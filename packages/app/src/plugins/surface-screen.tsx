@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
+import { useTranslation } from "react-i18next";
 import type { PluginScreenParams, PluginScreenProps } from "@getpaseo/plugin/client";
 import type { PluginTheme } from "@getpaseo/plugin";
 import { X } from "lucide-react-native";
@@ -128,6 +129,7 @@ function PluginHostFilter({
 }
 
 export function PluginSurfaceScreen() {
+  const { t } = useTranslation();
   const routeParams = useLocalSearchParams<{
     serverId?: string | string[];
     pluginId?: string | string[];
@@ -200,18 +202,18 @@ export function PluginSurfaceScreen() {
           />
         ) : null}
         <HeaderToggleButton
-          accessibilityLabel="Close plugin"
+          accessibilityLabel={t("plugins.surface.close")}
           onPress={close}
           testID="plugin-surface-close"
           tooltipKeys={EMPTY_SHORTCUT_KEYS}
-          tooltipLabel="Close"
+          tooltipLabel={t("common.actions.close")}
           tooltipSide="bottom"
         >
           <ThemedX size={18} uniProps={mutedColorMapping} />
         </HeaderToggleButton>
       </>
     ),
-    [close, contributionServerIds, identity, params, pluginId, serverId],
+    [close, contributionServerIds, identity, params, pluginId, serverId, t],
   );
 
   return (
@@ -235,7 +237,9 @@ export function PluginSurfaceScreen() {
           </SurfaceErrorBoundary>
         ) : (
           <Text style={styles.errorText}>
-            {plugin && surface ? "Plugin host is offline." : "This plugin surface is unavailable."}
+            {plugin && surface
+              ? t("plugins.surface.hostOffline")
+              : t("plugins.surface.unavailable")}
           </Text>
         )}
       </View>
