@@ -1624,12 +1624,6 @@ export const es: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "Agregar anfitrión",
-    allHosts: "Todos los hosts",
-    enableBuiltInDaemon: "Activar el demonio integrado",
-    fallback: "Host",
-  },
   projectPicker: {
     placeholder: "Escriba para buscar...",
     browse: "Explorar…",
@@ -1953,12 +1947,6 @@ export const es: TranslationResources = {
     inPaseo: "EnPaseo",
     externalBrowser: "Navegador externo",
     dontAskAgain: "no vuelvas a preguntar",
-  },
-  chatLink: {
-    title: "Abrir URL",
-    message: "¿Abrir {{url}} en Paseo o en tu navegador externo?",
-    internalTab: "Navegador interno — pestaña",
-    externalBrowser: "Navegador externo",
   },
   downloads: {
     requestTokenFailed: "No se pudo solicitar el token de descarga.",
@@ -2433,14 +2421,6 @@ export const es: TranslationResources = {
           external: "Navegador externo",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "Preguntar",
-          internalSide: "Navegador interno — lateral",
-          internalTab: "Navegador interno — pestaña",
-          external: "Navegador externo",
-        },
-      },
       terminalScrollback: {
         label: "Historial de terminal",
         description: "Líneas mantenidas en el búfer de terminal incorporado",
@@ -2832,13 +2812,6 @@ export const es: TranslationResources = {
           update: "Actualizar habilidad",
           delete: "Eliminar habilidad",
         },
-      },
-      browserTools: {
-        title: "Herramientas del navegador",
-        warning:
-          "Permite que los agentes accedan a las pestañas del navegador de Paseo y las controlen, incluido el estado de las sesiones iniciadas. Actívalo solo para agentes de confianza.",
-        updating: "Actualizando herramientas del navegador…",
-        accessibilityLabel: "Activar herramientas del navegador",
       },
       orchestration: {
         title: "Orquestación",

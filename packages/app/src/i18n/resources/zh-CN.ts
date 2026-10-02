@@ -1562,12 +1562,6 @@ export const zhCN: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "添加主机",
-    allHosts: "所有主机",
-    enableBuiltInDaemon: "启用内置 daemon",
-    fallback: "主机",
-  },
   projectPicker: {
     placeholder: "输入以搜索...",
     browse: "浏览…",
@@ -1883,12 +1877,6 @@ export const zhCN: TranslationResources = {
     inPaseo: "在 Paseo 中",
     externalBrowser: "外部浏览器",
     dontAskAgain: "不再询问",
-  },
-  chatLink: {
-    title: "打开 URL",
-    message: "要在 Paseo 还是外部浏览器中打开 {{url}}？",
-    internalTab: "内置浏览器 — 标签页",
-    externalBrowser: "外部浏览器",
   },
   downloads: {
     requestTokenFailed: "请求下载 token 失败。",
@@ -2354,14 +2342,6 @@ export const zhCN: TranslationResources = {
           external: "外部浏览器",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "询问",
-          internalSide: "内置浏览器 — 侧边",
-          internalTab: "内置浏览器 — 标签页",
-          external: "外部浏览器",
-        },
-      },
       terminalScrollback: {
         label: "终端回滚",
         description: "内置终端缓冲区保留的行数",
@@ -2744,13 +2724,6 @@ export const zhCN: TranslationResources = {
           update: "更新 skill",
           delete: "删除 skill",
         },
-      },
-      browserTools: {
-        title: "浏览器工具",
-        warning:
-          "允许 Agent 访问并控制 Paseo 浏览器标签页，包括已登录的浏览器状态。仅对你信任的 Agent 启用。",
-        updating: "正在更新浏览器工具…",
-        accessibilityLabel: "启用浏览器工具",
       },
       orchestration: {
         title: "编排",

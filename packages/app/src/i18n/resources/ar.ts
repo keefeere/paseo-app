@@ -1579,12 +1579,6 @@ export const ar: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "أضف مضيفًا",
-    allHosts: "كل المضيفين",
-    enableBuiltInDaemon: "تفعيل البرنامج الخفي المدمج",
-    fallback: "المضيف",
-  },
   projectPicker: {
     placeholder: "اكتب للبحث...",
     browse: "استعراض…",
@@ -1905,12 +1899,6 @@ export const ar: TranslationResources = {
     inPaseo: "في Paseo",
     externalBrowser: "متصفح خارجي",
     dontAskAgain: "لا تسأل مرة أخرى",
-  },
-  chatLink: {
-    title: "فتح عنوان URL",
-    message: "هل تريد فتح {{url}} في Paseo أم في متصفحك الخارجي؟",
-    internalTab: "المتصفح الداخلي — علامة تبويب",
-    externalBrowser: "المتصفح الخارجي",
   },
   downloads: {
     requestTokenFailed: "فشل طلب رمز التنزيل.",
@@ -2416,14 +2404,6 @@ export const ar: TranslationResources = {
           external: "متصفح خارجي",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "اسأل",
-          internalSide: "المتصفح الداخلي — الجانب",
-          internalTab: "المتصفح الداخلي — علامة تبويب",
-          external: "المتصفح الخارجي",
-        },
-      },
       terminalScrollback: {
         label: "التمرير Terminal",
         description: "يتم الاحتفاظ بالخطوط في المخزن المؤقت الطرفي المدمج",
@@ -2809,13 +2789,6 @@ export const ar: TranslationResources = {
           update: "تحديث المهارة",
           delete: "حذف المهارة",
         },
-      },
-      browserTools: {
-        title: "أدوات المتصفح",
-        warning:
-          "يسمح للوكلاء بالوصول إلى علامات تبويب متصفح Paseo والتحكم فيها، بما في ذلك حالة تسجيل الدخول في المتصفح. فعّل هذا فقط للوكلاء الذين تثق بهم.",
-        updating: "جارٍ تحديث أدوات المتصفح…",
-        accessibilityLabel: "تفعيل أدوات المتصفح",
       },
       orchestration: {
         title: "التنسيق",

@@ -1588,12 +1588,6 @@ export const ko: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "호스트 추가",
-    allHosts: "모든 호스트",
-    enableBuiltInDaemon: "내장 데몬 활성화",
-    fallback: "호스트",
-  },
   projectPicker: {
     placeholder: "검색할 내용을 입력하세요...",
     browse: "찾아보기…",
@@ -1915,12 +1909,6 @@ export const ko: TranslationResources = {
     inPaseo: "Paseo에서",
     externalBrowser: "외부 브라우저",
     dontAskAgain: "다시 묻지 않기",
-  },
-  chatLink: {
-    title: "URL 열기",
-    message: "{{url}}을(를) Paseo 또는 외부 브라우저에서 여시겠습니까?",
-    internalTab: "내부 브라우저 — 탭",
-    externalBrowser: "외부 브라우저",
   },
   downloads: {
     requestTokenFailed: "다운로드 토큰을 요청하지 못했습니다.",
@@ -2393,14 +2381,6 @@ export const ko: TranslationResources = {
           external: "외부 브라우저",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "물어보기",
-          internalSide: "내부 브라우저 — 측면",
-          internalTab: "내부 브라우저 — 탭",
-          external: "외부 브라우저",
-        },
-      },
       terminalScrollback: {
         label: "터미널 스크롤백",
         description: "내장 터미널 버퍼에 보관되는 줄 수",
@@ -2786,13 +2766,6 @@ export const ko: TranslationResources = {
           update: "스킬 업데이트",
           delete: "스킬 삭제",
         },
-      },
-      browserTools: {
-        title: "브라우저 도구",
-        warning:
-          "에이전트가 로그인된 브라우저 상태를 포함해 Paseo 브라우저 탭에 접근하고 제어할 수 있게 합니다. 신뢰하는 에이전트에만 활성화하세요.",
-        updating: "브라우저 도구 업데이트 중…",
-        accessibilityLabel: "브라우저 도구 활성화",
       },
       orchestration: {
         title: "오케스트레이션",

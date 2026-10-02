@@ -1595,12 +1595,6 @@ export const ja: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "ホストを追加",
-    allHosts: "すべてのホスト",
-    enableBuiltInDaemon: "組み込みデーモンを有効にする",
-    fallback: "ホスト",
-  },
   projectPicker: {
     placeholder: "入力して検索...",
     browse: "参照…",
@@ -1924,12 +1918,6 @@ export const ja: TranslationResources = {
     inPaseo: "Paseoで",
     externalBrowser: "外部ブラウザ",
     dontAskAgain: "次回から確認しない",
-  },
-  chatLink: {
-    title: "URLを開く",
-    message: "{{url}} を Paseo または外部ブラウザで開きますか？",
-    internalTab: "内部ブラウザ — タブ",
-    externalBrowser: "外部ブラウザ",
   },
   downloads: {
     requestTokenFailed: "ダウンロードトークンのリクエストに失敗しました。",
@@ -2400,14 +2388,6 @@ export const ja: TranslationResources = {
           external: "外部ブラウザ",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "確認する",
-          internalSide: "内部ブラウザ — サイド",
-          internalTab: "内部ブラウザ — タブ",
-          external: "外部ブラウザ",
-        },
-      },
       terminalScrollback: {
         label: "ターミナルスクロールバック",
         description: "組み込みターミナルバッファに保持する行数",
@@ -2798,13 +2778,6 @@ export const ja: TranslationResources = {
           update: "スキルを更新",
           delete: "スキルを削除",
         },
-      },
-      browserTools: {
-        title: "ブラウザツール",
-        warning:
-          "エージェントが Paseo のブラウザタブにアクセスして操作できるようにします。ログイン中のブラウザの状態も含まれます。信頼できるエージェントにのみ有効にしてください。",
-        updating: "ブラウザツールを更新中…",
-        accessibilityLabel: "ブラウザツールを有効にする",
       },
       orchestration: {
         title: "オーケストレーション",

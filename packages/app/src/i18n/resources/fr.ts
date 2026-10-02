@@ -1620,12 +1620,6 @@ export const fr: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "Ajouter un hôte",
-    allHosts: "Tous les hôtes",
-    enableBuiltInDaemon: "Activer le démon intégré",
-    fallback: "Hôte",
-  },
   projectPicker: {
     placeholder: "Tapez pour rechercher…",
     browse: "Parcourir…",
@@ -1951,12 +1945,6 @@ export const fr: TranslationResources = {
     inPaseo: "Dans Paseo",
     externalBrowser: "Navigateur externe",
     dontAskAgain: "Ne plus demander",
-  },
-  chatLink: {
-    title: "Ouvrir l’URL",
-    message: "Ouvrir {{url}} dans Paseo ou dans votre navigateur externe ?",
-    internalTab: "Navigateur interne — onglet",
-    externalBrowser: "Navigateur externe",
   },
   downloads: {
     requestTokenFailed: "Impossible d’obtenir le token de téléchargement.",
@@ -2432,14 +2420,6 @@ export const fr: TranslationResources = {
           external: "Navigateur externe",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "Demander",
-          internalSide: "Navigateur interne — sur le côté",
-          internalTab: "Navigateur interne — onglet",
-          external: "Navigateur externe",
-        },
-      },
       terminalScrollback: {
         label: "Historique du terminal",
         description: "Lignes conservées dans le tampon du terminal intégré",
@@ -2836,13 +2816,6 @@ export const fr: TranslationResources = {
           update: "Mettre à jour le skill",
           delete: "Supprimer le skill",
         },
-      },
-      browserTools: {
-        title: "Outils du navigateur",
-        warning:
-          "Autorise les agents à accéder aux onglets du navigateur Paseo et à les contrôler, y compris l’état des sessions connectées. N’activez cette option que pour des agents de confiance.",
-        updating: "Mise à jour des outils du navigateur…",
-        accessibilityLabel: "Activer les outils du navigateur",
       },
       orchestration: {
         title: "Orchestration",

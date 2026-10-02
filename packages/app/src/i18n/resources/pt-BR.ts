@@ -1609,12 +1609,6 @@ export const ptBR: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "Adicionar host",
-    allHosts: "Todos os hosts",
-    enableBuiltInDaemon: "Ativar o daemon integrado",
-    fallback: "Host",
-  },
   projectPicker: {
     placeholder: "Digite para pesquisar...",
     browse: "Procurar…",
@@ -1938,12 +1932,6 @@ export const ptBR: TranslationResources = {
     inPaseo: "No Paseo",
     externalBrowser: "Navegador externo",
     dontAskAgain: "Não perguntar novamente",
-  },
-  chatLink: {
-    title: "Abrir URL",
-    message: "Abrir {{url}} no Paseo ou no navegador externo?",
-    internalTab: "Navegador interno — aba",
-    externalBrowser: "Navegador externo",
   },
   downloads: {
     requestTokenFailed: "Falha ao solicitar token de download.",
@@ -2416,14 +2404,6 @@ export const ptBR: TranslationResources = {
           external: "Navegador externo",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "Perguntar",
-          internalSide: "Navegador interno — lateral",
-          internalTab: "Navegador interno — aba",
-          external: "Navegador externo",
-        },
-      },
       terminalScrollback: {
         label: "Scrollback do terminal",
         description: "Linhas mantidas no buffer do terminal integrado",
@@ -2813,13 +2793,6 @@ export const ptBR: TranslationResources = {
           update: "Atualizar skill",
           delete: "Excluir skill",
         },
-      },
-      browserTools: {
-        title: "Ferramentas do navegador",
-        warning:
-          "Permite que os agentes acessem e controlem as abas do navegador do Paseo, incluindo o estado de sessões conectadas. Ative apenas para agentes em que você confia.",
-        updating: "Atualizando ferramentas do navegador…",
-        accessibilityLabel: "Ativar ferramentas do navegador",
       },
       orchestration: {
         title: "Orquestração",

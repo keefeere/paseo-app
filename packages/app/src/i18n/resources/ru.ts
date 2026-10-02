@@ -1606,12 +1606,6 @@ export const ru: TranslationResources = {
       },
     },
   },
-  hostPicker: {
-    addHost: "Добавить хост",
-    allHosts: "Все хосты",
-    enableBuiltInDaemon: "Включить встроенный демон",
-    fallback: "Хост",
-  },
   projectPicker: {
     placeholder: "Введите текст для поиска...",
     browse: "Обзор…",
@@ -1937,12 +1931,6 @@ export const ru: TranslationResources = {
     inPaseo: "В Paseo",
     externalBrowser: "Внешний браузер",
     dontAskAgain: "Больше не спрашивать",
-  },
-  chatLink: {
-    title: "Открыть URL",
-    message: "Открыть {{url}} в Paseo или во внешнем браузере?",
-    internalTab: "Встроенный браузер — вкладка",
-    externalBrowser: "Внешний браузер",
   },
   downloads: {
     requestTokenFailed: "Не удалось запросить токен загрузки.",
@@ -2419,14 +2407,6 @@ export const ru: TranslationResources = {
           external: "Внешний браузер",
         },
       },
-      chatLinks: {
-        options: {
-          ask: "Спрашивать",
-          internalSide: "Встроенный браузер — сбоку",
-          internalTab: "Встроенный браузер — вкладка",
-          external: "Внешний браузер",
-        },
-      },
       terminalScrollback: {
         label: "Буфер прокрутки терминала",
         description: "Количество строк, сохраняемых во встроенном буфере терминала",
@@ -2823,13 +2803,6 @@ export const ru: TranslationResources = {
           update: "Обновить навык",
           delete: "Удалить навык",
         },
-      },
-      browserTools: {
-        title: "Инструменты браузера",
-        warning:
-          "Агенты смогут получать доступ к вкладкам браузера Paseo и управлять ими, включая состояние входа в аккаунты. Включайте только для агентов, которым доверяете.",
-        updating: "Обновление инструментов браузера…",
-        accessibilityLabel: "Включить инструменты браузера",
       },
       orchestration: {
         title: "Оркестрация",
