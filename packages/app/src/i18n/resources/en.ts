@@ -2658,6 +2658,12 @@ export const en = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "Archive merged PR workspaces",
+          hint: "Automatically archive clean Paseo workspaces after their pull request is merged",
+          accessibilityLabel: "Archive merged PR workspaces",
+          failedToUpdate: "Unable to update workspaces",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2787,6 +2793,15 @@ export const en = {
           errorTitle: "Error",
           errorMessage: "Unable to remove host",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "Terminal agents",
+        enableHooks: {
+          title: "Enable terminal agent hooks",
+          hint: "Get notifications and status from terminal agents. This installs hooks in your agent config files.",
+          accessibilityLabel: "Enable terminal agent hooks",
+          failedToUpdate: "Unable to update terminal agent hooks",
         },
       },
     },

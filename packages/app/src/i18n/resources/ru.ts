@@ -2582,6 +2582,12 @@ export const ru: TranslationResources = {
       },
       workspaces: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять рабочими пространствами",
+        autoArchiveAfterMerge: {
+          title: "Архивировать рабочие пространства слитых PR",
+          hint: "Автоматически архивировать чистые рабочие пространства Paseo после слияния их pull request",
+          accessibilityLabel: "Архивировать рабочие пространства слитых PR",
+          failedToUpdate: "Не удалось обновить рабочие пространства",
+        },
       },
       terminalProfiles: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять профилями терминала",
@@ -2714,6 +2720,15 @@ export const ru: TranslationResources = {
           errorTitle: "Ошибка",
           errorMessage: "Не удалось удалить хост",
           localErrorMessage: "Не удалось удалить подключение к localhost",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "Терминальные агенты",
+        enableHooks: {
+          title: "Включить хуки терминальных агентов",
+          hint: "Получайте уведомления и статус от терминальных агентов. Это установит хуки в файлы конфигурации ваших агентов.",
+          accessibilityLabel: "Включить хуки терминальных агентов",
+          failedToUpdate: "Не удалось обновить хуки терминальных агентов",
         },
       },
     },

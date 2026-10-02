@@ -2619,6 +2619,12 @@ export const uk: TranslationResources = {
       },
       workspaces: {
         unavailable: "Під'єднайтеся до цього хоста, щоб керувати робочими просторами",
+        autoArchiveAfterMerge: {
+          title: "Архівувати робочі простори злитих PR",
+          hint: "Автоматично архівувати чисті робочі простори Paseo після злиття їхнього pull request",
+          accessibilityLabel: "Архівувати робочі простори злитих PR",
+          failedToUpdate: "Не вдалося оновити робочі простори",
+        },
       },
       terminalProfiles: {
         unavailable: "Під'єднайтеся до цього хоста, щоб керувати профілями терміналу",
@@ -2750,6 +2756,15 @@ export const uk: TranslationResources = {
           errorTitle: "Помилка",
           errorMessage: "Не вдалося вилучити хост",
           localErrorMessage: "Не вдалося вилучити з'єднання з localhost",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "Термінальні агенти",
+        enableHooks: {
+          title: "Увімкнути хуки термінальних агентів",
+          hint: "Отримуйте сповіщення та стан від термінальних агентів. Це встановлює хуки у файли конфігурації ваших агентів.",
+          accessibilityLabel: "Увімкнути хуки термінальних агентів",
+          failedToUpdate: "Не вдалося оновити хуки термінальних агентів",
         },
       },
     },

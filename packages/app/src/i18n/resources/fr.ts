@@ -2600,6 +2600,12 @@ export const fr: TranslationResources = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "Archiver les espaces de travail des PR fusionnées",
+          hint: "Archiver automatiquement les espaces de travail Paseo propres après la fusion de leur pull request",
+          accessibilityLabel: "Archiver les espaces de travail des PR fusionnées",
+          failedToUpdate: "Impossible de mettre à jour les espaces de travail",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2733,6 +2739,15 @@ export const fr: TranslationResources = {
           errorTitle: "Erreur",
           errorMessage: "Impossible de supprimer l'hôte",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "Agents de terminal",
+        enableHooks: {
+          title: "Activer les hooks d'agents de terminal",
+          hint: "Recevez des notifications et l'état des agents de terminal. Cela installe des hooks dans vos fichiers de configuration d'agents.",
+          accessibilityLabel: "Activer les hooks d'agents de terminal",
+          failedToUpdate: "Impossible de mettre à jour les hooks d'agents de terminal",
         },
       },
     },

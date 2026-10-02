@@ -2560,6 +2560,12 @@ export const ja: TranslationResources = {
       },
       workspaces: {
         unavailable: "ワークスペースを管理するにはこのホストに接続してください",
+        autoArchiveAfterMerge: {
+          title: "マージ済みPRのワークスペースをアーカイブ",
+          hint: "プルリクエストがマージされた後、クリーンなPaseoワークスペースを自動的にアーカイブします",
+          accessibilityLabel: "マージ済みPRのワークスペースをアーカイブ",
+          failedToUpdate: "ワークスペースを更新できませんでした",
+        },
       },
       terminalProfiles: {
         unavailable: "ターミナルプロファイルを管理するにはこのホストに接続してください",
@@ -2692,6 +2698,15 @@ export const ja: TranslationResources = {
           errorTitle: "エラー",
           errorMessage: "ホストを削除できません",
           localErrorMessage: "localhost接続を削除できません",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "ターミナルエージェント",
+        enableHooks: {
+          title: "ターミナルエージェントのフックを有効化",
+          hint: "ターミナルエージェントからの通知とステータスを取得します。エージェント設定ファイルにフックをインストールします。",
+          accessibilityLabel: "ターミナルエージェントのフックを有効化",
+          failedToUpdate: "ターミナルエージェントフックを更新できませんでした",
         },
       },
     },

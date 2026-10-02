@@ -2574,6 +2574,12 @@ export const ptBR: TranslationResources = {
       },
       workspaces: {
         unavailable: "Conecte-se a este host para gerenciar workspaces",
+        autoArchiveAfterMerge: {
+          title: "Arquivar workspaces de PRs mesclados",
+          hint: "Arquivar automaticamente workspaces limpos do Paseo após o merge de seu pull request",
+          accessibilityLabel: "Arquivar workspaces de PRs mesclados",
+          failedToUpdate: "Não foi possível atualizar os workspaces",
+        },
       },
       terminalProfiles: {
         unavailable: "Conecte-se a este host para gerenciar perfis de terminal",
@@ -2706,6 +2712,15 @@ export const ptBR: TranslationResources = {
           errorTitle: "Erro",
           errorMessage: "Não foi possível remover host",
           localErrorMessage: "Não foi possível remover a conexão localhost",
+        },
+      },
+      terminalAgents: {
+        sectionTitle: "Agentes de terminal",
+        enableHooks: {
+          title: "Ativar hooks de agentes de terminal",
+          hint: "Receba notificações e status dos agentes de terminal. Isso instala hooks nos arquivos de configuração dos seus agentes.",
+          accessibilityLabel: "Ativar hooks de agentes de terminal",
+          failedToUpdate: "Não foi possível atualizar os hooks de agentes de terminal",
         },
       },
     },
