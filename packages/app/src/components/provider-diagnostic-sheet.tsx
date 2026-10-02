@@ -384,6 +384,7 @@ function DiagnosticSubSheet({
       header={header}
       visible={visible}
       onClose={onClose}
+      desktopMaxWidth={780}
       snapPoints={DIAGNOSTIC_SNAP_POINTS}
       scrollable={false}
       testID="provider-diagnostic-sheet"
@@ -686,6 +687,7 @@ export function ProviderDiagnosticSheet({
         visible={visible}
         onClose={onClose}
         testID="provider-settings-sheet"
+        desktopMaxWidth={780}
         footer={renderProviderSheetFooter({
           fetchedAt: providerEntry?.fetchedAt ?? null,
           isCompact,
