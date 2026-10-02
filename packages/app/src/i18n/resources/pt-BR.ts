@@ -87,6 +87,18 @@ export const ptBR: TranslationResources = {
       error: "Erro",
       idle: "Ocioso",
     },
+    time: {
+      justNow: "agora mesmo",
+      now: "agora",
+      ago: "há {{time}}",
+      minutes: "{{count}} min",
+      hours: "{{count}} h",
+      days: "{{count}} d",
+      seconds: "{{count}} s",
+      minutesSeconds: "{{minutes}} min {{seconds}} s",
+      hoursMinutes: "{{hours}} h {{minutes}} min",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -2832,6 +2844,15 @@ export const ptBR: TranslationResources = {
         saving: "Salvando...",
         cancel: "Cancelar",
       },
+    },
+  },
+  usage: {
+    window: {
+      percentLeft: "{{percent}} restante",
+      resettingNow: "reiniciando agora",
+      resets: "reinicia em {{time}}",
+      runsOutNow: "esgotando agora",
+      runsOut: "esgota em {{time}}",
     },
   },
 };

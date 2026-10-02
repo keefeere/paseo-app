@@ -89,6 +89,18 @@ export const fr: TranslationResources = {
       error: "Erreur",
       idle: "Inactif",
     },
+    time: {
+      justNow: "à l’instant",
+      now: "maintenant",
+      ago: "il y a {{time}}",
+      minutes: "{{count}} min",
+      hours: "{{count}} h",
+      days: "{{count}} j",
+      seconds: "{{count}} s",
+      minutesSeconds: "{{minutes}} min {{seconds}} s",
+      hoursMinutes: "{{hours}} h {{minutes}} min",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -2861,6 +2873,15 @@ export const fr: TranslationResources = {
         saving: "Sauvegarde...",
         cancel: "Annuler",
       },
+    },
+  },
+  usage: {
+    window: {
+      percentLeft: "{{percent}} restant",
+      resettingNow: "réinitialisation en cours",
+      resets: "réinitialisation dans {{time}}",
+      runsOutNow: "épuisé maintenant",
+      runsOut: "épuisé dans {{time}}",
     },
   },
 };
