@@ -17,7 +17,10 @@ function getDownloadStatusText(download: Download, t: TFunction): string {
     }
     return t("common.states.starting");
   }
-  if (download.status === "complete") return t("common.states.downloadComplete");
+  if (download.status === "complete") {
+    const complete = t("common.states.downloadComplete");
+    return download.savedPath ? `${complete} · ${download.savedPath}` : complete;
+  }
   return download.message ?? t("common.states.downloadFailed");
 }
 
