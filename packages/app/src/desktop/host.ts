@@ -74,6 +74,21 @@ export interface DesktopOpenerBridge {
   openUrl?: (url: string) => Promise<void>;
 }
 
+export interface DesktopDownloadRequest {
+  url: string;
+  fileName: string;
+  headers?: Record<string, string>;
+}
+
+export interface DesktopDownloadResult {
+  state: "completed" | "cancelled" | "interrupted";
+  path: string;
+}
+
+export interface DesktopDownloadsBridge {
+  start?: (request: DesktopDownloadRequest) => Promise<DesktopDownloadResult>;
+}
+
 export interface DesktopEditorTargetDescriptor {
   id: string;
   label: string;
@@ -193,6 +208,7 @@ export interface DesktopHostBridge {
   dialog?: DesktopDialogBridge;
   notification?: DesktopNotificationBridge;
   opener?: DesktopOpenerBridge;
+  downloads?: DesktopDownloadsBridge;
   editor?: DesktopEditorBridge;
   webUtils?: DesktopWebUtilsBridge;
   menu?: DesktopMenuBridge;

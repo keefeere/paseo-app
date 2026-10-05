@@ -6,6 +6,7 @@ import type { HostProfile } from "@/types/host-connection";
 import { buildDaemonWebSocketUrl } from "@/utils/daemon-endpoints";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { isWeb } from "@/constants/platform";
+import { getDesktopHost, type DesktopDownloadsBridge } from "@/desktop/host";
 import { i18n } from "@/i18n/i18next";
 
 interface DownloadProgress {
@@ -23,6 +24,7 @@ export interface Download {
   fileName: string;
   status: "downloading" | "complete" | "error";
   message?: string;
+  savedPath?: string;
   progress?: DownloadProgress;
   startedAt: number;
 }
@@ -46,7 +48,7 @@ interface DownloadState {
   }) => Promise<void>;
 
   updateProgress: (id: string, progress: DownloadProgress) => void;
-  completeDownload: (id: string) => void;
+  completeDownload: (id: string, savedPath?: string) => void;
   failDownload: (id: string, message: string) => void;
   dismissDownload: (id: string) => void;
   dismissAllCompleted: () => void;
@@ -95,6 +97,19 @@ export const useDownloadStore = create<DownloadState>()((set, get) => ({
       }
 
       const resolvedFileName = tokenResponse.fileName ?? fileName;
+
+      // Electron must not navigate the app window to the download URL.
+      const startDesktopDownload = getDesktopHost()?.downloads?.start;
+      if (startDesktopDownload) {
+        const savedPath = await saveThroughDesktop(startDesktopDownload, {
+          url: buildDownloadUrl(downloadTarget.baseUrl, tokenResponse.token, null),
+          fileName: resolvedFileName,
+          authHeader: downloadTarget.authHeader,
+        });
+        get().completeDownload(id, savedPath);
+        return;
+      }
+
       const downloadUrl = buildDownloadUrl(
         downloadTarget.baseUrl,
         tokenResponse.token,
@@ -177,14 +192,14 @@ export const useDownloadStore = create<DownloadState>()((set, get) => ({
     });
   },
 
-  completeDownload: (id) => {
+  completeDownload: (id, savedPath) => {
     set((state) => {
       const download = state.downloads.get(id);
       if (!download) {
         return state;
       }
       const updated = new Map(state.downloads);
-      updated.set(id, { ...download, status: "complete" });
+      updated.set(id, { ...download, status: "complete", savedPath });
       return { downloads: updated };
     });
   },
@@ -297,6 +312,20 @@ function buildDownloadUrl(
     url.password = authCredentials.password;
   }
   return url.toString();
+}
+
+async function saveThroughDesktop(
+  start: NonNullable<DesktopDownloadsBridge["start"]>,
+  input: { url: string; fileName: string; authHeader: string | null },
+): Promise<string> {
+  const result = await start({
+    url: input.url,
+    fileName: input.fileName,
+    ...(input.authHeader ? { headers: { Authorization: input.authHeader } } : {}),
+  });
+  if (result.state === "cancelled") throw new Error(i18n.t("downloads.cancelled"));
+  if (result.state !== "completed") throw new Error(i18n.t("downloads.failed"));
+  return result.path;
 }
 
 function triggerBrowserDownload(url: string, fileName: string) {
