@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { useHosts } from "@/runtime/host-runtime";
+import { getHostRuntimeStore, useHosts } from "@/runtime/host-runtime";
 import { useDownloadStore } from "@/stores/download-store";
 import { useFileExplorerActions } from "@/hooks/use-file-explorer-actions";
 
@@ -48,6 +48,7 @@ export function useFileDownload({
         fileName,
         path,
         daemonProfile,
+        connectionState: getHostRuntimeStore().getSnapshot(serverId),
         requestFileDownloadToken: (targetPath) => requestFileDownloadToken(targetPath),
       });
     },

@@ -3,7 +3,7 @@ import { File as FSFile, Paths } from "expo-file-system";
 import * as LegacyFileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import type { HostProfile } from "@/types/host-connection";
-import { buildDaemonWebSocketUrl } from "@/utils/daemon-endpoints";
+import { resolveDaemonDownloadTarget, type HostConnectionState } from "@/stores/download-target";
 import { openExternalUrl } from "@/utils/open-external-url";
 import { isWeb } from "@/constants/platform";
 import { getDesktopHost, type DesktopDownloadsBridge } from "@/desktop/host";
@@ -39,6 +39,7 @@ interface DownloadState {
     fileName: string;
     path: string;
     daemonProfile: HostProfile | undefined;
+    connectionState: HostConnectionState | null;
     requestFileDownloadToken: (path: string) => Promise<{
       token: string | null;
       fileName: string | null;
@@ -68,6 +69,7 @@ export const useDownloadStore = create<DownloadState>()((set, get) => ({
     fileName,
     path,
     daemonProfile,
+    connectionState,
     requestFileDownloadToken,
   }) => {
     const id = generateDownloadId();
@@ -91,7 +93,7 @@ export const useDownloadStore = create<DownloadState>()((set, get) => ({
         throw new Error(tokenResponse.error ?? i18n.t("downloads.requestTokenFailed"));
       }
 
-      const downloadTarget = resolveDaemonDownloadTarget(daemonProfile);
+      const downloadTarget = resolveDaemonDownloadTarget(daemonProfile, connectionState);
       if (!downloadTarget.baseUrl) {
         throw new Error(i18n.t("downloads.hostUnavailable"));
       }
@@ -251,53 +253,6 @@ function findMostRecentDownloadId(downloads: Map<string, Download>): string | nu
     }
   }
   return mostRecent?.id ?? null;
-}
-
-interface DownloadTarget {
-  baseUrl: string | null;
-  authHeader: string | null;
-  authCredentials: { username: string; password: string } | null;
-}
-
-function resolveDaemonDownloadTarget(daemon?: HostProfile): DownloadTarget {
-  const connection = daemon?.connections.find((conn) => conn.type === "directTcp") ?? null;
-  if (!connection) {
-    return { baseUrl: null, authHeader: null, authCredentials: null };
-  }
-
-  let parsed: URL;
-  try {
-    parsed = new URL(
-      buildDaemonWebSocketUrl(connection.endpoint, { useTls: connection.useTls ?? false }),
-    );
-  } catch {
-    return { baseUrl: null, authHeader: null, authCredentials: null };
-  }
-
-  if (parsed.protocol === "ws:") {
-    parsed.protocol = "http:";
-  } else if (parsed.protocol === "wss:") {
-    parsed.protocol = "https:";
-  }
-
-  let authCredentials: { username: string; password: string } | null = null;
-  if (parsed.username || parsed.password) {
-    authCredentials = {
-      username: decodeURIComponent(parsed.username),
-      password: decodeURIComponent(parsed.password),
-    };
-    parsed.username = "";
-    parsed.password = "";
-  }
-
-  parsed.pathname = parsed.pathname.replace(/\/ws\/?$/, "/");
-
-  const baseUrl = parsed.origin;
-  const authHeader = authCredentials
-    ? `Basic ${btoa(`${authCredentials.username}:${authCredentials.password}`)}`
-    : null;
-
-  return { baseUrl, authHeader, authCredentials };
 }
 
 function buildDownloadUrl(
