@@ -1,3 +1,4 @@
+import { mapCustomMessageToToolCall } from "../custom-message.js";
 import type { AgentStreamEvent, AgentTimelineItem, ToolCallDetail } from "../../agent-sdk-types.js";
 import { userMessageImages } from "../user-message-images.js";
 import {
@@ -62,6 +63,7 @@ export class PiHistoryMapper {
   private readonly hydrations: Promise<AgentStreamEvent[]>[] = [];
   private userIndex = 0;
   private assistantIndex = 0;
+  private customIndex = 0;
 
   constructor(
     private readonly provider: string,
@@ -128,6 +130,7 @@ export class PiHistoryMapper {
   ): AgentStreamEvent[] {
     const extensionMapping = this.extensionHost.mapCustomMessage(message);
     const extensionEvents = this.extensionEvents(extensionMapping);
+    if (message.display === false) return extensionEvents;
     const text = getUserMessageText(message.content);
     const mappedEvent = text ? this.hooks.mapCustomMessage?.(text, this.provider) : null;
     if (mappedEvent) {
@@ -140,7 +143,11 @@ export class PiHistoryMapper {
             {
               type: "timeline",
               provider: this.provider,
-              item: { type: "assistant_message", text },
+              item: mapCustomMessageToToolCall(
+                message,
+                text,
+                `${this.provider}-custom-${++this.customIndex}`,
+              ),
             } as AgentStreamEvent,
           ]
         : []),

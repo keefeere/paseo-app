@@ -1751,6 +1751,12 @@ export const ja: TranslationResources = {
       helper: "リモートホストで動作する Paseo デーモンに接続します。",
       fields: {
         target: "SSH ホスト",
+        password: "デーモンのパスワード",
+        optional: "任意",
+      },
+      passwordVisibility: {
+        show: "パスワードを表示",
+        hide: "パスワードを非表示",
       },
       actions: {
         cancel: "キャンセル",
@@ -2005,6 +2011,8 @@ export const ja: TranslationResources = {
     dismiss: "閉じる",
   },
   contextWindow: {
+    noData: "コンテキストデータがありません",
+    accessibilityNoData: "コンテキストウィンドウ：コンテキストデータがありません",
     title: "コンテキストウィンドウ",
     used: "{{percentage}}%使用",
     tokens: "{{used}} / {{max}}トークン",
@@ -2884,6 +2892,7 @@ export const ja: TranslationResources = {
     empty: "使用状況データがありません",
     noHosts: "接続されたホストはありません",
     errorTitle: "使用状況を読み込めません",
+    agentError: "使用状況を読み込めません: {{reason}}",
     hostUnavailable: "使用状況を表示するには {{host}} に接続してください",
     hostUpgradeRequired: "使用状況を表示するには {{host}} を更新してください",
     clientUnavailable: "ホスト接続の準備ができていません",

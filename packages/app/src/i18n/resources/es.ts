@@ -1782,6 +1782,12 @@ export const es: TranslationResources = {
       helper: "Conéctate a un daemon de Paseo en el host remoto.",
       fields: {
         target: "Host SSH",
+        password: "Contraseña del daemon",
+        optional: "Opcional",
+      },
+      passwordVisibility: {
+        show: "Mostrar contraseña",
+        hide: "Ocultar contraseña",
       },
       actions: {
         cancel: "Cancelar",
@@ -2033,6 +2039,8 @@ export const es: TranslationResources = {
     dismiss: "Despedir",
   },
   contextWindow: {
+    noData: "No hay datos de contexto",
+    accessibilityNoData: "Ventana de contexto: No hay datos de contexto",
     title: "ventana contextual",
     used: "{{percentage}}% utilizado",
     tokens: "Fichas{{used}}/{{max}}",
@@ -2916,6 +2924,7 @@ export const es: TranslationResources = {
     empty: "Sin datos de uso",
     noHosts: "No hay hosts conectados",
     errorTitle: "No se puede cargar el uso",
+    agentError: "No se puede cargar el uso: {{reason}}",
     hostUnavailable: "Conéctese a {{host}} para ver el uso",
     hostUpgradeRequired: "Actualice {{host}} para ver el uso",
     clientUnavailable: "La conexión del host no está lista",

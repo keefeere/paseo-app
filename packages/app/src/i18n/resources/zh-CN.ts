@@ -1714,6 +1714,12 @@ export const zhCN: TranslationResources = {
       helper: "连接到远程主机上运行的 Paseo 守护进程。",
       fields: {
         target: "SSH 主机",
+        password: "守护进程密码",
+        optional: "可选",
+      },
+      passwordVisibility: {
+        show: "显示密码",
+        hide: "隐藏密码",
       },
       actions: {
         cancel: "取消",
@@ -1960,6 +1966,8 @@ export const zhCN: TranslationResources = {
     dismiss: "关闭",
   },
   contextWindow: {
+    noData: "暂无上下文数据",
+    accessibilityNoData: "上下文窗口：暂无上下文数据",
     title: "上下文窗口",
     used: "已使用 {{percentage}}%",
     tokens: "{{used}} / {{max}} tokens",
@@ -2815,6 +2823,7 @@ export const zhCN: TranslationResources = {
     empty: "无使用数据",
     noHosts: "没有连接的主机",
     errorTitle: "无法加载使用情况",
+    agentError: "无法加载使用情况：{{reason}}",
     hostUnavailable: "连接到 {{host}} 查看使用情况",
     hostUpgradeRequired: "更新 {{host}} 查看使用情况",
     clientUnavailable: "主机连接未准备好",

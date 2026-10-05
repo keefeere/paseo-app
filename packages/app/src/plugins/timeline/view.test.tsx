@@ -41,6 +41,8 @@ import { PluginTimelineItemView } from "./view";
 import { CodeBlockActionsProvider, PluginCodeBlockActions } from "../code-block-actions";
 vi.mock("../host-navigation", () => ({ usePluginHostNavigation: () => ({}) }));
 
+const audio = { play: async () => 0 };
+
 const bundle = `(function(require) {
   const React = require("react");
   return { default: function(plugin) {
@@ -124,6 +126,7 @@ describe("PluginTimelineItemView", () => {
       [{ id: "reports", requirements: { paseo: `>=${appPackage.version}` }, clientBundle: bundle }],
       {
         client: daemonClient,
+        audio,
       },
     );
 
@@ -153,6 +156,7 @@ describe("PluginTimelineItemView", () => {
       ],
       {
         client: daemonClient,
+        audio,
       },
     );
     const container = document.createElement("div");
@@ -190,6 +194,7 @@ describe("PluginTimelineItemView", () => {
       ],
       {
         client: daemonClient,
+        audio,
       },
     );
     const container = document.createElement("div");
@@ -312,7 +317,7 @@ it("a renderer releases its observation on the plugin's client when it crashes, 
         clientBundle: liveBundle,
       },
     ],
-    { client },
+    { client, audio },
   );
   const container = document.createElement("div");
   containers.push(container);
@@ -372,7 +377,7 @@ it("isolates code actions by host and preserves code after a plugin crash or unl
         clientBundle: codeBundle,
       },
     ],
-    { client: daemonClient },
+    { client: daemonClient, audio },
   );
   const container = document.createElement("div");
   containers.push(container);

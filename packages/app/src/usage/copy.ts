@@ -52,6 +52,7 @@ export const usageCopy = {
   get errorTitle() {
     return i18n.t("usage.errorTitle");
   },
+  agentError: (reason: string) => i18n.t("usage.agentError", { reason }),
   hostUnavailable: (host: string) => i18n.t("usage.hostUnavailable", { host }),
   hostUpgradeRequired: (host: string) => i18n.t("usage.hostUpgradeRequired", { host }),
   get clientUnavailable() {

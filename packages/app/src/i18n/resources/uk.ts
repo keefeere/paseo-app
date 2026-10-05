@@ -1770,6 +1770,12 @@ export const uk: TranslationResources = {
       helper: "Під'єднайтеся до демона Paseo, запущеного на віддаленому хості.",
       fields: {
         target: "SSH-хост",
+        password: "Пароль демона",
+        optional: "Необов'язково",
+      },
+      passwordVisibility: {
+        show: "Показати пароль",
+        hide: "Приховати пароль",
       },
       actions: {
         cancel: "Скасувати",
@@ -2021,6 +2027,8 @@ export const uk: TranslationResources = {
     dismiss: "Закрити",
   },
   contextWindow: {
+    noData: "Немає даних про контекст",
+    accessibilityNoData: "Контекстне вікно: немає даних про контекст",
     title: "Контекстне вікно",
     used: "Використано {{percentage}}%",
     tokens: "Токени: {{used}} / {{max}}",
@@ -2942,6 +2950,7 @@ export const uk: TranslationResources = {
     empty: "Немає даних про використання",
     noHosts: "Немає підключених хостів",
     errorTitle: "Не вдалося завантажити використання",
+    agentError: "Не вдалося завантажити використання: {{reason}}",
     hostUnavailable: "Підключіться до {{host}}, щоб побачити використання",
     hostUpgradeRequired: "Оновіть {{host}}, щоб побачити використання",
     clientUnavailable: "З'єднання з хостом не готове",
