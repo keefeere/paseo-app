@@ -81,7 +81,7 @@ export interface DesktopDownloadRequest {
 }
 
 export interface DesktopDownloadResult {
-  state: "completed" | "cancelled" | "interrupted";
+  state: "completed" | "cancelled" | "interrupted" | "unreachable";
   path: string;
 }
 

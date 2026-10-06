@@ -975,6 +975,7 @@ async function bootstrap(): Promise<void> {
   const appDownloads = createAppDownloads({
     directory: () => app.getPath("downloads"),
     exists: existsSync,
+    log: (message) => log.info(`[downloads] ${message}`),
   });
   ipcMain.handle("paseo:download:start", (event, input: unknown) =>
     appDownloads.start(event.sender, input),

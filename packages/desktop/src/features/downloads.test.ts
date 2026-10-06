@@ -21,10 +21,14 @@ function createDownloadItem(
   let finish: ((event: unknown, state: DoneState) => void) | null = null;
   const item = {
     savePath: null as string | null,
+    cancelled: false,
     getURLChain: () => [url],
     getState: () => initialState,
     setSavePath: (value: string) => {
       item.savePath = value;
+    },
+    cancel: () => {
+      item.cancelled = true;
     },
     once: (_event: "done", listener: (event: unknown, state: DoneState) => void) => {
       finish = listener;
@@ -71,8 +75,12 @@ describe("app downloads", () => {
     await rm(directory, { recursive: true, force: true });
   });
 
-  function createDownloads() {
-    return createAppDownloads({ directory: () => directory, exists: existsSync });
+  function createDownloads(responseTimeoutMs?: number) {
+    return createAppDownloads({
+      directory: () => directory,
+      exists: existsSync,
+      ...(responseTimeoutMs === undefined ? {} : { responseTimeoutMs }),
+    });
   }
 
   it("saves its own download into the downloads folder without a dialog", async () => {
@@ -178,6 +186,36 @@ describe("app downloads", () => {
 
     await expect(result).resolves.toEqual({
       state: "interrupted",
+      path: join(directory, "plan.md"),
+    });
+  });
+
+  it("gives up on a host that never answers and cancels a late response", async () => {
+    const downloads = createDownloads(10);
+    const { source, emitWillDownload } = createSource();
+
+    const result = downloads.start(source, { url: DOWNLOAD_URL, fileName: "plan.md" });
+
+    await expect(result).resolves.toEqual({ state: "unreachable", path: "" });
+
+    const late = createDownloadItem(DOWNLOAD_URL);
+    emitWillDownload(late);
+    expect(late.cancelled).toBe(true);
+    expect(late.savePath).toBeNull();
+  });
+
+  it("does not time out a download that has started", async () => {
+    const downloads = createDownloads(10);
+    const { source, emitWillDownload } = createSource();
+
+    const result = downloads.start(source, { url: DOWNLOAD_URL, fileName: "plan.md" });
+    const item = createDownloadItem(DOWNLOAD_URL);
+    emitWillDownload(item);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    item.finish("completed");
+
+    await expect(result).resolves.toEqual({
+      state: "completed",
       path: join(directory, "plan.md"),
     });
   });

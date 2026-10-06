@@ -279,6 +279,7 @@ async function saveThroughDesktop(
     ...(input.authHeader ? { headers: { Authorization: input.authHeader } } : {}),
   });
   if (result.state === "cancelled") throw new Error(i18n.t("downloads.cancelled"));
+  if (result.state === "unreachable") throw new Error(i18n.t("downloads.hostUnavailable"));
   if (result.state !== "completed") throw new Error(i18n.t("downloads.failed"));
   return result.path;
 }
