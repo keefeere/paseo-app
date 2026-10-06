@@ -1,14 +1,15 @@
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, useUnistyles } from "react-native-unistyles";
 import { Check, X, XCircle } from "lucide-react-native";
+import { Button } from "@/components/ui/button";
+import { getDesktopHost } from "@/desktop/host";
 import { useDownloadStore, formatSpeed, formatEta, type Download } from "@/stores/download-store";
-
-const AUTO_DISMISS_DELAY = 3000;
+import { getAutoDismissDelayMs } from "@/stores/download-toast-policy";
 
 function getDownloadStatusText(download: Download, t: TFunction): string {
   if (download.status === "downloading") {
@@ -32,8 +33,11 @@ export function DownloadToast() {
   const activeDownloadId = useDownloadStore((state) => state.activeDownloadId);
   const dismissDownload = useDownloadStore((state) => state.dismissDownload);
   const dismissTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [openFailedFor, setOpenFailedFor] = useState<string | null>(null);
 
   const activeDownload = activeDownloadId ? downloads.get(activeDownloadId) : null;
+  const savedPath = activeDownload?.status === "complete" ? activeDownload.savedPath : undefined;
+  const opener = savedPath ? getDesktopHost()?.opener : undefined;
 
   useEffect(() => {
     if (dismissTimeoutRef.current) {
@@ -41,10 +45,11 @@ export function DownloadToast() {
       dismissTimeoutRef.current = null;
     }
 
-    if (activeDownload && activeDownload.status !== "downloading") {
+    const delay = activeDownload ? getAutoDismissDelayMs(activeDownload) : null;
+    if (activeDownload && delay !== null) {
       dismissTimeoutRef.current = setTimeout(() => {
         dismissDownload(activeDownload.id);
-      }, AUTO_DISMISS_DELAY);
+      }, delay);
     }
 
     return () => {
@@ -64,6 +69,20 @@ export function DownloadToast() {
       dismissDownload(activeDownload.id);
     }
   }, [activeDownload, dismissDownload]);
+
+  const runFileAction = useCallback(
+    (action: ((path: string) => Promise<void>) | undefined) => {
+      if (!activeDownload || !savedPath || !action) return;
+      setOpenFailedFor(null);
+      action(savedPath).catch(() => setOpenFailedFor(activeDownload.id));
+    },
+    [activeDownload, savedPath],
+  );
+  const handleOpen = useCallback(() => runFileAction(opener?.openPath), [opener, runFileAction]);
+  const handleShowInFolder = useCallback(
+    () => runFileAction(opener?.showItemInFolder),
+    [opener, runFileAction],
+  );
 
   if (!activeDownload) {
     return null;
@@ -85,7 +104,30 @@ export function DownloadToast() {
           <Text style={styles.fileName} numberOfLines={1}>
             {activeDownload.fileName}
           </Text>
-          <Text style={styles.status}>{getDownloadStatusText(activeDownload, t)}</Text>
+          <Text style={styles.status}>
+            {openFailedFor === activeDownload.id
+              ? t("downloads.openFailed")
+              : getDownloadStatusText(activeDownload, t)}
+          </Text>
+          {savedPath && opener ? (
+            <View style={styles.actions}>
+              {opener.openPath ? (
+                <Button size="sm" variant="outline" testID="download-open" onPress={handleOpen}>
+                  {t("downloads.open")}
+                </Button>
+              ) : null}
+              {opener.showItemInFolder ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  testID="download-show-in-folder"
+                  onPress={handleShowInFolder}
+                >
+                  {t("downloads.showInFolder")}
+                </Button>
+              ) : null}
+            </View>
+          ) : null}
           {activeDownload.status === "downloading" && activeDownload.progress && (
             <View style={styles.progressBar}>
               <ProgressFill percent={activeDownload.progress.percent} />
@@ -139,6 +181,12 @@ const styles = StyleSheet.create((theme) => ({
   status: {
     color: theme.colors.foregroundMuted,
     fontSize: theme.fontSize.sm,
+  },
+  actions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing[2],
+    marginTop: theme.spacing[2],
   },
   progressBar: {
     height: 3,

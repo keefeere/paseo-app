@@ -95,6 +95,7 @@ contextBridge.exposeInMainWorld("paseoDesktop", {
   },
   opener: {
     openPath: (path: string) => ipcRenderer.invoke("paseo:opener:openPath", path),
+    showItemInFolder: (path: string) => ipcRenderer.invoke("paseo:opener:showItemInFolder", path),
     openUrl: (url: string) => ipcRenderer.invoke("paseo:opener:openUrl", url),
   },
   downloads: {
