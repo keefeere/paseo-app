@@ -19,6 +19,7 @@ import {
   WorkerBackedTextToSpeechProvider,
   WorkerBackedTurnDetectionProvider,
 } from "./worker-client.js";
+import type { LocalSpeechWorkerConfig } from "./worker-protocol.js";
 
 interface ResolvedLocalModels {
   dictationLocalSttModel: LocalSttModelId;
@@ -134,6 +135,23 @@ function initializeLocalVoiceTts(params: {
   return new WorkerBackedTextToSpeechProvider(client);
 }
 
+function buildWorkerConfig(
+  modelsDir: string,
+  localModels: ResolvedLocalModels,
+  speechConfig: PaseoSpeechConfig | null,
+): LocalSpeechWorkerConfig {
+  return {
+    modelsDir,
+    voiceSttModel: localModels.voiceLocalSttModel,
+    dictationSttModel: localModels.dictationLocalSttModel,
+    voiceSttLanguage: speechConfig?.sttLanguages?.voice,
+    dictationSttLanguage: speechConfig?.sttLanguages?.dictation,
+    voiceTtsModel: localModels.voiceLocalTtsModel,
+    voiceTtsSpeakerId: speechConfig?.local?.models.voiceTtsSpeakerId,
+    voiceTtsSpeed: speechConfig?.local?.models.voiceTtsSpeed,
+  };
+}
+
 export async function initializeLocalSpeechServices(params: {
   providers: RequestedSpeechProviders;
   speechConfig: PaseoSpeechConfig | null;
@@ -157,14 +175,7 @@ export async function initializeLocalSpeechServices(params: {
   const workerClient = localConfig
     ? new LocalSpeechWorkerClient({
         logger,
-        config: {
-          modelsDir: localConfig.modelsDir,
-          voiceSttModel: localModels.voiceLocalSttModel,
-          dictationSttModel: localModels.dictationLocalSttModel,
-          voiceTtsModel: localModels.voiceLocalTtsModel,
-          voiceTtsSpeakerId: speechConfig?.local?.models.voiceTtsSpeakerId,
-          voiceTtsSpeed: speechConfig?.local?.models.voiceTtsSpeed,
-        },
+        config: buildWorkerConfig(localConfig.modelsDir, localModels, speechConfig),
       })
     : null;
 
