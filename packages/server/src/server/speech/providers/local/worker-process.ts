@@ -2,6 +2,7 @@ import pino from "pino";
 
 import type { StreamingTranscriptionSession } from "../../speech-provider.js";
 import type { TurnDetectionSession } from "../../turn-detection-provider.js";
+import { getSherpaOnnxModelSpec } from "./sherpa/model-catalog.js";
 import { getLocalSpeechModelDir, type LocalSttModelId, type LocalTtsModelId } from "./models.js";
 import { SherpaOfflineRecognizerEngine } from "./sherpa/sherpa-offline-recognizer.js";
 import { SherpaOnnxParakeetSTT } from "./sherpa/sherpa-parakeet-stt.js";
@@ -59,8 +60,28 @@ function ttsModelId(config: LocalSpeechWorkerConfig): LocalTtsModelId {
   return config.voiceTtsModel as LocalTtsModelId;
 }
 
-function sttEngineKey(config: LocalSpeechWorkerConfig, modelId: LocalSttModelId): string {
-  return `${config.modelsDir}:${modelId}`;
+function sttLanguage(config: LocalSpeechWorkerConfig, model: "voice" | "dictation"): string {
+  const language = (
+    model === "voice" ? config.voiceSttLanguage : config.dictationSttLanguage
+  )?.trim();
+  // Whisper detects the language when given an empty one.
+  return !language || language.toLowerCase() === "auto" ? "" : language;
+}
+
+function whisperPrefix(modelId: LocalSttModelId): string | undefined {
+  const spec: { whisperPrefix?: string } = getSherpaOnnxModelSpec(modelId);
+  return spec.whisperPrefix;
+}
+
+// Parakeet ignores the language, so only Whisper engines are keyed by it.
+function sttEngineKey(
+  config: LocalSpeechWorkerConfig,
+  modelId: LocalSttModelId,
+  model: "voice" | "dictation",
+): string {
+  return whisperPrefix(modelId)
+    ? `${config.modelsDir}:${modelId}:${sttLanguage(config, model)}`
+    : `${config.modelsDir}:${modelId}`;
 }
 
 function ttsKey(config: LocalSpeechWorkerConfig): string {
@@ -77,21 +98,30 @@ function getSttEngine(
   model: "voice" | "dictation",
 ): LocalSttEngine {
   const modelId = sttModelId(config, model);
-  const key = sttEngineKey(config, modelId);
+  const key = sttEngineKey(config, modelId, model);
   const existing = sttEngines.get(key);
   if (existing) {
     return existing;
   }
   const modelDir = getLocalSpeechModelDir(config.modelsDir, modelId);
+  const prefix = whisperPrefix(modelId);
   const created = new SherpaOfflineRecognizerEngine(
     {
-      model: {
-        kind: "nemo_transducer",
-        encoder: `${modelDir}/encoder.int8.onnx`,
-        decoder: `${modelDir}/decoder.int8.onnx`,
-        joiner: `${modelDir}/joiner.int8.onnx`,
-        tokens: `${modelDir}/tokens.txt`,
-      },
+      model: prefix
+        ? {
+            kind: "whisper",
+            encoder: `${modelDir}/${prefix}-encoder.int8.onnx`,
+            decoder: `${modelDir}/${prefix}-decoder.int8.onnx`,
+            tokens: `${modelDir}/${prefix}-tokens.txt`,
+            language: sttLanguage(config, model),
+          }
+        : {
+            kind: "nemo_transducer",
+            encoder: `${modelDir}/encoder.int8.onnx`,
+            decoder: `${modelDir}/decoder.int8.onnx`,
+            joiner: `${modelDir}/joiner.int8.onnx`,
+            tokens: `${modelDir}/tokens.txt`,
+          },
       numThreads: 2,
       debug: 0,
     },
@@ -106,7 +136,7 @@ function getSttProvider(
   model: "voice" | "dictation",
 ): SherpaOnnxParakeetSTT {
   const modelId = sttModelId(config, model);
-  const key = sttEngineKey(config, modelId);
+  const key = sttEngineKey(config, modelId, model);
   const existing = sttProviders.get(key);
   if (existing) {
     return existing;
@@ -215,10 +245,13 @@ async function createSession(
 
   const model = message.kind === "voiceStt" ? "voice" : "dictation";
   const engine = getSttEngine(message.config, model);
-  const session =
-    message.kind === "voiceStt"
-      ? getSttProvider(message.config, "voice").createSession({ logger })
-      : new SherpaParakeetRealtimeTranscriptionSession({ engine });
+  // The realtime session re-decodes partial audio on an interval, which suits Parakeet but
+  // would run Whisper over and over; Whisper decodes once, on commit.
+  const decodeOnCommit =
+    message.kind === "voiceStt" || whisperPrefix(sttModelId(message.config, model)) !== undefined;
+  const session = decodeOnCommit
+    ? getSttProvider(message.config, model).createSession({ logger })
+    : new SherpaParakeetRealtimeTranscriptionSession({ engine });
   trackTranscriptionSession(message.sessionId, session);
   await session.connect();
   sessions.set(message.sessionId, session);

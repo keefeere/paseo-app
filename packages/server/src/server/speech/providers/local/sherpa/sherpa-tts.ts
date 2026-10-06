@@ -6,7 +6,7 @@ import type { SpeechStreamResult, TextToSpeechProvider } from "../../../speech-p
 import { chunkBuffer, float32ToPcm16le } from "../../../audio.js";
 import { loadSherpaOnnxNode } from "./sherpa-onnx-node-loader.js";
 
-export type SherpaTtsPreset = "kokoro-en-v0_19";
+export type SherpaTtsPreset = "kokoro-en-v0_19" | "vits-coqui-uk-mai" | "vits-mms-ukr";
 
 export interface SherpaTtsConfig {
   preset: SherpaTtsPreset;
@@ -21,6 +21,37 @@ function assertFileExists(filePath: string, label: string): void {
   if (!existsSync(filePath)) {
     throw new Error(`Missing ${label}: ${filePath}`);
   }
+}
+
+function buildModelSection(config: SherpaTtsConfig): Record<string, unknown> {
+  const tokensPath = `${config.modelDir}/tokens.txt`;
+  assertFileExists(tokensPath, "TTS tokens");
+
+  if (config.preset !== "kokoro-en-v0_19") {
+    // Character-based VITS models: no voices.bin and no espeak-ng-data. Passing a dataDir
+    // would route text through the English espeak phonemizer and garble it.
+    const modelPath = `${config.modelDir}/model.onnx`;
+    assertFileExists(modelPath, "TTS model");
+    return {
+      vits: { model: modelPath, tokens: tokensPath, lengthScale: config.lengthScale ?? 1.0 },
+    };
+  }
+
+  const modelPath = `${config.modelDir}/model.onnx`;
+  const voicesPath = `${config.modelDir}/voices.bin`;
+  const dataDir = `${config.modelDir}/espeak-ng-data`;
+  assertFileExists(modelPath, "TTS model");
+  assertFileExists(voicesPath, "TTS voices");
+  assertFileExists(dataDir, "TTS espeak-ng dataDir");
+  return {
+    kokoro: {
+      model: modelPath,
+      voices: voicesPath,
+      tokens: tokensPath,
+      dataDir,
+      lengthScale: config.lengthScale ?? 1.0,
+    },
+  };
 }
 
 interface SherpaOfflineTtsNative {
@@ -59,27 +90,11 @@ export class SherpaOnnxTTS implements TextToSpeechProvider {
       throw new Error("sherpa-onnx-node OfflineTts is unavailable");
     }
 
-    const modelPath = `${config.modelDir}/model.onnx`;
-    const voicesPath = `${config.modelDir}/voices.bin`;
-    const tokensPath = `${config.modelDir}/tokens.txt`;
-    const dataDir = `${config.modelDir}/espeak-ng-data`;
-
-    assertFileExists(modelPath, "TTS model");
-    assertFileExists(voicesPath, "TTS voices");
-    assertFileExists(tokensPath, "TTS tokens");
-    assertFileExists(dataDir, "TTS espeak-ng dataDir");
-
     const modelConfig = {
       // The native parser reads these under model, despite the upstream JS typedef.
       numThreads: config.numThreads ?? 2,
       provider: "cpu",
-      kokoro: {
-        model: modelPath,
-        voices: voicesPath,
-        tokens: tokensPath,
-        dataDir,
-        lengthScale: config.lengthScale ?? 1.0,
-      },
+      ...buildModelSection(config),
     };
 
     const offlineTtsConfig = {

@@ -59,6 +59,32 @@ function holdNativeSynthesis() {
 }
 
 describe("SherpaOnnxTTS", () => {
+  it("configures a character-based VITS model without voices or espeak data", () => {
+    const modelDir = mkdtempSync(join(tmpdir(), "paseo-tts-vits-"));
+    directories.push(modelDir);
+    for (const name of ["model.onnx", "tokens.txt"]) writeFileSync(join(modelDir, name), "");
+    let nativeConfig: { model?: Record<string, unknown> } | undefined;
+    const tts = new SherpaOnnxTTS(
+      { preset: "vits-mms-ukr", modelDir },
+      pino({ level: "silent" }),
+      () => ({
+        OfflineTts: class {
+          constructor(config: { model?: Record<string, unknown> }) {
+            nativeConfig = config;
+          }
+          free() {}
+        },
+      }),
+    );
+    tts.free();
+    expect(nativeConfig?.model?.vits).toEqual({
+      model: join(modelDir, "model.onnx"),
+      tokens: join(modelDir, "tokens.txt"),
+      lengthScale: 1,
+    });
+    expect(nativeConfig?.model?.kokoro).toBeUndefined();
+  });
+
   it("requests Electron-compatible copied samples and returns PCM audio", async () => {
     const { tts, requests } = createTts();
     const result = await tts.synthesizeSpeech("hello");

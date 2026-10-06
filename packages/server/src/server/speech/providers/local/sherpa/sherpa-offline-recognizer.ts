@@ -9,13 +9,22 @@ function assertFileExists(filePath: string, label: string): void {
   }
 }
 
-export interface SherpaOfflineRecognizerModel {
-  kind: "nemo_transducer";
-  encoder: string;
-  decoder: string;
-  joiner: string;
-  tokens: string;
-}
+export type SherpaOfflineRecognizerModel =
+  | {
+      kind: "nemo_transducer";
+      encoder: string;
+      decoder: string;
+      joiner: string;
+      tokens: string;
+    }
+  | {
+      kind: "whisper";
+      encoder: string;
+      decoder: string;
+      tokens: string;
+      /** ISO code such as "uk"; empty string lets Whisper detect the language. */
+      language: string;
+    };
 
 export interface SherpaOfflineRecognizerConfig {
   model: SherpaOfflineRecognizerModel;
@@ -56,7 +65,9 @@ export class SherpaOfflineRecognizerEngine {
 
     assertFileExists(config.model.encoder, "offline encoder");
     assertFileExists(config.model.decoder, "offline decoder");
-    assertFileExists(config.model.joiner, "offline joiner");
+    if (config.model.kind === "nemo_transducer") {
+      assertFileExists(config.model.joiner, "offline joiner");
+    }
     assertFileExists(config.model.tokens, "tokens");
 
     const sherpa = loadSherpaOnnxNode();
@@ -67,13 +78,25 @@ export class SherpaOfflineRecognizerEngine {
         featureDim: config.featureDim ?? 80,
       },
       modelConfig: {
-        transducer: {
-          encoder: config.model.encoder,
-          decoder: config.model.decoder,
-          joiner: config.model.joiner,
-        },
+        ...(config.model.kind === "whisper"
+          ? {
+              whisper: {
+                encoder: config.model.encoder,
+                decoder: config.model.decoder,
+                language: config.model.language,
+                task: "transcribe",
+                tailPaddings: -1,
+              },
+            }
+          : {
+              transducer: {
+                encoder: config.model.encoder,
+                decoder: config.model.decoder,
+                joiner: config.model.joiner,
+              },
+            }),
         tokens: config.model.tokens,
-        modelType: "nemo_transducer",
+        modelType: config.model.kind,
         numThreads: config.numThreads ?? 1,
         provider: config.provider ?? "cpu",
         debug: config.debug ?? 0,

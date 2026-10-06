@@ -11,6 +11,8 @@ interface SherpaOnnxCatalogEntry {
   requiredFiles: string[];
   description: string;
   defaultFor?: DefaultModelRole;
+  /** File-name prefix of a Whisper bundle (`<prefix>-encoder.int8.onnx`); absent for NeMo transducers. */
+  whisperPrefix?: string;
 }
 
 export const SHERPA_ONNX_MODEL_CATALOG = {
@@ -32,6 +34,26 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     description:
       "NVIDIA Parakeet TDT v3 (offline NeMo transducer, 25 European languages, auto-detected).",
   },
+  "whisper-small": {
+    kind: "stt-offline",
+    archiveUrl:
+      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-small.tar.bz2",
+    extractedDir: "sherpa-onnx-whisper-small",
+    requiredFiles: ["small-encoder.int8.onnx", "small-decoder.int8.onnx", "small-tokens.txt"],
+    whisperPrefix: "small",
+    description:
+      "OpenAI Whisper small (multilingual, honors the configured STT language; 'auto' detects it).",
+  },
+  "whisper-turbo": {
+    kind: "stt-offline",
+    archiveUrl:
+      "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-whisper-turbo.tar.bz2",
+    extractedDir: "sherpa-onnx-whisper-turbo",
+    requiredFiles: ["turbo-encoder.int8.onnx", "turbo-decoder.int8.onnx", "turbo-tokens.txt"],
+    whisperPrefix: "turbo",
+    description:
+      "OpenAI Whisper large-v3-turbo (multilingual, most accurate; large, slow on weak CPUs).",
+  },
   "kokoro-en-v0_19": {
     kind: "tts",
     archiveUrl:
@@ -40,6 +62,23 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     requiredFiles: ["model.onnx", "voices.bin", "tokens.txt", "espeak-ng-data"],
     description: "Kokoro TTS (higher quality; larger).",
     defaultFor: "tts",
+  },
+  "vits-coqui-uk-mai": {
+    kind: "tts",
+    archiveUrl:
+      "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-coqui-uk-mai.tar.bz2",
+    extractedDir: "vits-coqui-uk-mai",
+    requiredFiles: ["model.onnx", "tokens.txt"],
+    description: "Coqui VITS TTS (Ukrainian, character-based; English text is not pronounced).",
+  },
+  "vits-mms-ukr": {
+    kind: "tts",
+    archiveUrl:
+      "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-mms-ukr.tar.bz2",
+    extractedDir: "vits-mms-ukr",
+    requiredFiles: ["model.onnx", "tokens.txt"],
+    description:
+      "Meta MMS VITS TTS (Ukrainian, character-based; English text is mostly not pronounced).",
   },
 } as const satisfies Record<string, SherpaOnnxCatalogEntry>;
 

@@ -9,6 +9,8 @@ export interface LocalSpeechWorkerConfig {
   modelsDir: string;
   voiceSttModel: string;
   dictationSttModel: string;
+  voiceSttLanguage?: string;
+  dictationSttLanguage?: string;
   voiceTtsModel: string;
   voiceTtsSpeakerId?: number;
   voiceTtsSpeed?: number;
