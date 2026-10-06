@@ -1881,6 +1881,9 @@ export const ptBR: TranslationResources = {
     externalBrowser: "Navegador externo",
   },
   downloads: {
+    open: "Abrir",
+    showInFolder: "Abrir pasta do arquivo",
+    openFailed: "Não foi possível abrir o arquivo.",
     requestTokenFailed: "Falha ao solicitar token de download.",
     hostUnavailable: "Host de download indisponível.",
     cancelled: "Download cancelado.",

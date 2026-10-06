@@ -1896,6 +1896,9 @@ export const es: TranslationResources = {
     externalBrowser: "Navegador externo",
   },
   downloads: {
+    open: "Abrir",
+    showInFolder: "Abrir carpeta contenedora",
+    openFailed: "No se pudo abrir el archivo.",
     requestTokenFailed: "No se pudo solicitar el token de descarga.",
     hostUnavailable: "El host de descarga no está disponible.",
     cancelled: "La descarga fue cancelada.",

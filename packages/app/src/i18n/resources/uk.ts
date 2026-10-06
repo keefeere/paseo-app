@@ -1884,6 +1884,9 @@ export const uk: TranslationResources = {
     externalBrowser: "Зовнішній браузер",
   },
   downloads: {
+    open: "Відкрити",
+    showInFolder: "Відкрити папку з файлом",
+    openFailed: "Не вдалося відкрити файл.",
     requestTokenFailed: "Не вдалося запитати токен завантаження.",
     hostUnavailable: "Хост завантаження недоступний.",
     cancelled: "Завантаження скасовано.",

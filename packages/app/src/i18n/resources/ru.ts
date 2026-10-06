@@ -1880,6 +1880,9 @@ export const ru: TranslationResources = {
     externalBrowser: "Внешний браузер",
   },
   downloads: {
+    open: "Открыть",
+    showInFolder: "Открыть папку с файлом",
+    openFailed: "Не удалось открыть файл.",
     requestTokenFailed: "Не удалось запросить токен загрузки.",
     hostUnavailable: "Хост загрузки недоступен.",
     cancelled: "Загрузка отменена.",

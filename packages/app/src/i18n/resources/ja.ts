@@ -1866,6 +1866,9 @@ export const ja: TranslationResources = {
     externalBrowser: "外部ブラウザ",
   },
   downloads: {
+    open: "開く",
+    showInFolder: "ファイルのフォルダーを開く",
+    openFailed: "ファイルを開けませんでした。",
     requestTokenFailed: "ダウンロードトークンのリクエストに失敗しました。",
     hostUnavailable: "ダウンロードホストが利用できません。",
     cancelled: "ダウンロードがキャンセルされました。",

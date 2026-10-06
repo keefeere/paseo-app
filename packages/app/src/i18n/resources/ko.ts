@@ -1857,6 +1857,9 @@ export const ko: TranslationResources = {
     externalBrowser: "외부 브라우저",
   },
   downloads: {
+    open: "열기",
+    showInFolder: "파일이 있는 폴더 열기",
+    openFailed: "파일을 열 수 없습니다.",
     requestTokenFailed: "다운로드 토큰을 요청하지 못했습니다.",
     hostUnavailable: "다운로드 호스트를 사용할 수 없습니다.",
     cancelled: "다운로드가 취소되었습니다.",

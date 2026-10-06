@@ -1873,6 +1873,9 @@ export const en = {
     externalBrowser: "External browser",
   },
   downloads: {
+    open: "Open",
+    showInFolder: "Open containing folder",
+    openFailed: "Couldn't open the file.",
     requestTokenFailed: "Failed to request download token.",
     hostUnavailable: "Download host is unavailable.",
     cancelled: "Download was cancelled.",

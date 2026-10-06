@@ -1847,6 +1847,9 @@ export const ar: TranslationResources = {
     externalBrowser: "المتصفح الخارجي",
   },
   downloads: {
+    open: "فتح",
+    showInFolder: "فتح المجلد الذي يحتوي على الملف",
+    openFailed: "تعذر فتح الملف.",
     requestTokenFailed: "فشل طلب رمز التنزيل.",
     hostUnavailable: "مضيف التنزيل غير متاح.",
     cancelled: "تم إلغاء التنزيل.",

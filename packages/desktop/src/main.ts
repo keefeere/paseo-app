@@ -51,7 +51,11 @@ import {
   registerNotificationHandlers,
   ensureNotificationCenterRegistration,
 } from "./features/notifications.js";
-import { createExternalUrlOpener, createLocalPathOpener } from "./features/opener.js";
+import {
+  createExternalUrlOpener,
+  createLocalPathOpener,
+  createLocalPathRevealer,
+} from "./features/opener.js";
 import { createAppDownloads } from "./features/downloads.js";
 import { createBrowserCaptureService } from "./features/browser-capture.js";
 import { registerEditorTargetHandlers } from "./features/editor-targets/ipc.js";
@@ -972,6 +976,10 @@ async function bootstrap(): Promise<void> {
   ipcMain.handle("paseo:opener:openUrl", (_event, value: unknown) => openExternalUrl(value));
   const openLocalPath = createLocalPathOpener({ open: shell.openPath });
   ipcMain.handle("paseo:opener:openPath", (_event, value: unknown) => openLocalPath(value));
+  const revealLocalPath = createLocalPathRevealer({ reveal: shell.showItemInFolder });
+  ipcMain.handle("paseo:opener:showItemInFolder", (_event, value: unknown) =>
+    revealLocalPath(value),
+  );
   const appDownloads = createAppDownloads({
     directory: () => app.getPath("downloads"),
     exists: existsSync,

@@ -1824,6 +1824,9 @@ export const zhCN: TranslationResources = {
     externalBrowser: "外部浏览器",
   },
   downloads: {
+    open: "打开",
+    showInFolder: "打开所在文件夹",
+    openFailed: "无法打开文件。",
     requestTokenFailed: "请求下载 token 失败。",
     hostUnavailable: "下载 Host 不可用。",
     cancelled: "下载已取消。",

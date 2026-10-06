@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { createExternalUrlOpener, createLocalPathOpener } from "./opener";
+import { createExternalUrlOpener, createLocalPathOpener, createLocalPathRevealer } from "./opener";
 
 describe("desktop opener", () => {
   it.each([
@@ -112,4 +112,24 @@ describe("local resource opener", () => {
       expect(opened).toEqual([]);
     },
   );
+  it("reveals an existing file or folder and refuses anything else", async () => {
+    const root = await mkdtemp(join(tmpdir(), "paseo-reveal-"));
+    try {
+      const file = join(root, "plan.md");
+      await writeFile(file, "notes");
+      const revealed: string[] = [];
+      const reveal = createLocalPathRevealer({ reveal: (path) => revealed.push(path) });
+
+      await reveal(file);
+      await reveal(root);
+      await expect(reveal(join(root, "missing"))).rejects.toThrow();
+      for (const input of ["relative.txt", "file:///tmp/file", null, "/tmp/file\0"]) {
+        await expect(reveal(input)).rejects.toThrow("An absolute local path is required.");
+      }
+
+      expect(revealed).toEqual([file, root]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

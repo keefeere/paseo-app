@@ -1901,6 +1901,9 @@ export const fr: TranslationResources = {
     externalBrowser: "Navigateur externe",
   },
   downloads: {
+    open: "Ouvrir",
+    showInFolder: "Ouvrir le dossier contenant",
+    openFailed: "Impossible d'ouvrir le fichier.",
     requestTokenFailed: "Échec de la demande du jeton de téléchargement.",
     hostUnavailable: "L'hôte de téléchargement n'est pas disponible.",
     cancelled: "Le téléchargement a été annulé.",
