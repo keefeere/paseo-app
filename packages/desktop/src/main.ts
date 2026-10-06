@@ -20,9 +20,12 @@ import {
   webContents,
 } from "electron";
 import log from "electron-log/main";
+import { ignoreClosedOutput } from "./features/closed-output.js";
+
+// The import has to sit above this call: CommonJS output does not hoist requires.
+ignoreClosedOutput(process.stdout, process.stderr);
 // Packaged relaunches can inherit a pipe whose reader exits with the old process.
 // Keep routine diagnostics in the log file unless console debugging is requested.
-ignoreClosedOutput(process.stdout, process.stderr);
 log.transports.console.level = app.isPackaged && process.env.PASEO_DEBUG !== "1" ? false : "info";
 log.initialize({ spyRendererConsole: true });
 
@@ -61,7 +64,6 @@ import {
   createLocalPathOpener,
   createLocalPathRevealer,
 } from "./features/opener.js";
-import { ignoreClosedOutput } from "./features/closed-output.js";
 import { createAppDownloads } from "./features/downloads.js";
 import { createBrowserCaptureService } from "./features/browser-capture.js";
 import { registerEditorTargetHandlers } from "./features/editor-targets/ipc.js";
