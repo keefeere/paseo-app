@@ -35,7 +35,16 @@ export {
 
 let cachedStagingUserIdPromise: Promise<string> | null = null;
 
-const UPDATE_CHANNEL_NOT_PUBLISHED_CODE = "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND";
+// electron-updater's codes for "the feed has nothing to update to".
+const UPDATE_NOT_PUBLISHED_CODES = new Set([
+  "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
+  "ERR_UPDATER_NO_PUBLISHED_VERSIONS",
+  "ERR_UPDATER_LATEST_VERSION_NOT_FOUND",
+]);
+// A repository without a published release (this fork's, for one) reaches us as
+// ERR_UPDATER_INVALID_RELEASE_FEED, with the real cause only in the message.
+const INVALID_RELEASE_FEED_CODE = "ERR_UPDATER_INVALID_RELEASE_FEED";
+const NO_LATEST_RELEASE_MESSAGE = "Unable to find latest version on GitHub";
 
 interface AppUpdateLogSink {
   info(message: string, details: object): void;
@@ -80,11 +89,14 @@ export function createAppUpdateLifecycleLogger(logger: AppUpdateLogSink) {
 const updateLifecycleLog = createAppUpdateLifecycleLogger(log);
 
 function isUpdateChannelNotPublished(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const { code, message } = error as { code?: unknown; message?: unknown };
+  if (typeof code !== "string") return false;
+  if (UPDATE_NOT_PUBLISHED_CODES.has(code)) return true;
   return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === UPDATE_CHANNEL_NOT_PUBLISHED_CODE
+    code === INVALID_RELEASE_FEED_CODE &&
+    typeof message === "string" &&
+    message.includes(NO_LATEST_RELEASE_MESSAGE)
   );
 }
 

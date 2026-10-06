@@ -47,10 +47,29 @@ import {
 } from "./auto-updater";
 
 describe("checkForAppUpdate", () => {
-  it("treats an unpublished channel manifest as an unavailable update", async () => {
-    const error = Object.assign(new Error("Cannot find latest-mac.yml"), {
-      code: "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
-    });
+  it.each([
+    [
+      "an unpublished channel manifest",
+      "Cannot find latest-mac.yml",
+      "ERR_UPDATER_CHANNEL_FILE_NOT_FOUND",
+    ],
+    [
+      "a repository with no published versions",
+      "No published versions on GitHub",
+      "ERR_UPDATER_NO_PUBLISHED_VERSIONS",
+    ],
+    [
+      "a repository with no latest release",
+      "Unable to find latest version on GitHub",
+      "ERR_UPDATER_LATEST_VERSION_NOT_FOUND",
+    ],
+    [
+      "a feed wrapping a missing latest release (a fork that publishes none)",
+      "Cannot parse releases feed: Error: Unable to find latest version on GitHub (https://github.com/o/r/releases/latest), please ensure a production release exists: HttpError: 406",
+      "ERR_UPDATER_INVALID_RELEASE_FEED",
+    ],
+  ])("treats %s as an unavailable update", async (_name, message, code) => {
+    const error = Object.assign(new Error(message), { code });
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
     autoUpdaterMock.checkForUpdates.mockImplementationOnce(async () => {
       autoUpdaterMock.logger.error(error);
@@ -93,6 +112,27 @@ describe("checkForAppUpdate", () => {
     });
 
     expect(result.errorMessage).toBe("network down");
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("keeps a malformed release feed visible", async () => {
+    const error = Object.assign(new Error("Cannot parse releases feed: Unexpected token <"), {
+      code: "ERR_UPDATER_INVALID_RELEASE_FEED",
+    });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    autoUpdaterMock.checkForUpdates.mockImplementationOnce(async () => {
+      autoUpdaterMock.handlers.get("error")?.(error);
+      throw error;
+    });
+
+    const result = await checkForAppUpdate({
+      currentVersion: "1.2.3",
+      releaseChannel: "stable",
+      intent: "manual",
+    });
+
+    expect(result.errorMessage).toBe("Cannot parse releases feed: Unexpected token <");
     expect(consoleError).toHaveBeenCalled();
     consoleError.mockRestore();
   });
