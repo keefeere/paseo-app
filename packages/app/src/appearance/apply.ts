@@ -9,6 +9,7 @@ import {
   type Theme,
 } from "@/styles/theme";
 import { applyRootUiFont } from "./apply-root-font";
+import { textSpacingScale, proseLineHeight } from "./spacing";
 
 const ALL_THEME_KEYS = Object.keys(REGISTERED_THEMES) as (keyof typeof REGISTERED_THEMES)[];
 
@@ -73,8 +74,8 @@ export function applyAppearance(input: AppearanceInput): void {
       Object.entries(SPACING).map(([key, value]) => [key, (value * percent) / 100]),
     ) as Theme["spacing"];
   const spacing = scaleSpacing(input.uiSpacingPercent);
-  const textSpacing = scaleSpacing(input.textSpacingPercent);
-  const textLineHeight = 1 + (0.4 * input.textSpacingPercent) / 100;
+  const textSpacing = scaleSpacing(textSpacingScale(input.textSpacingPercent) * 100);
+  const textLineHeight = proseLineHeight(input.textSpacingPercent);
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;

@@ -1,3 +1,4 @@
+import { SPACING } from "@/styles/theme";
 import { ChatFind, ChatFindExpansion } from "@/agent-stream/chat-find";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import React, {
@@ -1788,13 +1789,22 @@ const permissionStyles = StyleSheet.create((theme) => ({
 interface StreamItemWrapperProps {
   itemId: string;
   gapBelow: number;
+  spacingScale?: number;
   children: ReactNode;
 }
 
-function StreamItemWrapper({ gapBelow, children }: StreamItemWrapperProps) {
+function StreamItemWrapperBase({ gapBelow, spacingScale = 1, children }: StreamItemWrapperProps) {
   const wrapperStyle = useMemo(
-    () => [stylesheet.streamItemWrapper, { marginBottom: gapBelow }],
-    [gapBelow],
+    () => [stylesheet.streamItemWrapper, { marginBottom: gapBelow * spacingScale }],
+    [gapBelow, spacingScale],
   );
   return <View style={wrapperStyle}>{children}</View>;
+}
+
+const ThemedStreamItemWrapper = withUnistyles(StreamItemWrapperBase);
+const streamSpacingMapping = (theme: Theme) => ({
+  spacingScale: theme.textSpacing[4] / SPACING[4],
+});
+function StreamItemWrapper(props: StreamItemWrapperProps) {
+  return <ThemedStreamItemWrapper {...props} uniProps={streamSpacingMapping} />;
 }

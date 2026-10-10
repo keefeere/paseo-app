@@ -88,7 +88,7 @@ export interface AppSettings {
   monoFontFamily: string; // "" = platform default mono stack
   uiBaseFontSize: number; // clamped px, platform default 14 or 15
   contentFontSize: number; // clamped px, platform default 15 or 16
-  uiSpacingPercent: number; // 50–150, independent of font size
+  uiSpacingPercent: number; // 50–125, independent of font size
   textSpacingPercent: number; // 50–150, independent of interface spacing
   codeFontSize: number; // clamped px, default 12
   /** Max width of chat and markdown content in px; null follows the current default. */
@@ -241,7 +241,7 @@ const StoredAppSettingsSchema = z
     contentFontSize: clampedNumber(MIN_CONTENT_FONT_SIZE, MAX_CONTENT_FONT_SIZE)
       .optional()
       .catch(DEFAULT_CONTENT_FONT_SIZE),
-    uiSpacingPercent: clampedNumber(50, 150).catch(100),
+    uiSpacingPercent: clampedNumber(50, 125).catch(100),
     textSpacingPercent: clampedNumber(50, 150).catch(100),
     // COMPAT(uiFontSizeScale): replaced by the literal base size in v0.4, remove after 2027-08-17.
     uiFontSize: clampedNumber(11, 24).optional().catch(undefined),

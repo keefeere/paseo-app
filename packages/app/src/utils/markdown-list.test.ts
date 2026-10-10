@@ -41,6 +41,16 @@ describe("getMarkdownListMarker", () => {
 });
 
 describe("getMarkdownListSpacing", () => {
+  it("scales section boundaries with the rendered list-item gap", () => {
+    const list = { type: "bullet_list" };
+    const body = { type: "body", children: [list, { type: "paragraph" }] };
+    expect(getMarkdownListSpacing(list, [body], 1)).toEqual({ marginTop: 1, marginBottom: 4 });
+    expect(getMarkdownListSpacing(list, [{ type: "body", children: [list] }], 1)).toEqual({
+      marginTop: 1,
+      marginBottom: 0,
+    });
+  });
+
   it("keeps top-level list spacing as a section boundary", () => {
     const paragraph = { type: "paragraph" };
     const list = { type: "bullet_list" };

@@ -47,6 +47,8 @@ describe("loadAppSettingsFromStorage", () => {
     for (const [stored, expected] of [
       [{ uiSpacingPercent: 75, textSpacingPercent: 125 }, [75, 125]],
       [{ uiSpacingPercent: 1, textSpacingPercent: 999 }, [50, 150]],
+      [{ uiSpacingPercent: 150, textSpacingPercent: 87 }, [125, 87]],
+      [{ uiSpacingPercent: 67, textSpacingPercent: 83 }, [67, 83]],
       [{ uiSpacingPercent: "invalid", textSpacingPercent: null }, [100, 100]],
       [{}, [100, 100]],
     ] as const) {

@@ -1,3 +1,9 @@
+import { Slider } from "@/components/ui/slider";
+import {
+  MIN_SPACING_PERCENT,
+  MAX_UI_SPACING_PERCENT,
+  MAX_TEXT_SPACING_PERCENT,
+} from "@/appearance/spacing";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -467,54 +473,50 @@ function SyntaxRow({ value, onChange }: SyntaxRowProps) {
   );
 }
 
-const SPACING_OPTIONS = [50, 75, 100, 125, 150] as const;
-
-function SpacingOption({
-  percent,
-  selected,
-  onSelect,
-}: {
-  percent: number;
-  selected: boolean;
-  onSelect: (percent: number) => void;
-}) {
-  const select = useCallback(() => onSelect(percent), [onSelect, percent]);
-  return <DropdownMenuItem selected={selected} onSelect={select}>{`${percent}%`}</DropdownMenuItem>;
-}
-
 function SpacingRow({ setting }: { setting: "uiSpacingPercent" | "textSpacingPercent" }) {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppSettings();
+  const persistedValue = settings[setting];
+  const [draft, setDraft] = useState(persistedValue);
+  useEffect(() => setDraft(persistedValue), [persistedValue]);
   const label = t(`settings.appearance.spacing.${setting}`);
-  const select = useCallback(
+  const commit = useCallback(
     (percent: number) => {
-      void updateSettings({ [setting]: percent });
+      if (percent !== settings[setting]) void updateSettings({ [setting]: percent });
     },
-    [setting, updateSettings],
+    [setting, settings, updateSettings],
   );
+  // Persist after dragging: changing the theme mid-drag remounts web appearance boundaries.
   return (
-    <View style={setting === "uiSpacingPercent" ? settingsStyles.row : styles.rowWithBorder}>
+    <View
+      style={[
+        settingsStyles.row,
+        styles.spacingRow,
+        setting === "textSpacingPercent" && settingsStyles.rowBorder,
+      ]}
+    >
       <View style={settingsStyles.rowContent}>
         <Text style={settingsStyles.rowTitle}>{label}</Text>
         <Text style={settingsStyles.rowHint}>
           {t(`settings.appearance.spacing.${setting}Hint`)}
         </Text>
       </View>
-      <DropdownMenu>
-        <DropdownTrigger accessibilityLabel={`${label}: ${settings[setting]}%`}>
-          {`${settings[setting]}%`}
-        </DropdownTrigger>
-        <DropdownMenuContent side="bottom" align="end" width={160}>
-          {SPACING_OPTIONS.map((percent) => (
-            <SpacingOption
-              key={percent}
-              percent={percent}
-              selected={settings[setting] === percent}
-              onSelect={select}
-            />
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <View style={styles.spacingControl}>
+        <View style={styles.sliderTrack}>
+          <Slider
+            value={draft}
+            minimumValue={MIN_SPACING_PERCENT}
+            maximumValue={
+              setting === "uiSpacingPercent" ? MAX_UI_SPACING_PERCENT : MAX_TEXT_SPACING_PERCENT
+            }
+            step={1}
+            accessibilityLabel={label}
+            onValueChange={setDraft}
+            onSlidingComplete={commit}
+          />
+        </View>
+        <Text style={styles.spacingValue}>{draft}%</Text>
+      </View>
     </View>
   );
 }
@@ -767,6 +769,23 @@ export function AppearanceSection() {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  spacingRow: { flexWrap: "wrap", gap: theme.spacing[2] },
+  sliderTrack: { flex: 1, minWidth: 80 },
+  spacingControl: {
+    width: 200,
+    maxWidth: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  spacingValue: {
+    minWidth: 44,
+    textAlign: "right",
+    fontVariant: ["tabular-nums"],
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.base,
+  },
+
   preview: {
     marginTop: theme.spacing[4],
   },

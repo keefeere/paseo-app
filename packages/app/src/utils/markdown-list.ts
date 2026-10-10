@@ -94,10 +94,12 @@ function hasListItemAncestor(parent: unknown): boolean {
 export function getMarkdownListSpacing(
   node: MarkdownNode,
   parent: unknown,
+  itemGap: number = SPACING[1],
 ): { marginTop: number; marginBottom: number } {
+  const scale = itemGap / SPACING[1];
   if (hasListItemAncestor(parent)) {
     return {
-      marginTop: MARKDOWN_LIST_MARGIN_TOP,
+      marginTop: MARKDOWN_LIST_MARGIN_TOP * scale,
       marginBottom: MARKDOWN_NESTED_LIST_MARGIN_BOTTOM,
     };
   }
@@ -105,16 +107,16 @@ export function getMarkdownListSpacing(
   const nextType = getMarkdownNextSiblingType(node, parent);
   if (!nextType) {
     return {
-      marginTop: MARKDOWN_LIST_MARGIN_TOP,
+      marginTop: MARKDOWN_LIST_MARGIN_TOP * scale,
       marginBottom: MARKDOWN_TERMINAL_LIST_MARGIN_BOTTOM,
     };
   }
 
   return {
-    marginTop: MARKDOWN_LIST_MARGIN_TOP,
+    marginTop: MARKDOWN_LIST_MARGIN_TOP * scale,
     marginBottom: isListType(nextType)
-      ? MARKDOWN_LIST_MARGIN_BOTTOM_TO_LIST
-      : MARKDOWN_LIST_MARGIN_BOTTOM_TO_PROSE,
+      ? MARKDOWN_LIST_MARGIN_BOTTOM_TO_LIST * scale
+      : MARKDOWN_LIST_MARGIN_BOTTOM_TO_PROSE * scale,
   };
 }
 

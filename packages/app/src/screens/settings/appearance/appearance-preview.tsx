@@ -1,3 +1,4 @@
+import { proseLineHeight } from "@/appearance/spacing";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View, type TextStyle } from "react-native";
@@ -70,7 +71,7 @@ function buildContentOverride(overrides: PreviewOverrides | undefined): TextStyl
   if (fontSize === undefined) return {};
   return inlineUnistylesStyle({
     fontSize,
-    lineHeight: Math.round(fontSize * (1 + (0.4 * (overrides?.textSpacingPercent ?? 100)) / 100)),
+    lineHeight: Math.round(fontSize * proseLineHeight(overrides?.textSpacingPercent ?? 100)),
   });
 }
 
@@ -197,10 +198,10 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: theme.borderWidth[1],
     borderColor: theme.colors.border,
     overflow: "hidden",
-    paddingVertical: theme.spacing[2],
+    paddingVertical: Math.max(8, theme.spacing[2]),
   },
   row: {
-    paddingHorizontal: theme.spacing[3],
+    paddingHorizontal: Math.max(8, theme.spacing[3]),
   },
   addRow: {
     backgroundColor: ADDED_TINT,
@@ -219,8 +220,8 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foreground,
     fontSize: theme.fontSize.content,
     lineHeight: Math.round(theme.fontSize.content * theme.textLineHeight),
-    paddingHorizontal: theme.spacing[3],
-    paddingBottom: theme.spacing[2],
+    paddingHorizontal: Math.max(8, theme.spacing[3]),
+    paddingBottom: Math.max(8, theme.spacing[2]),
   },
   markerContext: {
     color: theme.colors.foregroundMuted,

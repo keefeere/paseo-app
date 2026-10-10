@@ -647,7 +647,7 @@ export function createSharedMarkdownRules(): RenderRules {
       <MarkdownListView
         key={node.key}
         baseStyle={styles.bullet_list}
-        spacing={getMarkdownListSpacing(node, parent)}
+        spacing={getMarkdownListSpacing(node, parent, Number(styles.list_item.marginBottom))}
       >
         {children}
       </MarkdownListView>
@@ -661,7 +661,7 @@ export function createSharedMarkdownRules(): RenderRules {
       <MarkdownListView
         key={node.key}
         baseStyle={styles.ordered_list}
-        spacing={getMarkdownListSpacing(node, parent)}
+        spacing={getMarkdownListSpacing(node, parent, Number(styles.list_item.marginBottom))}
       >
         {children}
       </MarkdownListView>

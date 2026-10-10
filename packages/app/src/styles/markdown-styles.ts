@@ -189,7 +189,7 @@ export function createMarkdownStyles(theme: Theme) {
       ...webSelectableTextStyle,
       backgroundColor: theme.colors.surface2,
       color: theme.colors.foreground,
-      padding: theme.textSpacing[3],
+      padding: Math.max(8, theme.textSpacing[3]),
       borderRadius: theme.borderRadius.md,
       fontFamily: theme.fontFamily.mono,
       fontSize: theme.fontSize.code,
@@ -200,7 +200,7 @@ export function createMarkdownStyles(theme: Theme) {
       ...webSelectableTextStyle,
       backgroundColor: theme.colors.surface2,
       color: theme.colors.foreground,
-      padding: theme.textSpacing[3],
+      padding: Math.max(8, theme.textSpacing[3]),
       borderRadius: theme.borderRadius.md,
       borderWidth: 1,
       borderColor: theme.colors.border,
@@ -333,7 +333,7 @@ export function createMarkdownStyles(theme: Theme) {
     hr: {
       backgroundColor: theme.colors.border,
       height: 1,
-      marginVertical: 10,
+      marginVertical: theme.textSpacing[2] * 1.25,
     },
 
     // =========================================================================

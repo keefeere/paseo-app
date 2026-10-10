@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { darkHighlightColors, resolveSyntaxColors } from "@getpaseo/highlight";
-import { DEFAULT_UI_FONT_STACK, REGISTERED_THEMES } from "@/styles/theme";
+import { DEFAULT_UI_FONT_STACK, REGISTERED_THEMES, SPACING } from "@/styles/theme";
 import { applyAppearance, type AppearanceInput } from "./apply";
 
 // Override the global react-native-unistyles mock (vitest.setup.ts) so that
@@ -37,6 +37,9 @@ interface FakeTheme {
     "4xl": number;
   };
   lineHeight: { diff: number };
+  spacing: Record<keyof typeof SPACING, number>;
+  textSpacing: Record<keyof typeof SPACING, number>;
+  textLineHeight: number;
   contentMaxWidth: number;
   colors: { foreground: string; syntax: Record<string, string> };
 }
@@ -57,6 +60,9 @@ function makeFakeTheme(): FakeTheme {
       "4xl": 26,
     },
     lineHeight: { diff: 22 },
+    spacing: { ...SPACING },
+    textSpacing: { ...SPACING },
+    textLineHeight: 1.4,
     contentMaxWidth: 820,
     colors: { foreground: "#fff", syntax: {} },
   };
@@ -111,6 +117,26 @@ describe("applyAppearance", () => {
     applyAppearance(makeInput({ contentMaxWidth: 1600 }));
 
     expect(runCapturedUpdater().contentMaxWidth).toBe(1600);
+  });
+
+  it("reduces prose whitespace without changing UI spacing or clipping the line box", () => {
+    applyAppearance(makeInput({ uiSpacingPercent: 100, textSpacingPercent: 50 }));
+    const result = runCapturedUpdater();
+    expect(result.spacing[4]).toBe(SPACING[4]);
+    expect(result.textSpacing[4]).toBe(SPACING[4] / 4);
+    expect(result.textLineHeight).toBe(1.3);
+    expect(result.fontSize.content).toBe(15);
+  });
+
+  it("preserves fine spacing values and restores authored spacing at 100 percent", () => {
+    applyAppearance(makeInput({ uiSpacingPercent: 67, textSpacingPercent: 83 }));
+    expect(runCapturedUpdater().spacing[4]).toBeCloseTo(SPACING[4] * 0.67);
+    expect(runCapturedUpdater().textSpacing[4]).toBeCloseTo(SPACING[4] * 0.83 ** 2);
+    updateTheme.mockClear();
+    applyAppearance(makeInput());
+    expect(runCapturedUpdater().spacing).toEqual(SPACING);
+    expect(runCapturedUpdater().textSpacing).toEqual(SPACING);
+    expect(runCapturedUpdater().textLineHeight).toBe(1.4);
   });
 
   it("resolves an empty UI font family to the default stack", () => {

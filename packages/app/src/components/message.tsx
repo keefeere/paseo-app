@@ -348,17 +348,17 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
     marginBottom: theme.spacing[1],
   },
   containerFirstInGroup: {
-    marginTop: theme.spacing[4],
+    marginTop: theme.textSpacing[4],
   },
   containerLastInGroup: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   bubble: {
     backgroundColor: theme.colors.surface3,
     borderRadius: theme.borderRadius["2xl"],
     borderTopRightRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[4],
+    paddingHorizontal: Math.max(12, theme.spacing[4]),
+    paddingVertical: Math.max(10, theme.spacing[4]),
     minWidth: 0,
     flexShrink: 1,
   },
@@ -848,7 +848,7 @@ interface AssistantMessageProps {
 
 export const assistantMessageStylesheet = StyleSheet.create((theme) => ({
   container: {
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
     ...(isWeb ? { userSelect: "text" as const } : {}),
   },
   containerCompactTop: {
@@ -1189,10 +1189,10 @@ const expandableBadgeStylesheet = StyleSheet.create((theme) => ({
     marginHorizontal: -13,
   },
   containerSpacing: {
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.textSpacing[1],
   },
   containerLastInSequence: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   pressable: {
     borderRadius: theme.borderRadius.lg,
@@ -1450,15 +1450,20 @@ function NativeShimmerPeakSvg({ gradientId }: { gradientId: string }) {
 interface AssistantMessageBlockContainerProps {
   block: string;
   marginBottom: number;
+  spacingScale?: number;
   children: ReactNode;
 }
 
-function AssistantMessageBlockContainer({
+function AssistantMessageBlockContainerBase({
   block,
   marginBottom,
+  spacingScale = 1,
   children,
 }: AssistantMessageBlockContainerProps) {
-  const style = useMemo(() => (marginBottom > 0 ? { marginBottom } : undefined), [marginBottom]);
+  const style = useMemo(
+    () => (marginBottom > 0 ? { marginBottom: marginBottom * spacingScale } : undefined),
+    [marginBottom, spacingScale],
+  );
   const handleLayout = useCallback(
     (event: LayoutChangeEvent) => {
       const { width, height } = event.nativeEvent.layout;
@@ -1471,6 +1476,12 @@ function AssistantMessageBlockContainer({
       {children}
     </View>
   );
+}
+
+const ThemedAssistantMessageBlockContainer = withUnistyles(AssistantMessageBlockContainerBase);
+const markdownBlockSpacingMapping = (theme: Theme) => ({ spacingScale: theme.textSpacing[3] / 12 });
+function AssistantMessageBlockContainer(props: AssistantMessageBlockContainerProps) {
+  return <ThemedAssistantMessageBlockContainer {...props} uniProps={markdownBlockSpacingMapping} />;
 }
 
 interface MemoizedMarkdownBlockProps {
@@ -1936,7 +1947,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           key={node.key}
           baseStyle={styles.bullet_list}
           copyTag="ul"
-          spacing={getMarkdownListSpacing(node, parent)}
+          spacing={getMarkdownListSpacing(node, parent, Number(styles.list_item.marginBottom))}
         >
           {children}
         </MarkdownListView>
@@ -1952,7 +1963,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           baseStyle={styles.ordered_list}
           copyTag="ol"
           orderedStart={node.attributes?.start}
-          spacing={getMarkdownListSpacing(node, parent)}
+          spacing={getMarkdownListSpacing(node, parent, Number(styles.list_item.marginBottom))}
         >
           {children}
         </MarkdownListView>
@@ -2140,10 +2151,10 @@ interface SpeakMessageProps {
 
 const speakMessageStylesheet = StyleSheet.create((theme) => ({
   container: {
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
   },
   containerSpacing: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   header: {
     flexDirection: "row",
@@ -2302,7 +2313,7 @@ const compactionStylesheet = StyleSheet.create((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
     paddingHorizontal: theme.spacing[4],
     gap: theme.spacing[2],
   },

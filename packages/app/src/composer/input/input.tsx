@@ -1922,17 +1922,17 @@ const styles = StyleSheet.create((theme: Theme) => ({
     borderColor: theme.colors.borderAccent,
     borderRadius: theme.borderRadius["2xl"],
     paddingTop: {
-      xs: theme.spacing[2],
-      md: theme.spacing[4],
+      xs: Math.max(8, theme.spacing[2]),
+      md: Math.max(12, theme.spacing[4]),
     },
     // The button row bleeds 6px horizontally, so match its corner inset at the bottom.
     paddingBottom: {
-      xs: theme.spacing[2],
-      md: theme.spacing[3],
+      xs: Math.max(8, theme.spacing[2]),
+      md: Math.max(8, theme.spacing[3]),
     },
     paddingHorizontal: {
-      xs: theme.spacing[3],
-      md: theme.spacing[4],
+      xs: Math.max(12, theme.spacing[3]),
+      md: Math.max(12, theme.spacing[4]),
     },
     ...(isWeb
       ? {
@@ -1972,7 +1972,7 @@ const styles = StyleSheet.create((theme: Theme) => ({
     // line box is the same for every line. Web keeps the CSS value.
     ...(isWeb
       ? ({
-          lineHeight: theme.fontSize.content * theme.textLineHeight,
+          lineHeight: theme.fontSize.content * 1.4,
           outlineStyle: "none",
           outlineWidth: 0,
           outlineColor: "transparent",

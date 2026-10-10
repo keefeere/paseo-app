@@ -17,6 +17,25 @@ describe("createMarkdownStyles", () => {
     expect(styles.bullet_list_icon.lineHeight).toBe(18);
   });
 
+  it("keeps code readable against its frame while tightening paragraph gaps", () => {
+    const styles = createMarkdownStyles({
+      ...darkTheme,
+      textSpacing: { ...darkTheme.textSpacing, 3: 3 },
+    });
+    expect(styles.paragraph.marginBottom).toBe(3);
+    expect(styles.code_block.padding).toBe(8);
+    expect(styles.fence.padding).toBe(8);
+  });
+
+  it("scales horizontal-rule whitespace with text density", () => {
+    const styles = createMarkdownStyles({
+      ...darkTheme,
+      textSpacing: { ...darkTheme.textSpacing, 2: 2 },
+    });
+    expect(styles.hr.marginVertical).toBe(2.5);
+    expect(createMarkdownStyles(darkTheme).hr.marginVertical).toBe(10);
+  });
+
   it("uses the content size for conversation prose and list markers", () => {
     const styles = createMarkdownStyles(darkTheme);
     const proseLineHeight = Math.round(darkTheme.fontSize.content * 1.4);
