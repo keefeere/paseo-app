@@ -96,6 +96,21 @@ export function applyAppearance(input: AppearanceInput): void {
         input.codeFontSize,
       );
       const lineHeight = { ...t.lineHeight, diff: diffLineHeight };
+      // At zero, remove the old 24px control floor as well as the padding.
+      // Keep the normal end unchanged and leave large glyphs a readable line box.
+      const sidebarRatio = Math.min(1, input.sidebarSpacingPercent / 100);
+      const controlHeight = 18 + 6 * sidebarRatio;
+      const sidebarLineHeight = Math.max(fontSize.base * 1.2, 18 + 2 * sidebarRatio);
+      const sidebarRow = {
+        controlHeight,
+        lineHeight: sidebarLineHeight,
+        minHeight:
+          Math.max(
+            fontSize.base * 1.4 * (0.75 + 0.25 * sidebarRatio),
+            controlHeight,
+            sidebarLineHeight,
+          ) + sidebarSpacing[3],
+      };
 
       if (t.colorScheme === "light") {
         return {
@@ -103,6 +118,7 @@ export function applyAppearance(input: AppearanceInput): void {
           spacing,
           textSpacing,
           sidebarSpacing,
+          sidebarRow,
           textLineHeight,
           fontFamily,
           fontSize,
@@ -116,6 +132,7 @@ export function applyAppearance(input: AppearanceInput): void {
         spacing,
         textSpacing,
         sidebarSpacing,
+        sidebarRow,
         textLineHeight,
         fontFamily,
         fontSize,

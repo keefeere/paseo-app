@@ -35,9 +35,6 @@ const STATUS_BADGE_OFFSET = -4;
 //
 // The filled alert occupies the full badge shell so needs-input remains more prominent than
 // the passive status dots.
-// Matches the workspace title's lineHeight (sidebar-workspace-row-content's
-// workspaceBranchText) so the icon centers on the title rather than floating above it.
-const LEADING_SLOT_HEIGHT = 20;
 
 const ThemedActivityIndicator = withUnistyles(ActivityIndicator);
 const ThemedCircleAlert = withUnistyles(CircleAlert);
@@ -270,13 +267,11 @@ const styles = StyleSheet.create((theme) => {
     }) as const;
 
   return {
-    // The slot is as tall as the title's line box, not as tall as the icon, and centers the
-    // icon inside it. Rows lay their leading visual out with alignItems:flex-start, so a
-    // 16pt slot next to a 20pt line box puts the icon 2pt above the title and the kebab —
-    // which is why the workspace status indicator is also 20 tall. Keep the two in step.
+    // Leading icons and workspace status indicators share the title's line box,
+    // keeping them centered as sidebar density changes.
     projectLeadingVisualSlot: {
       width: theme.iconSize.md,
-      height: LEADING_SLOT_HEIGHT,
+      height: theme.sidebarRow.lineHeight,
       flexShrink: 0,
       alignItems: "center",
       justifyContent: "center",

@@ -2519,7 +2519,7 @@ const styles = StyleSheet.create((theme) => ({
   // the step in reads as belonging to that project. Padding rather than margin, so the hover and
   // pressed fills stay the same box as every other row in the sidebar.
   newWorkspaceGhostRow: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    minHeight: theme.sidebarRow.minHeight,
     marginBottom: theme.sidebarSpacing[0.5],
     paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[4],
@@ -2559,7 +2559,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectRow: {
     position: "relative",
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    minHeight: theme.sidebarRow.minHeight,
     paddingVertical: theme.sidebarSpacing[2],
     paddingHorizontal: theme.spacing[2],
     borderRadius: theme.borderRadius.lg,
@@ -2623,7 +2623,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectIconActionButton: {
     width: 24,
-    height: 24,
+    height: theme.sidebarRow.controlHeight,
     borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -2640,13 +2640,13 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: 2,
     flexShrink: 0,
-    // MoreVertical paints only around the center of its 14px SVG. Keep the 24px controls,
+    // MoreVertical paints only around the center of its 14px SVG. Keep the control widths,
     // but pull their painted edge through the unused view-box space onto the row rail.
     marginRight: -6,
   },
   projectKebabButton: {
     width: 24,
-    height: 24,
+    height: theme.sidebarRow.controlHeight,
     borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -2660,7 +2660,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectTrailingControlSlot: {
     width: 24,
-    height: 24,
+    height: theme.sidebarRow.controlHeight,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -2681,7 +2681,7 @@ const styles = StyleSheet.create((theme) => ({
     right: theme.spacing[2],
   },
   workspaceRow: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    minHeight: theme.sidebarRow.minHeight,
     marginBottom: theme.sidebarSpacing[0.5],
     paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[2],
@@ -2761,7 +2761,7 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foreground,
     fontSize: theme.fontSize.base,
     fontWeight: "400",
-    lineHeight: 20,
+    lineHeight: theme.sidebarRow.lineHeight,
     opacity: 0.76,
     flex: 1,
     minWidth: 0,

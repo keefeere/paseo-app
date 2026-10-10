@@ -315,7 +315,7 @@ export const sidebarWorkspaceRowStyles = StyleSheet.create((theme) => ({
   // anchoring to the same right edge whether or not the slot holds anything.
   trailingActionSlot: {
     position: "relative",
-    minHeight: 20,
+    minHeight: theme.sidebarRow.lineHeight,
     flexShrink: 0,
     alignItems: "flex-end",
     justifyContent: "flex-start",
@@ -323,7 +323,7 @@ export const sidebarWorkspaceRowStyles = StyleSheet.create((theme) => ({
   trailingActionSlotReserved: {
     position: "relative",
     minWidth: 18,
-    minHeight: 20,
+    minHeight: theme.sidebarRow.lineHeight,
     flexShrink: 0,
     alignItems: "flex-end",
     justifyContent: "flex-start",
@@ -483,7 +483,7 @@ const styles = StyleSheet.create((theme) => ({
   workspaceStatusDot: {
     position: "relative",
     width: theme.iconSize.md,
-    height: 20,
+    height: theme.sidebarRow.lineHeight,
     borderRadius: theme.borderRadius.full,
     flexShrink: 0,
     alignItems: "center",
@@ -517,7 +517,7 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foreground,
     fontSize: theme.fontSize.base,
     fontWeight: "400",
-    lineHeight: 20,
+    lineHeight: theme.sidebarRow.lineHeight,
     opacity: 0.76,
     flex: 1,
     minWidth: 0,

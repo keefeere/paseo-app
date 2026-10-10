@@ -11,6 +11,7 @@ describe("appearanceStyleBoundaryKey", () => {
       { ...darkTheme, textSpacing: { ...darkTheme.textSpacing, 4: 8 } },
       { ...darkTheme, textLineHeight: 1.2 },
       { ...darkTheme, sidebarSpacing: { ...darkTheme.sidebarSpacing, 4: 0 } },
+      { ...darkTheme, sidebarRow: { minHeight: 18, controlHeight: 18, lineHeight: 18 } },
     ]) {
       expect(appearanceStyleBoundaryKey(changed)).not.toBe(appearanceStyleBoundaryKey(darkTheme));
     }

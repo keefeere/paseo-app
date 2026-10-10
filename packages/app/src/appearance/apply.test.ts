@@ -41,6 +41,7 @@ interface FakeTheme {
   textSpacing: Record<keyof typeof SPACING, number>;
   textLineHeight: number;
   sidebarSpacing: Record<keyof typeof SPACING, number>;
+  sidebarRow: { minHeight: number; controlHeight: number; lineHeight: number };
   contentMaxWidth: number;
   colors: { foreground: string; syntax: Record<string, string> };
 }
@@ -65,6 +66,7 @@ function makeFakeTheme(): FakeTheme {
     textSpacing: { ...SPACING },
     textLineHeight: 1.4,
     sidebarSpacing: { ...SPACING },
+    sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20 },
     contentMaxWidth: 820,
     colors: { foreground: "#fff", syntax: {} },
   };
@@ -153,6 +155,34 @@ describe("applyAppearance", () => {
     expect(result.textLineHeight).toBe(1.25);
     expect(result.spacing).toEqual(SPACING);
     expect(result.fontSize.content).toBe(15);
+  });
+
+  it("makes zero-density rows 25% shorter without shrinking fonts or horizontal spacing", () => {
+    applyAppearance(makeInput({ sidebarSpacingPercent: 0 }));
+    const compact = runCapturedUpdater();
+    expect(compact.sidebarRow).toEqual({ minHeight: 18, controlHeight: 18, lineHeight: 18 });
+    expect(compact.fontSize.base).toBe(14);
+    expect(compact.spacing).toEqual(SPACING);
+    expect(Object.values(compact.sidebarSpacing).every((value) => value === 0)).toBe(true);
+  });
+
+  it("preserves normal sidebar geometry at 100%", () => {
+    applyAppearance(makeInput());
+    expect(runCapturedUpdater().sidebarRow).toEqual({
+      minHeight: 24 + SPACING[3],
+      controlHeight: 24,
+      lineHeight: 20,
+    });
+  });
+
+  it("keeps large fonts readable at minimum sidebar density in every theme", () => {
+    applyAppearance(makeInput({ sidebarSpacingPercent: 0, uiBaseFontSize: 24 }));
+    for (let call = 0; call < ALL_THEME_KEYS.length; call++) {
+      const result = runCapturedUpdater(call);
+      expect(result.fontSize.base).toBe(24);
+      expect(result.sidebarRow.lineHeight).toBeCloseTo(28.8);
+      expect(result.sidebarRow.minHeight).toBeGreaterThanOrEqual(result.sidebarRow.lineHeight);
+    }
   });
 
   it("resolves an empty UI font family to the default stack", () => {

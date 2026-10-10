@@ -2462,7 +2462,8 @@ export const uk: TranslationResources = {
         textSpacingPercent: "Проміжки між абзацами й блоками",
         textSpacingPercentHint: "Відступи між абзацами, блоками й елементами діалогу",
         textLineHeightPercent: "Міжрядковий інтервал",
-        textLineHeightPercentHint: "Висота рядка незалежно від проміжків між абзацами",
+        textLineHeightPercentHint:
+          "Висота рядка відносно розміру символів (незалежно від відступів абзацу)",
         sidebarSpacingPercent: "Щільність рядків бічної панелі",
         sidebarSpacingPercentHint: "Вертикальні відступи у списках проєктів і робочих просторів",
         info: "Відступи за замовчуванням — 100%, висота рядка — 140%. Збережено лише на цьому пристрої.",

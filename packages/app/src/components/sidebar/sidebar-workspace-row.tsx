@@ -485,7 +485,7 @@ const styles = StyleSheet.create((theme) => ({
     position: "relative",
   },
   workspaceRow: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    minHeight: theme.sidebarRow.minHeight,
     marginBottom: theme.sidebarSpacing[1],
     paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[2],
