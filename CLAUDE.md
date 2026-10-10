@@ -106,6 +106,10 @@ Repo dev commands use checkout-local state by default. In this checkout, `PASEO_
 
 See [docs/development.md](docs/development.md) for full setup, build sync requirements, and debugging.
 
+## Fork builds
+
+Before choosing a version, creating a tag, invoking a release skill, or dispatching a build in this fork, read [docs/fork-builds.md](docs/fork-builds.md). Its fork rules take precedence over the upstream release flows. Read the installed `paseo-fork-release` skill when available.
+
 ## Release branches
 
 When the user says "this goes to next", create or
