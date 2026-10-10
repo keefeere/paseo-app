@@ -43,12 +43,40 @@ function makeDeps(
 }
 
 describe("loadAppSettingsFromStorage", () => {
+  it("preserves the old line box and accepts independent compact controls", async () => {
+    const legacy = await loadAppSettingsFromStorage(
+      makeDeps({
+        storage: createInMemoryKeyValueStorage({
+          [APP_SETTINGS_KEY]: JSON.stringify({ textSpacingPercent: 50 }),
+        }),
+      }),
+    );
+    expect(legacy.textLineHeightPercent).toBe(130);
+    expect(legacy.sidebarSpacingPercent).toBe(100);
+    const updated = await loadAppSettingsFromStorage(
+      makeDeps({
+        storage: createInMemoryKeyValueStorage({
+          [APP_SETTINGS_KEY]: JSON.stringify({
+            textSpacingPercent: 0,
+            textLineHeightPercent: 115,
+            sidebarSpacingPercent: 0,
+          }),
+        }),
+      }),
+    );
+    expect(updated.textSpacingPercent).toBe(0);
+    expect(updated.textLineHeightPercent).toBe(115);
+    expect(updated.sidebarSpacingPercent).toBe(0);
+  });
+
   it("loads independent device spacing preferences and bounds invalid values", async () => {
     for (const [stored, expected] of [
       [{ uiSpacingPercent: 75, textSpacingPercent: 125 }, [75, 125]],
       [{ uiSpacingPercent: 1, textSpacingPercent: 999 }, [50, 150]],
       [{ uiSpacingPercent: 150, textSpacingPercent: 87 }, [125, 87]],
       [{ uiSpacingPercent: 67, textSpacingPercent: 83 }, [67, 83]],
+      [{ uiSpacingPercent: 50, textSpacingPercent: 0 }, [50, 0]],
+      [{ textSpacingPercent: -10 }, [100, 0]],
       [{ uiSpacingPercent: "invalid", textSpacingPercent: null }, [100, 100]],
       [{}, [100, 100]],
     ] as const) {

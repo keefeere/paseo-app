@@ -2410,7 +2410,11 @@ export const ptBR: TranslationResources = {
         uiSpacingPercentHint: "Espaços e margens independentes do tamanho da fonte",
         textSpacingPercent: "Espaçamento do texto",
         textSpacingPercentHint: "Espaço entre linhas e parágrafos nas mensagens e no Markdown",
-        info: "100% é o padrão. Valores menores exibem mais conteúdo. Salvo apenas neste dispositivo.",
+        textLineHeightPercent: "Altura da linha",
+        textLineHeightPercentHint: "Altura das linhas independente do espaço entre parágrafos",
+        sidebarSpacingPercent: "Espaçamento das linhas laterais",
+        sidebarSpacingPercentHint: "Margens verticais nas listas de projetos e espaços de trabalho",
+        info: "Espaçamento padrão: 100%; altura da linha: 140%. Salvo apenas neste dispositivo.",
       },
       layout: {
         title: "Layout",

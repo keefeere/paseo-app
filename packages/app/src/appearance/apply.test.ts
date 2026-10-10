@@ -40,6 +40,7 @@ interface FakeTheme {
   spacing: Record<keyof typeof SPACING, number>;
   textSpacing: Record<keyof typeof SPACING, number>;
   textLineHeight: number;
+  sidebarSpacing: Record<keyof typeof SPACING, number>;
   contentMaxWidth: number;
   colors: { foreground: string; syntax: Record<string, string> };
 }
@@ -63,6 +64,7 @@ function makeFakeTheme(): FakeTheme {
     spacing: { ...SPACING },
     textSpacing: { ...SPACING },
     textLineHeight: 1.4,
+    sidebarSpacing: { ...SPACING },
     contentMaxWidth: 820,
     colors: { foreground: "#fff", syntax: {} },
   };
@@ -76,6 +78,8 @@ function makeInput(overrides: Partial<AppearanceInput> = {}): AppearanceInput {
     contentFontSize: 15,
     uiSpacingPercent: 100,
     textSpacingPercent: 100,
+    textLineHeightPercent: 140,
+    sidebarSpacingPercent: 100,
     codeFontSize: 12,
     contentMaxWidth: 820,
     syntaxTheme: "one",
@@ -124,7 +128,7 @@ describe("applyAppearance", () => {
     const result = runCapturedUpdater();
     expect(result.spacing[4]).toBe(SPACING[4]);
     expect(result.textSpacing[4]).toBe(SPACING[4] / 4);
-    expect(result.textLineHeight).toBe(1.3);
+    expect(result.textLineHeight).toBe(1.4);
     expect(result.fontSize.content).toBe(15);
   });
 
@@ -137,6 +141,18 @@ describe("applyAppearance", () => {
     expect(runCapturedUpdater().spacing).toEqual(SPACING);
     expect(runCapturedUpdater().textSpacing).toEqual(SPACING);
     expect(runCapturedUpdater().textLineHeight).toBe(1.4);
+  });
+
+  it("allows zero block and sidebar spacing without changing fonts or the independent line box", () => {
+    applyAppearance(
+      makeInput({ textSpacingPercent: 0, textLineHeightPercent: 125, sidebarSpacingPercent: 0 }),
+    );
+    const result = runCapturedUpdater();
+    expect(Object.values(result.textSpacing).every((value) => value === 0)).toBe(true);
+    expect(Object.values(result.sidebarSpacing).every((value) => value === 0)).toBe(true);
+    expect(result.textLineHeight).toBe(1.25);
+    expect(result.spacing).toEqual(SPACING);
+    expect(result.fontSize.content).toBe(15);
   });
 
   it("resolves an empty UI font family to the default stack", () => {

@@ -47,13 +47,13 @@ export function PinnedSectionHeader({
 
 const styles = StyleSheet.create((theme) => ({
   header: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.spacing[3],
+    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
     flexDirection: "row",
     alignItems: "center",
     alignSelf: "flex-start",
     gap: theme.spacing[1],
     paddingHorizontal: theme.spacing[2],
-    paddingVertical: theme.spacing[1],
+    paddingVertical: theme.sidebarSpacing[1],
     userSelect: "none",
   },
   title: {

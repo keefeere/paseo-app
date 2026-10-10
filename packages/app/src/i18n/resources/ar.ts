@@ -2374,7 +2374,11 @@ export const ar: TranslationResources = {
         uiSpacingPercentHint: "المسافات والهوامش مستقلة عن حجم الخط",
         textSpacingPercent: "تباعد النص",
         textSpacingPercentHint: "تباعد الأسطر والفقرات في الرسائل وMarkdown",
-        info: "100% هي القيمة الافتراضية. تعرض القيم الأصغر محتوى أكثر. يُحفظ على هذا الجهاز فقط.",
+        textLineHeightPercent: "ارتفاع السطر",
+        textLineHeightPercentHint: "ارتفاع كل سطر بشكل مستقل عن المسافات بين الفقرات",
+        sidebarSpacingPercent: "تباعد صفوف الشريط الجانبي",
+        sidebarSpacingPercentHint: "الحشو العمودي في قوائم المشاريع ومساحات العمل",
+        info: "التباعد الافتراضي 100% وارتفاع السطر 140%. يُحفظ على هذا الجهاز فقط.",
       },
       layout: {
         title: "التخطيط",

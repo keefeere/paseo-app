@@ -2385,7 +2385,11 @@ export const ko: TranslationResources = {
         uiSpacingPercentHint: "글꼴 크기와 독립적인 간격 및 여백",
         textSpacingPercent: "텍스트 간격",
         textSpacingPercentHint: "메시지와 Markdown의 줄 및 문단 간격",
-        info: "100%가 기본값입니다. 작은 값일수록 더 많은 내용이 표시됩니다. 이 기기에만 저장됩니다.",
+        textLineHeightPercent: "줄 높이",
+        textLineHeightPercentHint: "문단 간격과 독립적인 줄 높이",
+        sidebarSpacingPercent: "사이드바 행 간격",
+        sidebarSpacingPercentHint: "프로젝트 및 작업 공간 목록의 세로 여백",
+        info: "기본 간격은 100%, 줄 높이는 140%입니다. 이 기기에만 저장됩니다.",
       },
       layout: {
         title: "레이아웃",

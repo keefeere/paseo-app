@@ -2342,7 +2342,11 @@ export const zhCN: TranslationResources = {
         uiSpacingPercentHint: "独立于字号的间隔和内边距",
         textSpacingPercent: "文本间距",
         textSpacingPercentHint: "消息和 Markdown 中的行间距和段落间距",
-        info: "100% 为默认值。较小的值可显示更多内容。仅保存在此设备上。",
+        textLineHeightPercent: "行高",
+        textLineHeightPercentHint: "独立于段落间距的文本行高度",
+        sidebarSpacingPercent: "侧边栏行间距",
+        sidebarSpacingPercentHint: "项目和工作区列表的垂直内边距",
+        info: "默认间距为100%，行高为140%。仅保存在此设备上。",
       },
       layout: {
         title: "布局",

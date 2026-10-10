@@ -9,7 +9,7 @@ import {
   type Theme,
 } from "@/styles/theme";
 import { applyRootUiFont } from "./apply-root-font";
-import { textSpacingScale, proseLineHeight } from "./spacing";
+import { textSpacingScale } from "./spacing";
 
 const ALL_THEME_KEYS = Object.keys(REGISTERED_THEMES) as (keyof typeof REGISTERED_THEMES)[];
 
@@ -20,6 +20,8 @@ export interface AppearanceInput {
   contentFontSize: number; // already clamped
   uiSpacingPercent: number;
   textSpacingPercent: number;
+  textLineHeightPercent: number;
+  sidebarSpacingPercent: number;
   codeFontSize: number; // already clamped
   contentMaxWidth: number; // already clamped, default resolved
   syntaxTheme: SyntaxThemeId;
@@ -75,7 +77,8 @@ export function applyAppearance(input: AppearanceInput): void {
     ) as Theme["spacing"];
   const spacing = scaleSpacing(input.uiSpacingPercent);
   const textSpacing = scaleSpacing(textSpacingScale(input.textSpacingPercent) * 100);
-  const textLineHeight = proseLineHeight(input.textSpacingPercent);
+  const textLineHeight = input.textLineHeightPercent / 100;
+  const sidebarSpacing = scaleSpacing((input.uiSpacingPercent * input.sidebarSpacingPercent) / 100);
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -99,6 +102,7 @@ export function applyAppearance(input: AppearanceInput): void {
           ...t,
           spacing,
           textSpacing,
+          sidebarSpacing,
           textLineHeight,
           fontFamily,
           fontSize,
@@ -111,6 +115,7 @@ export function applyAppearance(input: AppearanceInput): void {
         ...t,
         spacing,
         textSpacing,
+        sidebarSpacing,
         textLineHeight,
         fontFamily,
         fontSize,

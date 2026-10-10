@@ -1,3 +1,4 @@
+import { proseLineHeight } from "@/appearance/spacing";
 import { isSyntaxThemeId, type SyntaxThemeId } from "@getpaseo/highlight";
 import type { ActiveTurnBehavior } from "@getpaseo/protocol/messages";
 import type { QueryClient } from "@tanstack/react-query";
@@ -89,7 +90,9 @@ export interface AppSettings {
   uiBaseFontSize: number; // clamped px, platform default 14 or 15
   contentFontSize: number; // clamped px, platform default 15 or 16
   uiSpacingPercent: number; // 50–125, independent of font size
-  textSpacingPercent: number; // 50–150, independent of interface spacing
+  textSpacingPercent: number; // 0–150, block spacing only
+  textLineHeightPercent: number; // 110–180, independent of block spacing
+  sidebarSpacingPercent: number; // 0–125, vertical padding multiplier for sidebar lists
   codeFontSize: number; // clamped px, default 12
   /** Max width of chat and markdown content in px; null follows the current default. */
   contentMaxWidth: number | null;
@@ -155,6 +158,8 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   contentFontSize: DEFAULT_CONTENT_FONT_SIZE,
   uiSpacingPercent: 100,
   textSpacingPercent: 100,
+  textLineHeightPercent: 140,
+  sidebarSpacingPercent: 100,
   codeFontSize: DEFAULT_CODE_FONT_SIZE,
   contentMaxWidth: null,
   syntaxTheme: "one",
@@ -242,7 +247,9 @@ const StoredAppSettingsSchema = z
       .optional()
       .catch(DEFAULT_CONTENT_FONT_SIZE),
     uiSpacingPercent: clampedNumber(50, 125).catch(100),
-    textSpacingPercent: clampedNumber(50, 150).catch(100),
+    textSpacingPercent: clampedNumber(0, 150).catch(100),
+    textLineHeightPercent: clampedNumber(110, 180).optional().catch(undefined),
+    sidebarSpacingPercent: clampedNumber(0, 125).catch(100),
     // COMPAT(uiFontSizeScale): replaced by the literal base size in v0.4, remove after 2027-08-17.
     uiFontSize: clampedNumber(11, 24).optional().catch(undefined),
     codeFontSize: clampedNumber(MIN_CODE_FONT_SIZE, MAX_CODE_FONT_SIZE).catch(
@@ -322,6 +329,11 @@ const StoredAppSettingsSchema = z
       stored.toolCallDetailLevel ?? (stored.compactToolCalls ? "overview" : "detailed");
     return {
       ...stored,
+      // COMPAT(textSpacingLineHeight): split in v0.11.2, remove after 2027-10-10.
+      // Preserve the previous coupled line box until its independent slider is adjusted.
+      textLineHeightPercent:
+        stored.textLineHeightPercent ??
+        Math.round(proseLineHeight(stored.textSpacingPercent) * 100),
       openInSidePane,
       pullRequestOpenLocation:
         stored.pullRequestOpenLocation ?? (legacyPullRequestsInSidePane ? "side" : "explorer"),

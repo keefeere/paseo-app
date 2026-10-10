@@ -1,6 +1,9 @@
 import { Slider } from "@/components/ui/slider";
 import {
   MIN_SPACING_PERCENT,
+  MIN_TEXT_SPACING_PERCENT,
+  MIN_TEXT_LINE_HEIGHT_PERCENT,
+  MAX_TEXT_LINE_HEIGHT_PERCENT,
   MAX_UI_SPACING_PERCENT,
   MAX_TEXT_SPACING_PERCENT,
 } from "@/appearance/spacing";
@@ -473,7 +476,23 @@ function SyntaxRow({ value, onChange }: SyntaxRowProps) {
   );
 }
 
-function SpacingRow({ setting }: { setting: "uiSpacingPercent" | "textSpacingPercent" }) {
+type SpacingSetting =
+  | "uiSpacingPercent"
+  | "textSpacingPercent"
+  | "textLineHeightPercent"
+  | "sidebarSpacingPercent";
+
+const SPACING_RANGES: Record<SpacingSetting, { minimum: number; maximum: number }> = {
+  uiSpacingPercent: { minimum: MIN_SPACING_PERCENT, maximum: MAX_UI_SPACING_PERCENT },
+  textSpacingPercent: { minimum: MIN_TEXT_SPACING_PERCENT, maximum: MAX_TEXT_SPACING_PERCENT },
+  textLineHeightPercent: {
+    minimum: MIN_TEXT_LINE_HEIGHT_PERCENT,
+    maximum: MAX_TEXT_LINE_HEIGHT_PERCENT,
+  },
+  sidebarSpacingPercent: { minimum: MIN_TEXT_SPACING_PERCENT, maximum: MAX_UI_SPACING_PERCENT },
+};
+
+function SpacingRow({ setting }: { setting: SpacingSetting }) {
   const { t } = useTranslation();
   const { settings, updateSettings } = useAppSettings();
   const persistedValue = settings[setting];
@@ -492,7 +511,7 @@ function SpacingRow({ setting }: { setting: "uiSpacingPercent" | "textSpacingPer
       style={[
         settingsStyles.row,
         styles.spacingRow,
-        setting === "textSpacingPercent" && settingsStyles.rowBorder,
+        setting !== "uiSpacingPercent" && settingsStyles.rowBorder,
       ]}
     >
       <View style={settingsStyles.rowContent}>
@@ -505,10 +524,8 @@ function SpacingRow({ setting }: { setting: "uiSpacingPercent" | "textSpacingPer
         <View style={styles.sliderTrack}>
           <Slider
             value={draft}
-            minimumValue={MIN_SPACING_PERCENT}
-            maximumValue={
-              setting === "uiSpacingPercent" ? MAX_UI_SPACING_PERCENT : MAX_TEXT_SPACING_PERCENT
-            }
+            minimumValue={SPACING_RANGES[setting].minimum}
+            maximumValue={SPACING_RANGES[setting].maximum}
             step={1}
             accessibilityLabel={label}
             onValueChange={setDraft}
@@ -666,11 +683,11 @@ export function AppearanceSection() {
   const previewOverrides = useMemo(
     () => ({
       contentFontSize: sizeDraftToOverride(contentSizeDraft),
-      textSpacingPercent: settings.textSpacingPercent,
+      textLineHeightPercent: settings.textLineHeightPercent,
       monoFontFamily: monoFontDraft,
       codeFontSize: sizeDraftToOverride(codeSizeDraft),
     }),
-    [codeSizeDraft, contentSizeDraft, monoFontDraft, settings.textSpacingPercent],
+    [codeSizeDraft, contentSizeDraft, monoFontDraft, settings.textLineHeightPercent],
   );
 
   return (
@@ -746,6 +763,8 @@ export function AppearanceSection() {
         <View style={settingsStyles.card}>
           <SpacingRow setting="uiSpacingPercent" />
           <SpacingRow setting="textSpacingPercent" />
+          <SpacingRow setting="textLineHeightPercent" />
+          <SpacingRow setting="sidebarSpacingPercent" />
         </View>
       </SettingsSection>
       <SettingsSection title={t("settings.appearance.layout.title")}>

@@ -2,7 +2,7 @@
 
 Tokens — every color, font size, weight, spacing step, radius, icon size — live in `packages/app/src/styles/theme.ts`.
 
-Appearance spacing has two axes. Interface spacing changes chrome and sidebar rows; text spacing changes prose blocks and conversation gaps. Keep input and code insets readable at the compact end, and keep the composer line box independent of prose density. Do not shrink overlay clearance with text spacing: the stream tail uses it to keep the final row reachable.
+Appearance spacing separates interface padding, prose block gaps, prose line height, and sidebar list density. Sidebar density scales vertical list padding without changing navigation or horizontal alignment. Block spacing can reach zero; line height remains independent. Keep input and code insets readable at the compact end, and keep the composer line box independent of prose density. Do not shrink overlay clearance with text spacing: the stream tail uses it to keep the final row reachable.
 
 ---
 

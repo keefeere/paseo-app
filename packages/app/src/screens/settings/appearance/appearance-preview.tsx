@@ -1,4 +1,3 @@
-import { proseLineHeight } from "@/appearance/spacing";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Text, View, type TextStyle } from "react-native";
@@ -28,7 +27,7 @@ type RowType = "context" | "add" | "remove";
 
 interface PreviewOverrides {
   contentFontSize?: number;
-  textSpacingPercent?: number;
+  textLineHeightPercent?: number;
   monoFontFamily?: string;
   codeFontSize?: number;
 }
@@ -71,7 +70,7 @@ function buildContentOverride(overrides: PreviewOverrides | undefined): TextStyl
   if (fontSize === undefined) return {};
   return inlineUnistylesStyle({
     fontSize,
-    lineHeight: Math.round(fontSize * proseLineHeight(overrides?.textSpacingPercent ?? 100)),
+    lineHeight: Math.round((fontSize * (overrides?.textLineHeightPercent ?? 140)) / 100),
   });
 }
 

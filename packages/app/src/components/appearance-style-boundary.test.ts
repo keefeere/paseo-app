@@ -10,6 +10,7 @@ describe("appearanceStyleBoundaryKey", () => {
       { ...darkTheme, spacing: { ...darkTheme.spacing, 4: 8 } },
       { ...darkTheme, textSpacing: { ...darkTheme.textSpacing, 4: 8 } },
       { ...darkTheme, textLineHeight: 1.2 },
+      { ...darkTheme, sidebarSpacing: { ...darkTheme.sidebarSpacing, 4: 0 } },
     ]) {
       expect(appearanceStyleBoundaryKey(changed)).not.toBe(appearanceStyleBoundaryKey(darkTheme));
     }

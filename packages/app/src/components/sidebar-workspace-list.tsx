@@ -2493,13 +2493,13 @@ const styles = StyleSheet.create((theme) => ({
     // Optical inset: aligns the visible Pinned/Workspaces glyph edge with the
     // Schedules icon across the divider; their layout boxes have different insets.
     paddingTop: 2,
-    paddingBottom: theme.spacing[4],
+    paddingBottom: theme.sidebarSpacing[4],
   },
   projectListContainer: {
     width: "100%",
   },
   pinnedSection: {
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.sidebarSpacing[1],
   },
   // Three times the gap a row keeps from its neighbour, so the break between two groups reads as
   // a break rather than as one more row of pitch. Kept equal to `statusGroupBlockExpanded` — the
@@ -2509,7 +2509,7 @@ const styles = StyleSheet.create((theme) => ({
   // the rows underneath the header, so a collapsed project gives it back and a column of collapsed
   // headers closes up to the pitch of a list instead of staying spaced for content that is gone.
   projectBlockExpanded: {
-    paddingBottom: theme.spacing[3],
+    paddingBottom: theme.sidebarSpacing[3],
   },
   workspaceListContainer: {},
   // Kept in step with `workspaceRow` above. It stands in a project's list where a workspace row
@@ -2519,9 +2519,9 @@ const styles = StyleSheet.create((theme) => ({
   // the step in reads as belonging to that project. Padding rather than margin, so the hover and
   // pressed fills stay the same box as every other row in the sidebar.
   newWorkspaceGhostRow: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.spacing[3],
-    marginBottom: theme.spacing[0.5],
-    paddingVertical: theme.spacing[2],
+    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    marginBottom: theme.sidebarSpacing[0.5],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[4],
     paddingRight: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
@@ -2559,11 +2559,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectRow: {
     position: "relative",
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.spacing[3],
-    paddingVertical: theme.spacing[2],
+    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingHorizontal: theme.spacing[2],
     borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.sidebarSpacing[1],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -2610,7 +2610,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: theme.spacing[1],
     paddingHorizontal: theme.spacing[2],
-    paddingVertical: theme.spacing[1],
+    paddingVertical: theme.sidebarSpacing[1],
     borderRadius: theme.borderRadius.md,
     flexShrink: 0,
   },
@@ -2681,16 +2681,16 @@ const styles = StyleSheet.create((theme) => ({
     right: theme.spacing[2],
   },
   workspaceRow: {
-    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.spacing[3],
-    marginBottom: theme.spacing[0.5],
-    paddingVertical: theme.spacing[2],
+    minHeight: Math.max(theme.fontSize.base * 1.4, 24) + theme.sidebarSpacing[3],
+    marginBottom: theme.sidebarSpacing[0.5],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     flexDirection: "column",
     alignItems: "stretch",
     justifyContent: "center",
-    gap: theme.spacing[1],
+    gap: theme.sidebarSpacing[1],
     userSelect: "none",
   },
   workspaceRowMain: {

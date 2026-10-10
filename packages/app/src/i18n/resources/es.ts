@@ -2429,7 +2429,12 @@ export const es: TranslationResources = {
         uiSpacingPercentHint: "Separación y relleno independientes del tamaño de letra",
         textSpacingPercent: "Espaciado del texto",
         textSpacingPercentHint: "Espacio entre líneas y párrafos en mensajes y Markdown",
-        info: "100% es el valor predeterminado. Valores menores muestran más contenido. Se guarda solo en este dispositivo.",
+        textLineHeightPercent: "Interlineado",
+        textLineHeightPercentHint: "Altura de línea independiente del espacio entre párrafos",
+        sidebarSpacingPercent: "Espaciado de filas laterales",
+        sidebarSpacingPercentHint:
+          "Márgenes verticales en las listas de proyectos y espacios de trabajo",
+        info: "Espaciado predeterminado: 100%; altura de línea: 140%. Guardado solo en este dispositivo.",
       },
       layout: {
         title: "Diseño",

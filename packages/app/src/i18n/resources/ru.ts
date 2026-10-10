@@ -2415,7 +2415,11 @@ export const ru: TranslationResources = {
         uiSpacingPercentHint: "Промежутки и поля независимо от размера шрифта",
         textSpacingPercent: "Интервалы текста",
         textSpacingPercentHint: "Межстрочные и межабзацные интервалы в сообщениях и Markdown",
-        info: "100% — стандартные отступы. Меньшие значения вмещают больше данных. Сохраняется только на этом устройстве.",
+        textLineHeightPercent: "Межстрочный интервал",
+        textLineHeightPercentHint: "Высота строки независимо от промежутков между абзацами",
+        sidebarSpacingPercent: "Интервалы строк боковой панели",
+        sidebarSpacingPercentHint: "Вертикальные отступы в списках проектов и рабочих пространств",
+        info: "Отступы по умолчанию — 100%, высота строки — 140%. Сохранено только на этом устройстве.",
       },
       layout: {
         title: "Макет",

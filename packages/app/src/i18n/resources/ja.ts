@@ -2396,7 +2396,11 @@ export const ja: TranslationResources = {
         uiSpacingPercentHint: "文字サイズと独立した間隔とパディング",
         textSpacingPercent: "テキストの間隔",
         textSpacingPercentHint: "メッセージとMarkdownの行間・段落間隔",
-        info: "100%が既定値です。小さい値ほど多く表示できます。この端末にのみ保存されます。",
+        textLineHeightPercent: "行の高さ",
+        textLineHeightPercentHint: "段落間の余白とは独立した行の高さ",
+        sidebarSpacingPercent: "サイドバーの行間隔",
+        sidebarSpacingPercentHint: "プロジェクトとワークスペース一覧の上下余白",
+        info: "余白の既定値は100%、行の高さは140%です。このデバイスにのみ保存されます。",
       },
       layout: {
         title: "レイアウト",

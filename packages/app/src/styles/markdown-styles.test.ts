@@ -3,6 +3,22 @@ import { createCompactMarkdownStyles, createMarkdownStyles } from "./markdown-st
 import { darkTheme } from "./theme";
 
 describe("createMarkdownStyles", () => {
+  it("keeps inline code padded and gives its own font a centered line box at zero block spacing", () => {
+    const compact = {
+      ...darkTheme,
+      spacing: Object.fromEntries(
+        Object.entries(darkTheme.spacing).map(([key]) => [key, 0]),
+      ) as typeof darkTheme.spacing,
+      textSpacing: Object.fromEntries(
+        Object.entries(darkTheme.textSpacing).map(([key]) => [key, 0]),
+      ) as typeof darkTheme.textSpacing,
+    };
+    const style = createMarkdownStyles(compact).code_inline;
+    expect(style.paddingHorizontal).toBe(4);
+    expect(style.paddingVertical).toBe(2);
+    expect(style.lineHeight).toBe(Math.round(darkTheme.fontSize.code * 1.4));
+  });
+
   it("tightens text independently of interface padding and font size", () => {
     const compactTheme = {
       ...darkTheme,
@@ -129,7 +145,9 @@ describe("createMarkdownStyles", () => {
       fontFamily: darkTheme.fontFamily.mono,
       fontSize: darkTheme.fontSize.code,
     });
-    expect(styles.code_inline).not.toHaveProperty("lineHeight");
+    expect(styles.code_inline.lineHeight).toBe(Math.round(darkTheme.fontSize.code * 1.4));
+    expect(styles.code_inline.includeFontPadding).toBe(false);
+    expect(styles.code_inline.verticalAlign).toBe("middle");
     expect(styles.code_block).toMatchObject({
       fontFamily: darkTheme.fontFamily.mono,
       fontSize: darkTheme.fontSize.code,
@@ -142,7 +160,7 @@ describe("createMarkdownStyles", () => {
       fontFamily: darkTheme.fontFamily.mono,
       fontSize: darkTheme.fontSize.code,
     });
-    expect(compactStyles.code_inline).not.toHaveProperty("lineHeight");
+    expect(compactStyles.code_inline.lineHeight).toBe(Math.round(darkTheme.fontSize.code * 1.4));
   });
 
   it("scales Markdown headings from content size with safe line heights", () => {

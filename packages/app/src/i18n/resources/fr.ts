@@ -2429,7 +2429,12 @@ export const fr: TranslationResources = {
         textSpacingPercent: "Espacement du texte",
         textSpacingPercentHint:
           "Espaces entre les lignes et paragraphes des messages et du Markdown",
-        info: "100 % est la valeur par défaut. Des valeurs plus petites affichent plus de contenu. Enregistré uniquement sur cet appareil.",
+        textLineHeightPercent: "Hauteur de ligne",
+        textLineHeightPercentHint: "Hauteur des lignes indépendante des espaces entre paragraphes",
+        sidebarSpacingPercent: "Espacement des lignes latérales",
+        sidebarSpacingPercentHint:
+          "Marges verticales dans les listes de projets et espaces de travail",
+        info: "Les espacements sont à 100 % par défaut, la hauteur de ligne à 140 %. Enregistré uniquement sur cet appareil.",
       },
       layout: {
         title: "Mise en page",
