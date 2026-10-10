@@ -7,6 +7,14 @@ on:
       - "v*"
   workflow_dispatch:
     inputs:
+      nas_image:
+        description: "Build the full NAS image as a downloadable artifact."
+        type: boolean
+        default: false
+      checkout_ref:
+        description: "Source commit for the NAS image (defaults to workflow commit)."
+        required: false
+        default: ""
       paseo_version:
         description: "Expected source version to build. Required when publish is true."
         required: false
@@ -112,7 +120,7 @@ jobs:
 
   build:
     needs: setup
-    if: needs.setup.outputs.publish != 'true'
+    if: needs.setup.outputs.publish != 'true' && inputs.nas_image != true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -137,7 +145,7 @@ jobs:
 
   publish:
     needs: setup
-    if: needs.setup.outputs.publish == 'true'
+    if: needs.setup.outputs.publish == 'true' && inputs.nas_image != true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -167,3 +175,50 @@ jobs:
           provenance: false
           cache-from: type=gha,scope=paseo
           cache-to: type=gha,scope=paseo,mode=max
+
+  nas-image:
+    needs: setup
+    if: github.event_name == 'workflow_dispatch' && inputs.nas_image == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.checkout_ref || github.sha }}
+          path: source
+      - name: Build full NAS image
+        env:
+          VERSION: ${{ needs.setup.outputs.install_version }}
+        run: |
+          set -euo pipefail
+          test "$(node -p "require('./source/package.json').version")" = "$VERSION"
+          revision="$(git -C source rev-parse HEAD)"
+          docker build --build-arg PASEO_VERSION="$VERSION" \
+            -f source/docker/base/Dockerfile -t "paseo-nas-base:$revision" source
+          docker build --build-arg BASE_IMAGE="paseo-nas-base:$revision" \
+            --label "org.opencontainers.image.revision=$revision" \
+            -f docker/nas/Dockerfile -t "paseo-nas:$VERSION" -t "paseo-nas:sha-$revision" .
+          docker run --rm --entrypoint /bin/bash "paseo-nas:$VERSION" -ec '
+            test "$(node -p "require(\"/usr/local/lib/node_modules/@getpaseo/server/package.json\").version")" = "$1"
+            test "$(node -p "require(\"/usr/local/lib/node_modules/@getpaseo/cli/package.json\").version")" = "$1"
+            claude --version; codex --version; opencode --version; agy --version; pi --version; gh --version; ssh -V
+          ' -- "$VERSION"
+          mkdir -p nas-artifact
+          docker save "paseo-nas:$VERSION" "paseo-nas:sha-$revision" | gzip -1 > "nas-artifact/paseo-nas-$VERSION.tar.gz"
+          (cd nas-artifact && sha256sum *.tar.gz > SHA256SUMS)
+          {
+            echo "version=$VERSION"
+            echo "revision=$revision"
+            echo "image=paseo-nas:sha-$revision"
+            echo "image_id=$(docker image inspect --format '{{.Id}}' "paseo-nas:$VERSION")"
+            echo "platform=linux/amd64"
+          } | tee nas-artifact/image-metadata.txt >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paseo-nas-image
+          path: nas-artifact/
+          compression-level: 0
+          retention-days: 14
