@@ -3,6 +3,7 @@ import path from "node:path";
 import { expect, test, type Page } from "../../app/e2e/support/fixtures";
 import { gotoAppShell, openSettings } from "../../app/e2e/support/helpers/app";
 import { expandFolder, openFileExplorer } from "../../app/e2e/support/helpers/file-explorer";
+import { openAgentRoute, seedMockAgentWorkspace } from "../../app/e2e/support/helpers/mock-agent";
 import { installDesktopRuntime } from "./support/runtime";
 import { clickSettingsBackToWorkspace } from "../../app/e2e/support/helpers/settings";
 
@@ -215,4 +216,37 @@ test.describe("Workspace open in editor", () => {
       afterCount: recordsAfterReturnOpen,
     });
   });
+});
+
+test("keeps a system link recoverable when its OS application is unavailable", async ({ page }) => {
+  await installDesktopRuntime(page, { serverId: requireE2EEnv("E2E_SERVER_ID") });
+  const workspace = await seedMockAgentWorkspace({
+    repoPrefix: "desktop-system-link-",
+    title: "System link",
+    initialPrompt: "Show a system link",
+    featureValues: { mockAssistantResponse: "[Connect](ssh://user@example.com)" },
+  });
+  try {
+    await openAgentRoute(page, workspace);
+    // The daemon and renderer are real; this adapter represents a missing OS application.
+    await page.evaluate(() => {
+      window.paseoDesktop.opener = {
+        openUrl: async () => {
+          throw new Error("No SSH application installed");
+        },
+      };
+    });
+    await page.getByRole("link", { name: "Connect", exact: true }).first().click();
+    await expect(page.getByTestId("system-link-dialog")).toBeVisible();
+    await page.getByTestId("system-link-open").click();
+    await expect(page.getByTestId("system-link-dialog").getByRole("alert")).toContainText(
+      "No SSH application installed",
+    );
+    await expect(page.getByTestId("system-link-open")).toBeEnabled();
+    await page.screenshot({ path: test.info().outputPath("system-link-error.png") });
+    await page.getByTestId("system-link-copy").click();
+    await expect(page.getByText("Copied", { exact: true }).filter({ visible: true })).toBeVisible();
+  } finally {
+    await workspace.cleanup();
+  }
 });

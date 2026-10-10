@@ -889,25 +889,6 @@ test.describe("Resource links", () => {
       await page.getByRole("link", { name: "Connect", exact: true }).first().click();
       await expect(page.getByTestId("system-link-dialog")).toBeVisible();
       await expect(page.getByTestId("system-link-open")).toBeVisible();
-      // The daemon and renderer are real; this adapter represents a missing OS application.
-      await page.evaluate(() => {
-        window.paseoDesktop = {
-          opener: {
-            openUrl: async () => {
-              throw new Error("No SSH application installed");
-            },
-          },
-        };
-      });
-      await page.getByTestId("system-link-open").click();
-      await expect(page.getByTestId("system-link-dialog").getByRole("alert")).toContainText(
-        "No SSH application installed",
-      );
-      await expect(page.getByTestId("system-link-open")).toBeEnabled();
-      await page.screenshot({ path: test.info().outputPath("system-link-error.png") });
-      await page.evaluate(() => {
-        delete window.paseoDesktop;
-      });
       await page.getByTestId("system-link-copy").click();
       await expect(
         page.getByText("Copied", { exact: true }).filter({ visible: true }),
