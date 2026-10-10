@@ -52,6 +52,8 @@ export const uk: TranslationResources = {
       search: "Пошук",
       select: "Вибрати",
       selectAll: "Вибрати все",
+
+      save: "Зберегти",
     },
     placeholders: {
       search: "Пошук...",
@@ -420,6 +422,8 @@ export const uk: TranslationResources = {
       withTokens: "Контекст стиснуто (токенів: {{tokens}}K)",
       completed: "Контекст стиснуто",
     },
+
+    turnFooter: { workedFor: "Працював {{duration}}" },
   },
   importSession: {
     title: "Імпорт сесії",
@@ -1010,6 +1014,10 @@ export const uk: TranslationResources = {
         actions: {
           viewPullRequest: "Переглянути",
           openOn: "Відкрити на {{brand}}",
+
+          addToChat: "Додати до чату",
+          addAllToChat: "Додати все до чату",
+          addingToChat: "Додавання…",
         },
         checksSummary: {
           passedLabel: "пройдено",
@@ -1023,12 +1031,16 @@ export const uk: TranslationResources = {
           checks: "Перевірки",
           pipeline: "Конвеєр",
           reviews: "Рецензії",
+
+          activity: "Активність",
         },
         empty: {
           noJobs: "Немає завдань",
           loadingPipeline: "Завантаження конвеєра…",
           pipelineJobsLoadFailed: "Не вдалося завантажити завдання конвеєра",
           allowedToFail: "збій дозволено",
+
+          noActivity: "Поки немає активності",
         },
         approvals: "Схвалень: {{given}} з {{required}}",
         accessibility: {
@@ -1044,6 +1056,9 @@ export const uk: TranslationResources = {
             skipped: "Пропущено",
             cancelled: "Скасовано",
           },
+
+          commentActions: "Дії з коментарем",
+          threadActions: "Дії з обговоренням",
         },
         states: {
           draft: "Чернетка",
@@ -1062,10 +1077,52 @@ export const uk: TranslationResources = {
         },
         thread: {
           discussion: "Обговорення",
+
+          resolved: "Вирішено",
+          outdated: "Застаріле",
         },
         errors: {
           statusLoadFailed: "Не вдалося завантажити статус pull request",
           activityLoadFailed: "Не вдалося завантажити активність pull request",
+        },
+
+        checksOverview: {
+          headline: {
+            actionRequired: "Деякі перевірки потребують вашої уваги",
+            failure: "Деякі перевірки не пройшли",
+            pending: "Деякі перевірки ще не завершені",
+            success: "Усі перевірки пройшли",
+            none: "Немає перевірок",
+          },
+          detailOne: "Перевірки: {{parts}}",
+          detailMany: "Перевірки: {{parts}}",
+          count: {
+            actionRequired: "Перевірки (потребують дії): {{count}}",
+            warning: "Перевірки (з попередженнями): {{count}}",
+            failure: "Перевірки (не пройшли): {{count}}",
+            pending: "Перевірки (виконуються): {{count}}",
+            manual: "Перевірки (ручні): {{count}}",
+            success: "Перевірки (успішні): {{count}}",
+            ignored: "Перевірки (пропущені): {{count}}",
+          },
+          groupOne: {
+            actionRequired: "Перевірки (потребують дії): {{count}}",
+            warning: "Перевірки (з попередженнями): {{count}}",
+            failure: "Перевірки (не пройшли): {{count}}",
+            pending: "Перевірки (виконуються): {{count}}",
+            manual: "Перевірки (ручні): {{count}}",
+            success: "Перевірки (успішні): {{count}}",
+            ignored: "Перевірки (пропущені): {{count}}",
+          },
+          groupMany: {
+            actionRequired: "Перевірки (потребують дії): {{count}}",
+            warning: "Перевірки (з попередженнями): {{count}}",
+            failure: "Перевірки (не пройшли): {{count}}",
+            pending: "Перевірки (виконуються): {{count}}",
+            manual: "Перевірки (ручні): {{count}}",
+            success: "Перевірки (успішні): {{count}}",
+            ignored: "Перевірки (пропущені): {{count}}",
+          },
         },
       },
       forgeSetup: {
@@ -1167,6 +1224,8 @@ export const uk: TranslationResources = {
         label: "Проєкт",
         all: "Усі проєкти",
       },
+
+      showBackground: "Показувати фонові",
     },
     filterEmpty: {
       title: "Немає відповідних робочих просторів",
@@ -1292,6 +1351,15 @@ export const uk: TranslationResources = {
         hideFailed: "Не вдалося приховати робочий простір",
         archiveFailed: "Не вдалося архівувати робочий простір",
       },
+    },
+
+    statusGroupAccessibility: "Група «{{label}}»",
+    statusBucket: {
+      needsInput: "Потрібна відповідь",
+      failed: "Помилка",
+      readyToReview: "Готово до перевірки",
+      working: "Працює",
+      done: "Завершено",
     },
   },
   newWorkspace: {
@@ -2049,6 +2117,18 @@ export const uk: TranslationResources = {
       cancelAccessibility: "Скасувати коментар рев'ю",
       save: "Коментувати",
       saveAccessibility: "Зберегти коментар рев'ю",
+    },
+
+    feedback: {
+      send: "Надіслати відгуки ({{count}})",
+      sending: "Надсилання відгуків ({{count}})",
+      chooseAgent: "Вибрати агента",
+      sent: "Відгуки надіслано: {{recipient}}",
+      "no-agents": "Відкрийте вкладку агента в цьому робочому просторі, щоб надіслати відгуки.",
+      disconnected: "Підключіться до хоста, щоб надіслати відгуки.",
+      "no-context": "Збережені коментарі більше не відповідають цьому diff.",
+      failed: "Не вдалося надіслати відгуки. Спробуйте ще раз.",
+      prompt: "Врахуйте зауваження до цього коду.",
     },
   },
   settings: {

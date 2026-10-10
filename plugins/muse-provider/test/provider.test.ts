@@ -1,3 +1,6 @@
+import { execFile } from "node:child_process";
+import { UsageSourceRegistry } from "../../../packages/server/src/server/plugins/usage-sources/index.js";
+import { Usage as MuseUsage } from "../server/usage.js";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { setTimeout as delay } from "node:timers/promises";
 import os from "node:os";
@@ -14,6 +17,7 @@ import {
   type ProviderInput,
 } from "@getpaseo/plugin/server/provider";
 import type { UsageSourceRegistration } from "@getpaseo/plugin/server";
+import { execCommand } from "@getpaseo/plugin/server";
 import contribute from "../index.server.js";
 
 const connections: ProviderConnection[] = [];
@@ -219,9 +223,9 @@ test("text and reasoning stream, completion overwrites deltas, user echo retains
       { type: "text", text: "hello" },
     ],
   });
-  expect(h.events.filter((event) => event.type === "session.persistence").length).toBeGreaterThan(
-    1,
-  );
+  expect(h.events.findLast((event) => event.type === "session.persistence")).toMatchObject({
+    persistence: { version: 1, data: { model: "meta/muse-spark-1.3", thinkingOption: "high" } },
+  });
 });
 test("tool calls classify read, shell, and edit with fetched JSON patch converted to unified diff", async () => {
   const h = await harness("tools-edit");
@@ -325,23 +329,69 @@ test("interrupt awaits cancelled terminal and reconciles the tool", async () => 
     ),
   ).toBeGreaterThan(terminalIndex);
 });
+test("a fresh connection restores earlier messages from persisted session state", async () => {
+  const original = await harness();
+  const historyPath = path.join(original.root, "native-history.ndjson");
+  original.launch.env.MUSE_TEST_HISTORY = historyPath;
+  await original.open();
+  await original.prompt();
+  await original.wait((event) => event.type === "session.turn" && event.state === "completed");
+  const messages = [
+    ...new Map(
+      original.events
+        .filter((event) => event.type === "timeline.item")
+        .map((event) => event.item)
+        .filter((item) => item.type === "user_message" || item.type === "assistant_message")
+        .map((item) => [item.id, item] as const),
+    ).values(),
+  ];
+  expect(messages.map((item) => item.type)).toEqual(["user_message", "assistant_message"]);
+  const saved = original.events.findLast((event) => event.type === "session.persistence");
+  if (!saved) throw new Error("Expected session persistence");
+  const persistencePath = path.join(original.root, "persistence.json");
+  // Older daemon records carry a view cursor even though their timeline is not durable.
+  await writeFile(
+    persistencePath,
+    JSON.stringify({
+      ...saved.persistence,
+      data: { ...saved.persistence.data, cursor: saved.persistence.data.cursor ?? "v:old:7" },
+    }),
+  );
+  await original.connection.close();
+  const reopened = await harness("text-reasoning", { MUSE_TEST_HISTORY: historyPath });
+  expect(await reopened.open(JSON.parse(await readFile(persistencePath, "utf8")))).toMatchObject({
+    type: "session.ready",
+  });
+  const restored = reopened.events
+    .filter((event) => event.type === "timeline.item")
+    .map((event) => event.item)
+    .filter((item) => item.type === "user_message" || item.type === "assistant_message");
+  expect(restored.map((item) => ({ type: item.type, text: item.text }))).toEqual(
+    messages.map((item) => ({ type: item.type, text: item.text })),
+  );
+  const reopenedState = reopened.events.findLast((event) => event.type === "session.persistence");
+  expect(reopenedState?.persistence.data).not.toHaveProperty("cursor");
+  expect(reopened.events.filter((event) => event.type === "session.turn")).toEqual([]);
+  await reopened.prompt();
+  await reopened.wait((event) => event.type === "session.turn" && event.state === "completed");
+});
+
 for (const cursor of [undefined, "v:old:7"]) {
-  test(`resume ${cursor ? "with cursor emits suffix and ignores old terminal" : "without cursor replays inline history"}`, async () => {
-    const h = await harness(cursor ? "resume-with-cursor" : "resume-without-cursor");
+  test(`resume ${cursor ? "with a legacy persistence cursor" : "without a persistence cursor"} replays inline history`, async () => {
+    const h = await harness("resume-without-cursor");
     await h.open({
       version: 1,
       data: { sessionId: "saved-session", ...(cursor ? { cursor } : {}) },
     });
     expect(h.events.filter((event) => event.type === "session.turn")).toEqual([]);
     const history = h.events.filter((event) => event.type === "timeline.item");
-    if (!cursor)
-      expect(history).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            item: expect.objectContaining({ type: "assistant_message", text: "RESUME_MARKER_OK" }),
-          }),
-        ]),
-      );
+    expect(history).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          item: expect.objectContaining({ type: "assistant_message", text: "RESUME_MARKER_OK" }),
+        }),
+      ]),
+    );
     await h.prompt();
     await h.wait((event) => event.type === "session.turn" && event.state === "completed");
     expect(
@@ -349,7 +399,10 @@ for (const cursor of [undefined, "v:old:7"]) {
     ).toHaveLength(1);
     expect(
       (await h.recorded()).find((frame) => frame.method === "session/resume").params,
-    ).toMatchObject({ sessionId: "saved-session", ...(cursor ? { cursor } : {}) });
+    ).toMatchObject({ sessionId: "saved-session" });
+    expect(
+      (await h.recorded()).find((frame) => frame.method === "session/resume").params,
+    ).not.toHaveProperty("cursor");
   });
 }
 test("steer sends ifBusy steer and joins the running turn", async () => {
@@ -460,6 +513,25 @@ for (const [env, expected] of [
     expect(await h.provider.status!({ launch: h.launch })).toEqual(expected);
   });
 }
+test("status preserves the version-probe command and stderr diagnostic", async () => {
+  const h = await harness("catalog-controls", {
+    MUSE_TEST_VERSION_ERROR: "Muse version probe could not read its installation metadata",
+  });
+  // Compare against the original execFile callback: wrapping in MuseError only changed its kind.
+  const previousDiagnostic = await new Promise<string>((resolve, reject) => {
+    execFile(h.launch.command, [...h.launch.args, "--version"], { env: h.launch.env }, (error) => {
+      if (error) resolve(error.message);
+      else reject(new Error("Expected the version probe to fail"));
+    });
+  });
+  const status = await h.provider.status!({ launch: h.launch });
+  expect(status).toEqual({ available: false, diagnostic: previousDiagnostic });
+  expect(status.diagnostic).toContain("--version");
+  expect(status.diagnostic).toContain(
+    "Muse version probe could not read its installation metadata",
+  );
+  expect(await h.recorded()).toEqual([]);
+});
 test("status reports a missing executable", async () => {
   const h = await harness();
   expect(
@@ -841,7 +913,7 @@ test("fingerprint mismatch is logged but does not prevent opening", async () => 
 });
 for (const restoring of [false, true]) {
   test(`MCP servers map to MSP stdio and streamableHttp on ${restoring ? "resume" : "start"}`, async () => {
-    const h = await harness(restoring ? "resume-with-cursor" : "text-reasoning");
+    const h = await harness(restoring ? "resume-without-cursor" : "text-reasoning");
     await h.send({
       type: "session.open",
       sessionId: "paseo-session",
@@ -1345,7 +1417,7 @@ for (const usage of [
   test(`usage source presents ${"usage" in usage ? "subscription windows" : "real route absence"} from discovered accounts`, async () => {
     const h = await harness("catalog-controls", { MUSE_TEST_USAGE: JSON.stringify(usage) });
     await h.open();
-    const inputs = await h.usageSource.discover();
+    const inputs = await h.usageSource.discover({ kind: "global" });
     expect(inputs).toHaveLength(1);
     const account = inputs[0]!;
     expect(account).toEqual({
@@ -1496,7 +1568,7 @@ test("usage identity follows the resolved config directory across credential and
       META_BASE_URL: route!,
     });
     await h.open();
-    const inputs = await h.usageSource.discover();
+    const inputs = await h.usageSource.discover({ kind: "global" });
     expect(inputs).toHaveLength(1);
     identities.push(inputs[0]!.key);
   }
@@ -1506,7 +1578,7 @@ test("usage identity follows the resolved config directory across credential and
 
 test.each(["no sessions", "unrelated environment"])("Muse discovery is empty with %s", async () => {
   const { Usage } = await import("../server/usage.js");
-  expect(await new Usage().registration().discover()).toEqual([]);
+  expect(await new Usage().registration().discover({ kind: "global" })).toEqual([]);
 });
 
 test("Muse window identity follows the reported duration instead of assuming five hours", async () => {
@@ -1521,7 +1593,7 @@ test("Muse window identity follows the reported duration instead of assuming fiv
     }),
   });
   await h.open();
-  const [account] = await h.usageSource.discover();
+  const [account] = await h.usageSource.discover({ kind: "global" });
   expect(await h.usageSource.fetch(account!.input)).toMatchObject({
     status: "available",
     windows: [
@@ -1529,4 +1601,132 @@ test("Muse window identity follows the reported duration instead of assuming fiv
       { id: "weekly", label: "Weekly", shortLabel: "wk" },
     ],
   });
+});
+
+test("status accepts initialization slower than the account deadline without isolating history", async () => {
+  const h = await harness("catalog-controls", { MUSE_TEST_INITIALIZE_DELAY_MS: "3500" });
+  expect(await h.provider.status!({ launch: h.launch })).toEqual({ available: true });
+  expect(await h.recorded()).toContainEqual({ event: "hostClosed" });
+}, 10000);
+
+for (const extension of ["cmd", "bat"]) {
+  test.runIf(process.platform === "win32")(
+    `launches the discovered Muse .${extension} for status, catalog and sessions`,
+    async () => {
+      const h = await harness("catalog-controls");
+      const shim = path.join(h.root, `muse launcher.${extension}`);
+      await writeFile(shim, `@echo off\r\n"${process.execPath}" "${h.launch.args[0]}" %*\r\n`);
+      h.launch.command = shim;
+      h.launch.args = [];
+      expect(await h.provider.status!({ launch: h.launch })).toEqual({ available: true });
+      await h.send({ type: "catalog", requestId: "shim-catalog" });
+      expect(await h.wait((event) => event.type === "catalog")).toMatchObject({
+        requestId: "shim-catalog",
+      });
+      await h.open();
+      expect(await h.wait((event) => event.type === "session.opened")).toMatchObject({
+        sessionId: "paseo-session",
+      });
+    },
+    20000,
+  );
+}
+
+test("force-stops a Muse host that ignores stdin EOF", async () => {
+  const h = await stubbornHostHarness();
+  try {
+    const result = await Promise.race([
+      h.provider.status!({ launch: h.launch }),
+      delay(10000).then(() => {
+        throw new Error("Muse status did not finish closing its host");
+      }),
+    ]);
+    expect(result).toEqual({ available: true });
+    const hosts = (await h.recorded()).filter((row) => row.event === "stubbornHost");
+    expect(hosts).toHaveLength(1);
+    expect(() => process.kill(hosts[0].pid, 0)).toThrow();
+  } finally {
+    await cleanupStubbornHosts(h);
+  }
+}, 15000);
+
+test("closes the whole Muse host after an uncorrelated MSP error", async () => {
+  const h = await stubbornHostHarness({ MUSE_TEST_NULL_ERROR_ID: "1" });
+  try {
+    const result = await h.provider.status!({ launch: h.launch });
+    expect(result).toEqual({ available: false, diagnostic: "Cannot recover request id" });
+    const recorded = await h.recorded();
+    expect(recorded.some((row) => row.event === "hostClosed")).toBe(true);
+    const hosts = recorded.filter((row) => row.event === "stubbornHost");
+    expect(hosts).toHaveLength(1);
+    expect(() => process.kill(hosts[0].pid, 0)).toThrow();
+  } finally {
+    await cleanupStubbornHosts(h);
+  }
+}, 15000);
+
+async function stubbornHostHarness(env: Record<string, string> = {}) {
+  const h = await harness("catalog-controls", { MUSE_TEST_STUBBORN: "1", ...env });
+  if (process.platform === "win32") {
+    const shim = path.join(h.root, "stubborn muse.cmd");
+    await writeFile(shim, `@echo off\r\n"${process.execPath}" "${h.launch.args[0]}" %*\r\n`);
+    h.launch.command = shim;
+    h.launch.args = [];
+  }
+  return h;
+}
+async function cleanupStubbornHosts(h: Awaited<ReturnType<typeof harness>>) {
+  // Keep a failing Windows regression from leaving its deliberately stubborn child alive.
+  for (const host of (await h.recorded()).filter((row) => row.event === "stubbornHost")) {
+    if (process.platform === "win32") {
+      await execCommand("taskkill.exe", ["/PID", String(host.pid), "/T", "/F"], {
+        shell: false,
+      }).catch(() => {});
+    } else {
+      try {
+        process.kill(host.pid, "SIGKILL");
+      } catch {}
+    }
+  }
+}
+
+test("Muse reports belong only to the session's account and remain available globally", async () => {
+  const usage = new MuseUsage();
+  const homeEnv = { HOME: "/usage/home" };
+  const configEnv = { HOME: "/usage/home", XDG_CONFIG_HOME: "/usage/work" };
+  const accountIds = [homeEnv, configEnv].map((env, index) => {
+    const launch = { command: "muse", args: [], env };
+    usage.attach(`session-${index}`, launch, async () => ({
+      usage: {
+        observedAtMs: 1700000000000,
+        tier: "Pro",
+        window: { usedPercent: 11, resetsAtMs: 1700018000000, windowDurationMins: 120 },
+        weekly: { usedPercent: 22, resetsAtMs: 1700604800000 },
+      },
+    }));
+    return `muse:${usage.remember(launch).account}`;
+  });
+  const sessions = new Map([
+    ["claude", { provider: "claude", env: homeEnv, sessionKey: "claude" }],
+    ["codex", { provider: "codex", env: configEnv, sessionKey: "codex" }],
+    ["muse-home", { provider: "muse", env: homeEnv, sessionKey: "muse-home" }],
+    ["muse-work", { provider: "muse", env: configEnv, sessionKey: "muse-work" }],
+    ["muse-unknown", { provider: "muse", env: { HOME: "/usage/unknown" }, sessionKey: "unknown" }],
+  ]);
+  const registry = new UsageSourceRegistry(Date.now, 300_000, undefined, {
+    hasAgent: (id) => sessions.has(id),
+    usageSession: (id) => sessions.get(id) ?? null,
+  });
+  registry.register(usage.registration());
+
+  expect((await registry.listReports()).map((report) => report.id)).toEqual(accountIds);
+  expect(await registry.listReports({ agentId: "claude" })).toEqual([]);
+  expect(await registry.listReports({ agentId: "codex" })).toEqual([]);
+  for (const [index, agentId] of ["muse-home", "muse-work"].entries()) {
+    const reports = await registry.listReports({ agentId });
+    expect(reports.map((report) => report.id)).toEqual([accountIds[index]]);
+    expect(reports[0]!.report.status).toBe("available");
+  }
+  expect(await registry.listReports({ agentId: "muse-unknown" })).toEqual([]);
+  expect((await registry.listReports()).map((report) => report.id)).toEqual(accountIds);
 });

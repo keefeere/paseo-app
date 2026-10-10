@@ -6,8 +6,19 @@ import { fileURLToPath } from "node:url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
 const scenario = process.env.MUSE_TEST_SCENARIO || "text-reasoning";
 if (process.argv.includes("--version")) {
+  if (process.env.MUSE_TEST_VERSION_ERROR) {
+    process.stderr.write(process.env.MUSE_TEST_VERSION_ERROR + "\n");
+    process.exit(17);
+  }
   process.stdout.write(`Muse Code ${process.env.MUSE_TEST_VERSION || "1.4.1"}\n`);
   process.exit(0);
+}
+if (process.env.MUSE_TEST_STUBBORN) {
+  setInterval(() => {}, 1000);
+  appendFileSync(
+    process.env.MUSE_TEST_REQUESTS,
+    JSON.stringify({ event: "stubbornHost", pid: process.pid }) + "\n",
+  );
 }
 const rows = readFixture(scenario);
 if (process.env.MUSE_TEST_REQUESTS)
@@ -22,6 +33,14 @@ const receipts = new Set();
 const lines = createInterface({ input: process.stdin });
 lines.on("line", receive);
 function receive(line) {
+  const parsed = JSON.parse(line);
+  if (parsed.method === "initialize" && process.env.MUSE_TEST_INITIALIZE_DELAY_MS) {
+    setTimeout(() => receiveFrame(line), Number(process.env.MUSE_TEST_INITIALIZE_DELAY_MS));
+    return;
+  }
+  receiveFrame(line);
+}
+function receiveFrame(line) {
   const frame = JSON.parse(line);
   if (process.env.MUSE_TEST_REQUESTS)
     appendFileSync(process.env.MUSE_TEST_REQUESTS, JSON.stringify(frame) + "\n");
@@ -61,6 +80,22 @@ function receive(line) {
   } else for (const row of messages) emitFixtureMessage(row.msg, recorded, frame);
 }
 function controlResponse(frame) {
+  if (frame.method === "session/resume" && process.env.MUSE_TEST_HISTORY) {
+    const result = responseFor(readFixture("resume-without-cursor"), "session/resume");
+    result.session.sessionId = frame.params.sessionId;
+    result.history = frame.params.cursor
+      ? { mode: "none", noneReason: "cursorSuffix", items: null, snapshot: null }
+      : {
+          mode: "inline",
+          items: readFileSync(process.env.MUSE_TEST_HISTORY, "utf8")
+            .trim()
+            .split("\n")
+            .map((line) => JSON.parse(line)),
+          snapshot: null,
+        };
+    respond(frame, result);
+    return true;
+  }
   if (frame.method === "initialized") return true;
   if (frame.method === "initialize" && process.env.MUSE_TEST_EXIT) {
     process.stderr.write("diagnostic tail, not protocol\n");
@@ -419,6 +454,9 @@ function replace(value) {
   return value;
 }
 function send(frame) {
+  if (frame.method === "item/completed" && process.env.MUSE_TEST_HISTORY) {
+    appendFileSync(process.env.MUSE_TEST_HISTORY, JSON.stringify(frame.params.item) + "\n");
+  }
   process.stdout.write(JSON.stringify(frame) + "\n");
 }
 function respond(frame, result) {
