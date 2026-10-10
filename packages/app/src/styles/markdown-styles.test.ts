@@ -3,6 +3,20 @@ import { createCompactMarkdownStyles, createMarkdownStyles } from "./markdown-st
 import { darkTheme } from "./theme";
 
 describe("createMarkdownStyles", () => {
+  it("tightens text independently of interface padding and font size", () => {
+    const compactTheme = {
+      ...darkTheme,
+      spacing: { ...darkTheme.spacing, 3: 18 },
+      textSpacing: { ...darkTheme.textSpacing, 3: 6 },
+      textLineHeight: 1.2,
+    };
+    const styles = createMarkdownStyles(compactTheme);
+    expect(styles.body.fontSize).toBe(15);
+    expect(styles.body.lineHeight).toBe(18);
+    expect(styles.paragraph.marginBottom).toBe(6);
+    expect(styles.bullet_list_icon.lineHeight).toBe(18);
+  });
+
   it("uses the content size for conversation prose and list markers", () => {
     const styles = createMarkdownStyles(darkTheme);
     const proseLineHeight = Math.round(darkTheme.fontSize.content * 1.4);

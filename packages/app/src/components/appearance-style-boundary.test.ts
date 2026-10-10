@@ -5,6 +5,16 @@ import { darkTheme } from "@/styles/theme";
 import { appearanceStyleBoundaryKey } from "./appearance-style-boundary";
 
 describe("appearanceStyleBoundaryKey", () => {
+  it("refreshes rendered content when interface or text spacing changes", () => {
+    for (const changed of [
+      { ...darkTheme, spacing: { ...darkTheme.spacing, 4: 8 } },
+      { ...darkTheme, textSpacing: { ...darkTheme.textSpacing, 4: 8 } },
+      { ...darkTheme, textLineHeight: 1.2 },
+    ]) {
+      expect(appearanceStyleBoundaryKey(changed)).not.toBe(appearanceStyleBoundaryKey(darkTheme));
+    }
+  });
+
   it("changes when content size changes without any other appearance token changing", () => {
     const contentOnlyChange = {
       ...darkTheme,

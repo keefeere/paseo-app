@@ -2375,6 +2375,14 @@ export const uk: TranslationResources = {
         codeSizeHint: "Використовується для коду, diff і виводу терміналу",
         codeSizeAccessibility: "Розмір шрифту коду",
       },
+      spacing: {
+        title: "Повітря",
+        uiSpacingPercent: "Відступи інтерфейсу",
+        uiSpacingPercentHint: "Проміжки та поля незалежно від розміру шрифту",
+        textSpacingPercent: "Інтервали тексту",
+        textSpacingPercentHint: "Міжрядкові та міжабзацні інтервали в повідомленнях і Markdown",
+        info: "100% — стандартні відступи. Менші значення вміщують більше даних. Зберігається лише на цьому пристрої.",
+      },
       layout: {
         title: "Макет",
         contentWidth: "Ширина вмісту",

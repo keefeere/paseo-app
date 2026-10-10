@@ -2308,6 +2308,14 @@ export const ko: TranslationResources = {
         codeSizeHint: "코드, diff 및 터미널 출력에 사용됩니다",
         codeSizeAccessibility: "코드 글꼴 크기",
       },
+      spacing: {
+        title: "간격",
+        uiSpacingPercent: "인터페이스 간격",
+        uiSpacingPercentHint: "글꼴 크기와 독립적인 간격 및 여백",
+        textSpacingPercent: "텍스트 간격",
+        textSpacingPercentHint: "메시지와 Markdown의 줄 및 문단 간격",
+        info: "100%가 기본값입니다. 작은 값일수록 더 많은 내용이 표시됩니다. 이 기기에만 저장됩니다.",
+      },
       layout: {
         title: "레이아웃",
         contentWidth: "콘텐츠 너비",

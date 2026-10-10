@@ -43,6 +43,23 @@ function makeDeps(
 }
 
 describe("loadAppSettingsFromStorage", () => {
+  it("loads independent device spacing preferences and bounds invalid values", async () => {
+    for (const [stored, expected] of [
+      [{ uiSpacingPercent: 75, textSpacingPercent: 125 }, [75, 125]],
+      [{ uiSpacingPercent: 1, textSpacingPercent: 999 }, [50, 150]],
+      [{ uiSpacingPercent: "invalid", textSpacingPercent: null }, [100, 100]],
+      [{}, [100, 100]],
+    ] as const) {
+      const deps = makeDeps({
+        storage: createInMemoryKeyValueStorage({
+          [APP_SETTINGS_KEY]: JSON.stringify(stored),
+        }),
+      });
+      const loaded = await loadAppSettingsFromStorage(deps);
+      expect([loaded.uiSpacingPercent, loaded.textSpacingPercent]).toEqual(expected);
+    }
+  });
+
   it("preserves a persisted steer send behavior", async () => {
     const deps = makeDeps({
       storage: createInMemoryKeyValueStorage({

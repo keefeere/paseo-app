@@ -68,6 +68,8 @@ function makeInput(overrides: Partial<AppearanceInput> = {}): AppearanceInput {
     monoFontFamily: "",
     uiBaseFontSize: 14,
     contentFontSize: 15,
+    uiSpacingPercent: 100,
+    textSpacingPercent: 100,
     codeFontSize: 12,
     contentMaxWidth: 820,
     syntaxTheme: "one",

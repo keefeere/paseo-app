@@ -2333,6 +2333,14 @@ export const ptBR: TranslationResources = {
         codeSizeHint: "Usado em código, diffs e saída do terminal",
         codeSizeAccessibility: "Tamanho da fonte de código",
       },
+      spacing: {
+        title: "Espaçamento",
+        uiSpacingPercent: "Espaçamento da interface",
+        uiSpacingPercentHint: "Espaços e margens independentes do tamanho da fonte",
+        textSpacingPercent: "Espaçamento do texto",
+        textSpacingPercentHint: "Espaço entre linhas e parágrafos nas mensagens e no Markdown",
+        info: "100% é o padrão. Valores menores exibem mais conteúdo. Salvo apenas neste dispositivo.",
+      },
       layout: {
         title: "Layout",
         contentWidth: "Largura do conteúdo",

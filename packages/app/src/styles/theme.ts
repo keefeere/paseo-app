@@ -652,7 +652,9 @@ export const DEFAULT_CONTENT_MAX_WIDTH = 820;
 // them at runtime via `UnistylesRuntime.updateTheme`. The remaining tokens keep their
 // literal types.
 interface CommonTheme {
-  spacing: typeof SPACING;
+  spacing: Record<keyof typeof SPACING, number>;
+  textSpacing: Record<keyof typeof SPACING, number>;
+  textLineHeight: number;
   fontSize: Record<keyof typeof FONT_SIZE, number>;
   fontFamily: { ui: string; mono: string };
   lineHeight: Record<keyof typeof LINE_HEIGHT, number>;
@@ -666,6 +668,8 @@ interface CommonTheme {
 
 const commonTheme: CommonTheme = {
   spacing: SPACING,
+  textSpacing: SPACING,
+  textLineHeight: 1.4,
   fontSize: FONT_SIZE,
   fontFamily: { ui: DEFAULT_UI_FONT_STACK, mono: DEFAULT_MONO_FONT_STACK },
   lineHeight: LINE_HEIGHT,

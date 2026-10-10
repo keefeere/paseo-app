@@ -467,6 +467,58 @@ function SyntaxRow({ value, onChange }: SyntaxRowProps) {
   );
 }
 
+const SPACING_OPTIONS = [50, 75, 100, 125, 150] as const;
+
+function SpacingOption({
+  percent,
+  selected,
+  onSelect,
+}: {
+  percent: number;
+  selected: boolean;
+  onSelect: (percent: number) => void;
+}) {
+  const select = useCallback(() => onSelect(percent), [onSelect, percent]);
+  return <DropdownMenuItem selected={selected} onSelect={select}>{`${percent}%`}</DropdownMenuItem>;
+}
+
+function SpacingRow({ setting }: { setting: "uiSpacingPercent" | "textSpacingPercent" }) {
+  const { t } = useTranslation();
+  const { settings, updateSettings } = useAppSettings();
+  const label = t(`settings.appearance.spacing.${setting}`);
+  const select = useCallback(
+    (percent: number) => {
+      void updateSettings({ [setting]: percent });
+    },
+    [setting, updateSettings],
+  );
+  return (
+    <View style={setting === "uiSpacingPercent" ? settingsStyles.row : styles.rowWithBorder}>
+      <View style={settingsStyles.rowContent}>
+        <Text style={settingsStyles.rowTitle}>{label}</Text>
+        <Text style={settingsStyles.rowHint}>
+          {t(`settings.appearance.spacing.${setting}Hint`)}
+        </Text>
+      </View>
+      <DropdownMenu>
+        <DropdownTrigger accessibilityLabel={`${label}: ${settings[setting]}%`}>
+          {`${settings[setting]}%`}
+        </DropdownTrigger>
+        <DropdownMenuContent side="bottom" align="end" width={160}>
+          {SPACING_OPTIONS.map((percent) => (
+            <SpacingOption
+              key={percent}
+              percent={percent}
+              selected={settings[setting] === percent}
+              onSelect={select}
+            />
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -612,10 +664,11 @@ export function AppearanceSection() {
   const previewOverrides = useMemo(
     () => ({
       contentFontSize: sizeDraftToOverride(contentSizeDraft),
+      textSpacingPercent: settings.textSpacingPercent,
       monoFontFamily: monoFontDraft,
       codeFontSize: sizeDraftToOverride(codeSizeDraft),
     }),
-    [codeSizeDraft, contentSizeDraft, monoFontDraft],
+    [codeSizeDraft, contentSizeDraft, monoFontDraft, settings.textSpacingPercent],
   );
 
   return (
@@ -682,6 +735,15 @@ export function AppearanceSection() {
             onChangeDraft={handleCodeSizeChange}
             onCommit={commitCodeSize}
           />
+        </View>
+      </SettingsSection>
+      <SettingsSection
+        title={t("settings.appearance.spacing.title")}
+        info={t("settings.appearance.spacing.info")}
+      >
+        <View style={settingsStyles.card}>
+          <SpacingRow setting="uiSpacingPercent" />
+          <SpacingRow setting="textSpacingPercent" />
         </View>
       </SettingsSection>
       <SettingsSection title={t("settings.appearance.layout.title")}>

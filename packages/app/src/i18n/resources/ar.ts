@@ -2297,6 +2297,14 @@ export const ar: TranslationResources = {
         codeSizeHint: "يُستخدم للكود والفروقات ومخرجات الطرفية",
         codeSizeAccessibility: "حجم خط الكود",
       },
+      spacing: {
+        title: "التباعد",
+        uiSpacingPercent: "تباعد الواجهة",
+        uiSpacingPercentHint: "المسافات والهوامش مستقلة عن حجم الخط",
+        textSpacingPercent: "تباعد النص",
+        textSpacingPercentHint: "تباعد الأسطر والفقرات في الرسائل وMarkdown",
+        info: "100% هي القيمة الافتراضية. تعرض القيم الأصغر محتوى أكثر. يُحفظ على هذا الجهاز فقط.",
+      },
       layout: {
         title: "التخطيط",
         contentWidth: "عرض المحتوى",

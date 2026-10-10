@@ -2352,6 +2352,14 @@ export const es: TranslationResources = {
         codeSizeHint: "Se usa en código, diferencias y la salida del terminal",
         codeSizeAccessibility: "Tamaño de fuente del código",
       },
+      spacing: {
+        title: "Espaciado",
+        uiSpacingPercent: "Espaciado de la interfaz",
+        uiSpacingPercentHint: "Separación y relleno independientes del tamaño de letra",
+        textSpacingPercent: "Espaciado del texto",
+        textSpacingPercentHint: "Espacio entre líneas y párrafos en mensajes y Markdown",
+        info: "100% es el valor predeterminado. Valores menores muestran más contenido. Se guarda solo en este dispositivo.",
+      },
       layout: {
         title: "Diseño",
         contentWidth: "Ancho del contenido",

@@ -124,7 +124,7 @@ A section or group explains itself through the `info` prop on `<SettingsSection>
 
 Cards inside a section sit closer than sections. Rows inside a card touch — only the divider separates them. The rhythm is page → spacious; section → spacious; card → tight.
 
-Rows have generous vertical padding: roughly 16px of content plus 16px of vertical padding for settings rows, 8–12px for sidebar list items where many rows must fit. Compressing rows below the established density to fit more on the screen is wrong. Too many rows means more cards or more sections, not smaller rows.
+Rows have generous vertical padding: roughly 16px of content plus 16px of vertical padding for settings rows, 8–12px for sidebar list items where many rows must fit. Keep authored rows at this density. Appearance spacing is a user preference: interface gaps and padding scale independently of font size, while message and Markdown line and paragraph spacing have a separate control. Both default to 100% and stay local to each client. Fixed control heights preserve touch targets.
 
 The whitespace is the design.
 

@@ -2338,6 +2338,14 @@ export const ru: TranslationResources = {
         codeSizeHint: "Используется для кода, диффов и вывода терминала",
         codeSizeAccessibility: "Размер шрифта кода",
       },
+      spacing: {
+        title: "Воздух",
+        uiSpacingPercent: "Отступы интерфейса",
+        uiSpacingPercentHint: "Промежутки и поля независимо от размера шрифта",
+        textSpacingPercent: "Интервалы текста",
+        textSpacingPercentHint: "Межстрочные и межабзацные интервалы в сообщениях и Markdown",
+        info: "100% — стандартные отступы. Меньшие значения вмещают больше данных. Сохраняется только на этом устройстве.",
+      },
       layout: {
         title: "Макет",
         contentWidth: "Ширина содержимого",

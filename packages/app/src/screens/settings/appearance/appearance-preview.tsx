@@ -27,6 +27,7 @@ type RowType = "context" | "add" | "remove";
 
 interface PreviewOverrides {
   contentFontSize?: number;
+  textSpacingPercent?: number;
   monoFontFamily?: string;
   codeFontSize?: number;
 }
@@ -67,7 +68,10 @@ function buildCodeOverride(overrides: PreviewOverrides | undefined): TextStyle {
 function buildContentOverride(overrides: PreviewOverrides | undefined): TextStyle {
   const fontSize = resolveSizeOverride(overrides?.contentFontSize);
   if (fontSize === undefined) return {};
-  return inlineUnistylesStyle({ fontSize, lineHeight: Math.round(fontSize * 1.4) });
+  return inlineUnistylesStyle({
+    fontSize,
+    lineHeight: Math.round(fontSize * (1 + (0.4 * (overrides?.textSpacingPercent ?? 100)) / 100)),
+  });
 }
 
 interface KeyedToken {
@@ -214,7 +218,7 @@ const styles = StyleSheet.create((theme) => ({
   contentSample: {
     color: theme.colors.foreground,
     fontSize: theme.fontSize.content,
-    lineHeight: Math.round(theme.fontSize.content * 1.4),
+    lineHeight: Math.round(theme.fontSize.content * theme.textLineHeight),
     paddingHorizontal: theme.spacing[3],
     paddingBottom: theme.spacing[2],
   },

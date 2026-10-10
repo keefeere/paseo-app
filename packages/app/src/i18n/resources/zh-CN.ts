@@ -2265,6 +2265,14 @@ export const zhCN: TranslationResources = {
         codeSizeHint: "用于代码、差异和终端输出",
         codeSizeAccessibility: "代码字号",
       },
+      spacing: {
+        title: "间距",
+        uiSpacingPercent: "界面间距",
+        uiSpacingPercentHint: "独立于字号的间隔和内边距",
+        textSpacingPercent: "文本间距",
+        textSpacingPercentHint: "消息和 Markdown 中的行间距和段落间距",
+        info: "100% 为默认值。较小的值可显示更多内容。仅保存在此设备上。",
+      },
       layout: {
         title: "布局",
         contentWidth: "内容宽度",

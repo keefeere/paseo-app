@@ -598,7 +598,7 @@ const styles = StyleSheet.create((theme) => ({
     minWidth: 0,
     color: theme.colors.foreground,
     fontSize: theme.fontSize.content,
-    lineHeight: theme.fontSize.content * 1.4,
+    lineHeight: theme.fontSize.content * theme.textLineHeight,
   },
   commentActions: {
     flexDirection: "row",
@@ -647,7 +647,7 @@ const styles = StyleSheet.create((theme) => ({
     paddingHorizontal: theme.spacing[3],
     paddingVertical: theme.spacing[2],
     fontSize: theme.fontSize.content,
-    lineHeight: theme.fontSize.content * 1.4,
+    lineHeight: theme.fontSize.content * theme.textLineHeight,
     textAlignVertical: "top",
     ...(isWeb
       ? {

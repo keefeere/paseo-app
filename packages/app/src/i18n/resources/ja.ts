@@ -2318,6 +2318,14 @@ export const ja: TranslationResources = {
         codeSizeHint: "コード、差分、ターミナル出力に使用されます",
         codeSizeAccessibility: "コードフォントサイズ",
       },
+      spacing: {
+        title: "余白",
+        uiSpacingPercent: "インターフェースの余白",
+        uiSpacingPercentHint: "文字サイズと独立した間隔とパディング",
+        textSpacingPercent: "テキストの間隔",
+        textSpacingPercentHint: "メッセージとMarkdownの行間・段落間隔",
+        info: "100%が既定値です。小さい値ほど多く表示できます。この端末にのみ保存されます。",
+      },
       layout: {
         title: "レイアウト",
         contentWidth: "コンテンツ幅",

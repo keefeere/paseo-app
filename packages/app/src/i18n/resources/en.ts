@@ -2417,6 +2417,14 @@ export const en = {
         codeSizeHint: "Used for code, diffs, and terminal output",
         codeSizeAccessibility: "Code font size",
       },
+      spacing: {
+        title: "Spacing",
+        uiSpacingPercent: "Interface spacing",
+        uiSpacingPercentHint: "Gaps and padding, independent of font size",
+        textSpacingPercent: "Text spacing",
+        textSpacingPercentHint: "Line and paragraph spacing in messages and Markdown",
+        info: "100% is the default. Smaller values fit more content. Saved only on this device.",
+      },
       layout: {
         title: "Layout",
         contentWidth: "Content width",

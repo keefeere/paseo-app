@@ -4,6 +4,7 @@ import {
   DEFAULT_UI_FONT_STACK,
   DEFAULT_MONO_FONT_STACK,
   FONT_SIZE,
+  SPACING,
   REGISTERED_THEMES,
   type Theme,
 } from "@/styles/theme";
@@ -16,6 +17,8 @@ export interface AppearanceInput {
   monoFontFamily: string; // "" -> default stack
   uiBaseFontSize: number; // already clamped
   contentFontSize: number; // already clamped
+  uiSpacingPercent: number;
+  textSpacingPercent: number;
   codeFontSize: number; // already clamped
   contentMaxWidth: number; // already clamped, default resolved
   syntaxTheme: SyntaxThemeId;
@@ -64,6 +67,14 @@ export function applyAppearance(input: AppearanceInput): void {
   const ui = input.uiFontFamily.trim() || DEFAULT_UI_FONT_STACK;
   const mono = input.monoFontFamily.trim() || DEFAULT_MONO_FONT_STACK;
   const diffLineHeight = Math.round(input.codeFontSize * 1.5); // couple to code size
+  // Always scale the authored spacing so repeated updates never compound.
+  const scaleSpacing = (percent: number): Theme["spacing"] =>
+    Object.fromEntries(
+      Object.entries(SPACING).map(([key, value]) => [key, (value * percent) / 100]),
+    ) as Theme["spacing"];
+  const spacing = scaleSpacing(input.uiSpacingPercent);
+  const textSpacing = scaleSpacing(input.textSpacingPercent);
+  const textLineHeight = 1 + (0.4 * input.textSpacingPercent) / 100;
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -81,9 +92,13 @@ export function applyAppearance(input: AppearanceInput): void {
         input.codeFontSize,
       );
       const lineHeight = { ...t.lineHeight, diff: diffLineHeight };
+
       if (t.colorScheme === "light") {
         return {
           ...t,
+          spacing,
+          textSpacing,
+          textLineHeight,
           fontFamily,
           fontSize,
           lineHeight,
@@ -93,6 +108,9 @@ export function applyAppearance(input: AppearanceInput): void {
       }
       return {
         ...t,
+        spacing,
+        textSpacing,
+        textLineHeight,
         fontFamily,
         fontSize,
         lineHeight,

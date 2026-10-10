@@ -2357,6 +2357,15 @@ export const fr: TranslationResources = {
         codeSizeHint: "Utilisée pour le code, les diffs et la sortie du terminal",
         codeSizeAccessibility: "Taille de la police du code",
       },
+      spacing: {
+        title: "Espacement",
+        uiSpacingPercent: "Espacement de l’interface",
+        uiSpacingPercentHint: "Marges et espaces indépendants de la taille du texte",
+        textSpacingPercent: "Espacement du texte",
+        textSpacingPercentHint:
+          "Espaces entre les lignes et paragraphes des messages et du Markdown",
+        info: "100 % est la valeur par défaut. Des valeurs plus petites affichent plus de contenu. Enregistré uniquement sur cet appareil.",
+      },
       layout: {
         title: "Mise en page",
         contentWidth: "Largeur du contenu",
