@@ -218,6 +218,7 @@ interface TestDeps {
 function buildAgentManagerSpies() {
   return {
     createAgent: vi.fn(),
+    persistSubmittedPromptImages: vi.fn().mockResolvedValue(undefined),
     waitForAgentEvent: vi.fn().mockResolvedValue({
       status: "idle",
       permission: null,
