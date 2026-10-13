@@ -28,9 +28,9 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.0.0",
-    "@getpaseo/client": "0.11.2",
-    "@getpaseo/protocol": "0.11.2",
-    "@getpaseo/server": "0.11.2",
+    "@getpaseo/client": "0.11.2-beta.906",
+    "@getpaseo/protocol": "0.11.2-beta.906",
+    "@getpaseo/server": "0.11.2-beta.906",
     "chalk": "^5.3.0",
     "commander": "^12.0.0",
     "mime-types": "^2.1.35",
