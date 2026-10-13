@@ -1323,6 +1323,8 @@ export const uk: TranslationResources = {
         copyPath: "Копіювати шлях",
         copyBranchName: "Копіювати назву гілки",
         rename: "Перейменувати робочий простір",
+        markAsRead: "Позначити прочитаним",
+        markAsUnread: "Позначити непрочитаним",
         pin: "Закріпити вгорі",
         unpin: "Відкріпити",
         archive: "Архівувати",

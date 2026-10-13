@@ -1310,6 +1310,8 @@ export const ar: TranslationResources = {
         copyPath: "نسخ المسار",
         copyBranchName: "انسخ اسم الفرع",
         rename: "إعادة تسمية مساحة العمل",
+        markAsRead: "وضع علامة مقروء",
+        markAsUnread: "وضع علامة غير مقروء",
         pin: "تثبيت في الأعلى",
         unpin: "إلغاء التثبيت",
         archive: "أرشيف",
