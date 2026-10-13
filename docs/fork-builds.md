@@ -1,6 +1,6 @@
 # Fork builds
 
-This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cover fork test builds. Upstream release docs ([release.md](release.md)) do not apply here.
+This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cover fork builds and Linux beta releases. Upstream release docs ([release.md](release.md)) do not apply here.
 
 ## Rules
 
@@ -8,7 +8,7 @@ This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cove
 - Build only from fork `main`. Merge feature branches into `main` first; never build from a feature branch or a mix of branches.
 - Before a build, merge the latest published upstream stable release tag into `main` and resolve conflicts there. Keep fork changes. Do not routinely merge unreleased `upstream/main` into the release track; feature branches can still start there for upstream PRs. Never reset or rewrite existing history to remove previously merged commits.
 - Desktop and Docker come from the same commit, so both report the same version.
-- Never push a `v*` tag. It starts Desktop Release, Android, Docker and Release Notes Sync.
+- Do not push `v*` tags manually. Publish Desktop through manual dispatch; the workflow creates its release tag at the stamped source SHA. A manual tag push starts additional tag workflows.
 
 ## Version
 
@@ -31,13 +31,13 @@ Keep CI, Desktop Packages, Desktop Release and Docker enabled. The fork does not
 
 ## Update feed
 
-`packages/desktop/electron-builder.yml` publishes to keefeere/paseo-app. The auto-updater downloads any newer release from that feed. Pointed at upstream, it would replace the fork build with vanilla Paseo the first time upstream releases a higher version. The fork publishes no releases, so fork builds see no updates.
+`packages/desktop/electron-builder.yml` publishes to keefeere/paseo-app. The auto-updater downloads any newer release from that feed. Pointed at upstream, it would replace the fork build with vanilla Paseo the first time upstream releases a higher version. Publish Linux beta builds as GitHub prereleases with `beta-linux.yml`. Beta Desktop installations check this feed for newer versions. The release workflow validates the Linux manifest and publishes only after the requested Linux build succeeds. macOS and Windows manifests are required only when those platforms are selected. Linux releases use immediate rollout (`rollout_hours=0`).
 
 ## Build
 
 1. On a branch from `main`, set every workspace package to the build version, then commit `chore(build): stamp v<version> (upstream <base>)`. Edit versions with the closing quote included: an unanchored `sed` also rewrites `@xterm/addon-ligatures` `^0.11.0-beta.213`.
 2. Push to `build/v<version>`. Non-`main` pushes start no workflows.
-3. Desktop: `gh workflow run desktop-release.yml -R keefeere/paseo-app --ref build/v<version> -f tag=v<version> -f platform=linux -f checkout_ref=<sha> -f publish=false`. The AppImage is the `desktop-linux` artifact. Download it with `gh run download <run> -n desktop-linux -D ~/Downloads/paseo-<version>`. Without `-D` it extracts 700 MB into the current directory.
+3. Desktop: `gh workflow run desktop-release.yml -R keefeere/paseo-app --ref build/v<version> -f tag=v<version> -f platform=linux -f checkout_ref=<sha> -f publish=true -f rollout_hours=0`. The workflow publishes a GitHub prerelease containing the AppImage, DEB, RPM, tar archive and beta update manifest. For a build requested without publication, use `publish=false`; its AppImage is the `desktop-linux` artifact. Download that artifact with `gh run download <run> -n desktop-linux -D ~/Downloads/paseo-<version>`. Without `-D` it extracts 700 MB into the current directory.
 4. Docker: `gh workflow run docker.yml -R keefeere/paseo-app --ref main -f export_image=true -f checkout_ref=<full-sha> -f paseo_version=<version> -f publish=false`. CI exports the standard image from `docker/base/Dockerfile`, without agent CLIs or personal configuration. Download `paseo-image`; verify `SHA256SUMS`, then import the archive with `docker load`. Match its image ID and source commit against `image-metadata.txt`.
 5. Host-specific tools and deployment automation stay on the target host, outside this public repository. Derive the local image from the verified CI base and deploy through the host's container manager, preserving the existing persistent data. An update restarts the daemon and stops its agents. Manual updates need explicit restart approval; enabling a scheduled updater authorizes later updates within that schedule. Run the updater on the host so health checks and rollback survive the agent container's restart.
 

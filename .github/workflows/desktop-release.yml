@@ -11,13 +11,13 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build (e.g. v0.1.0)"
+        description: "Release version tag (created when publishing, e.g. v0.11.2-beta.907)"
         required: true
         type: string
       platform:
         description: "Optional desktop platform to build."
         required: false
-        default: "all"
+        default: "linux"
         type: choice
         options:
           - all
@@ -40,7 +40,7 @@ on:
       rollout_hours:
         description: "Linear rollout duration in hours. Use 0 for instant rollout."
         required: false
-        default: "36"
+        default: "0"
         type: string
 
 concurrency:
@@ -51,12 +51,13 @@ env:
   SOURCE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
   CHECKOUT_REF: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.checkout_ref || github.ref_name) || github.ref_name }}
   SHOULD_PUBLISH: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.publish != 'false' }}
-  ROLLOUT_HOURS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rollout_hours || '36' }}
+  ROLLOUT_HOURS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.rollout_hours || '0' }}
   DESKTOP_PACKAGE_PATH: "packages/desktop"
+  RELEASE_PLATFORM: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.platform || 'all' }}
 
 jobs:
   create-release:
-    if: ${{ (github.event_name == 'push' && !startsWith(github.ref_name, 'desktop-macos-v') && !startsWith(github.ref_name, 'desktop-linux-v') && !startsWith(github.ref_name, 'desktop-windows-v')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.platform == 'all' && github.event.inputs.publish != 'false') }}
+    if: ${{ (github.event_name == 'push' && !startsWith(github.ref_name, 'desktop-macos-v') && !startsWith(github.ref_name, 'desktop-linux-v') && !startsWith(github.ref_name, 'desktop-windows-v')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish != 'false') }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -85,6 +86,7 @@ jobs:
             gh release create "$RELEASE_TAG" \
               --repo "${{ github.repository }}" \
               --title "Paseo $RELEASE_TAG" \
+              --target "$(git rev-parse HEAD)" \
               --notes "" \
               --draft \
               $prerelease_flag || {
@@ -478,11 +480,13 @@ jobs:
           manifests_dir="$PWD/final"
           mkdir -p "$manifests_dir"
 
-          expected_manifests=(
-            "${RELEASE_CHANNEL}-mac.yml"
-            "${RELEASE_CHANNEL}-linux.yml"
-            "${RELEASE_CHANNEL}.yml"
-          )
+          case "$RELEASE_PLATFORM" in
+            linux) expected_manifests=("${RELEASE_CHANNEL}-linux.yml") ;;
+            macos) expected_manifests=("${RELEASE_CHANNEL}-mac.yml") ;;
+            windows) expected_manifests=("${RELEASE_CHANNEL}.yml") ;;
+            all) expected_manifests=("${RELEASE_CHANNEL}-mac.yml" "${RELEASE_CHANNEL}-linux.yml" "${RELEASE_CHANNEL}.yml") ;;
+            *) echo "::error::Unknown release platform: $RELEASE_PLATFORM"; exit 1 ;;
+          esac
           release_lookup="$(node ../scripts/github-release.mjs --repo "${{ github.repository }}" --tag "$RELEASE_TAG" --cleanup-duplicates)"
           existing_assets="$(gh release view "$release_lookup" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
           for manifest_name in "${expected_manifests[@]}"; do
