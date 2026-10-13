@@ -28,7 +28,10 @@ import { isWeb } from "@/constants/platform";
 import { useAppSettings } from "@/hooks/use-settings";
 import { useLiveFile } from "./live-file/hook";
 import { useFilePreview } from "./preview-lifecycle/hook";
-import { resolveFilePreviewLifecycle } from "./preview-lifecycle/model";
+import {
+  getUnavailablePreviewResource,
+  resolveFilePreviewLifecycle,
+} from "./preview-lifecycle/model";
 import { FilePanelBar } from "./bar";
 import { FileHtmlPreview } from "./html-preview";
 import { FileMarkdownPreview } from "./markdown-preview";
@@ -296,14 +299,18 @@ export function FilePane({
     previewLifecycle.status === "read_pending" ||
     previewLifecycle.status === "preparing";
 
-  if (previewLifecycle.status === "unavailable" && readTarget) {
+  const unavailableResource = getUnavailablePreviewResource(previewLifecycle);
+  if (unavailableResource && readTarget) {
     return (
       <UnavailableResource
         key={targetKey}
         serverId={serverId}
         cwd={readTarget.cwd}
         requestedPath={readTarget.path}
-        resource={previewLifecycle.resource}
+        resource={unavailableResource}
+        errorMessage={errorMessage}
+        onRetry={liveFile.refresh}
+        retrying={liveFile.isRetrying}
       />
     );
   }

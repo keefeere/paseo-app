@@ -152,6 +152,78 @@ describe("FilePreviewLifecycleModel", () => {
     await expectSnapshot(model, { status: "error", message: "attachment failed" });
   });
 
+  it("retains an open text file when it becomes a directory so its editor can retry", async () => {
+    const preview: FilePanePreview = { file: previewFile("preview"), imageAttachment: null };
+    const model = new FilePreviewLifecycleModel(async () => preview);
+    model.setSource(source("/workspace:file.ts", completed(file())));
+    await expectSnapshot(model, { status: "ready", preview });
+    model.setSource(
+      source("/workspace:file.ts", {
+        observation: {
+          status: "error",
+          cwd: "/workspace",
+          path: "file.ts",
+          error: "Requested path is not a file",
+        },
+        read: {
+          status: "error",
+          error: "Requested path is a directory",
+          resource: {
+            reason: "directory",
+            path: "/workspace/file.ts",
+            size: 0,
+            mimeType: "inode/directory",
+          },
+        },
+      }),
+    );
+    expect(model.getSnapshot()).toEqual({
+      status: "error",
+      message: "Requested path is not a file",
+      preview,
+    });
+  });
+
+  it("keeps binary metadata through a live directory replacement and a pending retry", () => {
+    const resource = {
+      reason: "unsupported",
+      path: "/workspace/data.bin",
+      size: 4,
+      mimeType: "application/octet-stream",
+    } as const;
+    const model = new FilePreviewLifecycleModel(async () => null);
+    model.setSource(
+      source("/workspace:data.bin", {
+        observation: null,
+        read: { status: "error", error: "unsupported", resource },
+      }),
+    );
+    model.setSource(
+      source("/workspace:data.bin", {
+        observation: {
+          status: "error",
+          cwd: "/workspace",
+          path: "data.bin",
+          error: "Requested path is not a file",
+        },
+        read: {
+          status: "error",
+          error: "directory",
+          resource: { ...resource, reason: "directory", mimeType: "inode/directory" },
+        },
+      }),
+    );
+    expect(model.getSnapshot()).toEqual({
+      status: "error",
+      message: "Requested path is not a file",
+      resource,
+    });
+    model.setSource(source("/workspace:data.bin", pending()));
+    expect(model.getSnapshot()).toEqual({ status: "read_pending", resource });
+    model.setSource(source("/workspace:other.bin", pending()));
+    expect(model.getSnapshot()).toEqual({ status: "read_pending" });
+  });
+
   it("does not publish a stale conversion after retargeting", async () => {
     const first = deferred<FilePanePreview | null>();
     const second = deferred<FilePanePreview | null>();

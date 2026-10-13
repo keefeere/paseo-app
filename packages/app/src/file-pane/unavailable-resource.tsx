@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { buildAbsoluteExplorerPath } from "@/utils/explorer-paths";
 import { useCallback, useLayoutEffect, useState } from "react";
 import { useIsCompactFormFactor } from "@/constants/layout";
@@ -16,12 +17,18 @@ export function UnavailableResource({
   cwd,
   requestedPath,
   resource,
+  errorMessage,
+  onRetry,
+  retrying,
 }: {
   serverId: string;
   cwd: string;
   /** The path the tab asked for; `resource.path` is canonical and may leave a symlinked root. */
   requestedPath: string;
   resource: FilePreviewUnavailable;
+  errorMessage: string | null;
+  onRetry: () => void;
+  retrying: boolean;
 }) {
   const { t } = useTranslation();
   const { openPreferredTarget, workspaceId, closeCurrentTab } = usePaneContext();
@@ -82,15 +89,24 @@ export function UnavailableResource({
       ? t("panels.file.tooLargeToDisplay")
       : t("panels.file.binaryPreviewUnavailable");
   return (
-    <View style={styles.container} testID="file-preview-unavailable">
+    <View style={styles.container} testID="workspace-file-pane">
       <ResourceActions
         serverId={serverId}
         cwd={cwd}
         path={resource.path}
         downloadable={resource.mimeType !== "inode/special"}
       />
-      <View style={styles.center}>
-        <Text style={styles.text}>{message}</Text>
+      <View style={styles.center} testID="file-preview-unavailable">
+        {errorMessage || retrying ? (
+          <>
+            <Text style={styles.text}>{errorMessage}</Text>
+            <Button variant="outline" size="sm" onPress={onRetry} loading={retrying}>
+              {t("common.actions.retry")}
+            </Button>
+          </>
+        ) : (
+          <Text style={styles.text}>{message}</Text>
+        )}
         <Text selectable style={styles.text}>
           {resource.path}
         </Text>
