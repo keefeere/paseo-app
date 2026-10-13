@@ -2336,6 +2336,12 @@ export const ar: TranslationResources = {
         description: "عرض مخطط للتنقل بين المطالبات",
       },
       sidebar: {
+        projects: {
+          title: "المشاريع",
+          flattenSingleWorkspace: "عدم توسيع المشاريع ذات مساحة العمل الواحدة",
+          description: "فتح مساحة العمل الوحيدة مباشرة من صف المشروع",
+          saveFailed: "تعذر حفظ إعدادات الشريط الجانبي",
+        },
         header: {
           title: "الرأس",
           description: "اختر العناصر التي تظهر أعلى الشريط الجانبي وترتيبها",

@@ -120,6 +120,7 @@ import { Shortcut } from "@/components/ui/shortcut";
 import type { ShortcutKey } from "@/utils/format-shortcut";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
 import { useKeyboardActionHandler } from "@/hooks/use-keyboard-action-handler";
+import { useSettings } from "@/hooks/use-settings";
 import { useWorkspaceReadState } from "@/hooks/use-workspace-read-state";
 import type { PrHint } from "@/git/use-pr-status-query";
 import {
@@ -239,6 +240,7 @@ interface ProjectHeaderRowProps {
   displayName: string;
   iconDataUri: string | null;
   statusBucket: SidebarStateBucket | null;
+  unreadBadgeOnLeft?: boolean;
   selected?: boolean;
   chevron: "expand" | "collapse" | null;
   onPress: () => void;
@@ -848,6 +850,7 @@ function ProjectHeaderRow({
   displayName,
   iconDataUri,
   statusBucket,
+  unreadBadgeOnLeft = false,
   selected = false,
   chevron,
   onPress,
@@ -943,6 +946,7 @@ function ProjectHeaderRow({
           displayName={displayName}
           iconDataUri={iconDataUri}
           statusBucket={statusBucket}
+          unreadBadgeOnLeft={unreadBadgeOnLeft}
           projectViewKey={project.viewKey}
           backdrop={getSidebarRowBackdrop({ isDragging, isPressed, selected, isHovered })}
           chevron={chevron}
@@ -1540,6 +1544,7 @@ function ProjectBlock({
   project,
   workspaceEntriesByKey,
   collapsed,
+  flattenSingleWorkspaceProjects,
   displayName,
   iconDataUri,
   selectionEnabled,
@@ -1565,6 +1570,7 @@ function ProjectBlock({
   project: SidebarProjectEntry;
   workspaceEntriesByKey: ReadonlyMap<string, SidebarWorkspaceEntry>;
   collapsed: boolean;
+  flattenSingleWorkspaceProjects: boolean;
   displayName: string;
   iconDataUri: string | null;
   selectionEnabled: boolean;
@@ -1598,16 +1604,17 @@ function ProjectBlock({
       buildSidebarProjectRowModel({
         project,
         collapsed,
+        flattenSingleWorkspaceProjects,
         supportsMultiplicityByServerId,
       }),
-    [collapsed, project, supportsMultiplicityByServerId],
+    [collapsed, flattenSingleWorkspaceProjects, project, supportsMultiplicityByServerId],
   );
 
   // Collapsed rows hide their workspace rows, so the project row carries the most urgent
   // status among them; expanded rows leave the signal to the child rows themselves.
   const aggregateStatusBucket = useSidebarProjectStatusBucket({
     workspaces: project.workspaces,
-    enabled: collapsed,
+    enabled: collapsed || rowModel.kind === "project_workspace",
   });
 
   const active = isProjectSelectedByRoute({
@@ -1739,12 +1746,24 @@ function ProjectBlock({
     })();
   }, [isRemovingProject, displayName, t, toast, project.hosts]);
 
-  const handleToggleCollapsed = useCallback(() => {
+  const handleProjectPress = useCallback(() => {
+    if (rowModel.kind === "project_workspace") {
+      onWorkspacePress?.();
+      navigateToWorkspace({
+        serverId: rowModel.workspace.serverId,
+        workspaceId: rowModel.workspace.workspaceId,
+      });
+      return;
+    }
     onToggleCollapsed(project.viewKey);
-  }, [onToggleCollapsed, project.viewKey]);
+  }, [rowModel, onWorkspacePress, onToggleCollapsed, project.viewKey]);
 
+  const isFlattened = rowModel.kind === "project_workspace";
+  const shortcutNumber = isFlattened
+    ? (shortcutIndexByWorkspaceKey.get(rowModel.workspace.workspaceKey) ?? null)
+    : null;
   let projectChildren = null;
-  if (!collapsed) {
+  if (!collapsed && !isFlattened) {
     if (project.workspaces.length > 0) {
       projectChildren = (
         <>
@@ -1794,9 +1813,12 @@ function ProjectBlock({
         displayName={displayName}
         iconDataUri={iconDataUri}
         statusBucket={aggregateStatusBucket}
-        selected={false}
+        unreadBadgeOnLeft={isFlattened}
+        selected={isFlattened && active}
+        shortcutNumber={shortcutNumber}
+        showShortcutBadge={showShortcutBadges}
         chevron={rowModel.chevron}
-        onPress={handleToggleCollapsed}
+        onPress={handleProjectPress}
         worktreeTarget={
           rowModel.trailingAction.kind === "new_workspace" ? rowModel.trailingAction.target : null
         }
@@ -1825,6 +1847,7 @@ function areProjectBlockPropsEqual(previous: ProjectBlockProps, next: ProjectBlo
     previous.project === next.project &&
     previous.workspaceEntriesByKey === next.workspaceEntriesByKey &&
     previous.collapsed === next.collapsed &&
+    previous.flattenSingleWorkspaceProjects === next.flattenSingleWorkspaceProjects &&
     previous.displayName === next.displayName &&
     previous.iconDataUri === next.iconDataUri &&
     previous.selectionEnabled === next.selectionEnabled &&
@@ -2111,6 +2134,14 @@ function ProjectModeList({
   onToggleWorkspacePin: ToggleSidebarWorkspacePin;
   onPinnedWorkspaceReorder: (workspaces: SidebarWorkspacePlacement[]) => void;
 }) {
+  const flattenSingleWorkspaceProjects = useSettings(
+    (settings) => settings.flattenSingleWorkspaceProjects,
+  );
+  const singleWorkspaceProjectsByKey = useMemo(() => {
+    // Count before pinning removes workspaces from their project rows.
+    const singleWorkspaceProjects = projects.filter((project) => project.workspaces.length === 1);
+    return new Map(singleWorkspaceProjects.map((project) => [project.viewKey, project]));
+  }, [projects]);
   const hasActiveHostFilter = useSidebarViewStore((state) => state.hostFilters.length > 0);
   const [creatingWorkspaceIds, setCreatingWorkspaceIds] = useState<Set<string>>(() => new Set());
   const creatingWorkspaceTimeoutsRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(
@@ -2282,10 +2313,14 @@ function ProjectModeList({
         dragHandleProps?: DraggableRenderItemInfo<SidebarProjectEntry>["dragHandleProps"];
       },
     ) => {
+      const singleWorkspaceProject = singleWorkspaceProjectsByKey.get(item.viewKey);
+      const shouldFlatten = flattenSingleWorkspaceProjects && singleWorkspaceProject !== undefined;
+      const rowProject = shouldFlatten ? singleWorkspaceProject : item;
       return (
         <MemoProjectBlock
           key={item.viewKey}
-          project={item}
+          project={rowProject}
+          flattenSingleWorkspaceProjects={shouldFlatten}
           workspaceEntriesByKey={workspaceEntriesByKey}
           collapsed={collapsedProjectKeys.has(item.viewKey)}
           displayName={item.projectName}
@@ -2314,6 +2349,8 @@ function ProjectModeList({
     },
     [
       collapsedProjectKeys,
+      flattenSingleWorkspaceProjects,
+      singleWorkspaceProjectsByKey,
       activeWorkspaceSelection,
       handleWorktreeCreated,
       handleWorkspaceReorder,

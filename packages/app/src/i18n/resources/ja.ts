@@ -2357,6 +2357,12 @@ export const ja: TranslationResources = {
         description: "プロンプト間を移動するためのアウトラインを表示します",
       },
       sidebar: {
+        projects: {
+          title: "プロジェクト",
+          flattenSingleWorkspace: "ワークスペースが1つのプロジェクトを展開しない",
+          description: "プロジェクト行から唯一のワークスペースを直接開く",
+          saveFailed: "サイドバー設定を保存できませんでした",
+        },
         header: {
           title: "ヘッダー",
           description: "サイドバー上部に表示する項目とその順序を選択します",

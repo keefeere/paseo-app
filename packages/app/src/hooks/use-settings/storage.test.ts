@@ -43,6 +43,28 @@ function makeDeps(
 }
 
 describe("loadAppSettingsFromStorage", () => {
+  it("defaults single-workspace flattening off for old or malformed settings", async () => {
+    for (const stored of [{}, { flattenSingleWorkspaceProjects: "true" }]) {
+      const deps = makeDeps({
+        storage: createInMemoryKeyValueStorage({ [APP_SETTINGS_KEY]: JSON.stringify(stored) }),
+      });
+      expect((await loadAppSettingsFromStorage(deps)).flattenSingleWorkspaceProjects).toBe(false);
+    }
+  });
+
+  it("persists and reloads the single-workspace preference", async () => {
+    const deps = makeDeps();
+    const queryClient = new QueryClient();
+    await saveAppSettings({ queryClient, deps, updates: { flattenSingleWorkspaceProjects: true } });
+    expect((await loadAppSettingsFromStorage(deps)).flattenSingleWorkspaceProjects).toBe(true);
+    await saveAppSettings({
+      queryClient,
+      deps,
+      updates: { flattenSingleWorkspaceProjects: false },
+    });
+    expect((await loadAppSettingsFromStorage(deps)).flattenSingleWorkspaceProjects).toBe(false);
+  });
+
   it("preserves the old line box and accepts independent compact controls", async () => {
     const legacy = await loadAppSettingsFromStorage(
       makeDeps({

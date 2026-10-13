@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type ReactElement } from "react";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -17,6 +17,8 @@ import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { Button } from "@/components/ui/button";
 import { Shortcut } from "@/components/ui/shortcut";
 import { Switch } from "@/components/ui/switch";
+import { useAppSettings } from "@/hooks/use-settings";
+import { useToast } from "@/contexts/toast-context";
 import { useShortcutKeys } from "@/hooks/use-shortcut-keys";
 import { SettingsSection } from "@/components/settings/headings/settings-section";
 import {
@@ -181,8 +183,47 @@ function SidebarItemsCard({ section }: { section: SidebarSection }): ReactElemen
 
 /** Settings > Sidebar: one card per section. The footer's bottom line is fixed and not listed. */
 export function SidebarNavSection(): ReactElement {
+  const { t } = useTranslation();
+  const { settings, isLoading, updateSettings } = useAppSettings();
+  const toast = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const handleFlattenChange = useCallback(
+    async (value: boolean) => {
+      setIsSaving(true);
+      try {
+        await updateSettings({ flattenSingleWorkspaceProjects: value });
+      } catch {
+        toast.error(t("settings.appearance.sidebar.projects.saveFailed"));
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [updateSettings, toast, t],
+  );
+
   return (
     <>
+      <SettingsSection title={t("settings.appearance.sidebar.projects.title")}>
+        <View style={settingsStyles.card}>
+          <View style={settingsStyles.row}>
+            <View style={settingsStyles.rowContent}>
+              <Text style={settingsStyles.rowTitle}>
+                {t("settings.appearance.sidebar.projects.flattenSingleWorkspace")}
+              </Text>
+              <Text style={settingsStyles.rowHint}>
+                {t("settings.appearance.sidebar.projects.description")}
+              </Text>
+            </View>
+            <Switch
+              value={settings.flattenSingleWorkspaceProjects}
+              onValueChange={handleFlattenChange}
+              disabled={isLoading || isSaving}
+              accessibilityLabel={t("settings.appearance.sidebar.projects.flattenSingleWorkspace")}
+              testID="sidebar-flatten-single-workspace-projects"
+            />
+          </View>
+        </View>
+      </SettingsSection>
       <SidebarItemsCard section="header" />
       <SidebarItemsCard section="footer" />
     </>

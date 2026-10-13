@@ -2347,6 +2347,12 @@ export const ko: TranslationResources = {
         description: "프롬프트 사이를 이동하기 위한 개요 표시",
       },
       sidebar: {
+        projects: {
+          title: "프로젝트",
+          flattenSingleWorkspace: "워크스페이스가 하나인 프로젝트 펼치지 않기",
+          description: "프로젝트 행에서 유일한 워크스페이스 바로 열기",
+          saveFailed: "사이드바 설정을 저장하지 못했습니다",
+        },
         header: {
           title: "헤더",
           description: "사이드바 상단에 표시할 항목과 순서를 선택하세요",

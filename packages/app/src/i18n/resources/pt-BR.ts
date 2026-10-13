@@ -2372,6 +2372,12 @@ export const ptBR: TranslationResources = {
         description: "Mostrar uma estrutura para navegar entre prompts",
       },
       sidebar: {
+        projects: {
+          title: "Projetos",
+          flattenSingleWorkspace: "Não expandir projetos com um único espaço de trabalho",
+          description: "Abrir o único espaço de trabalho diretamente pela linha do projeto",
+          saveFailed: "Não foi possível salvar as configurações da barra lateral",
+        },
         header: {
           title: "Cabeçalho",
           description: "Escolha quais itens aparecem no topo da barra lateral e em que ordem",

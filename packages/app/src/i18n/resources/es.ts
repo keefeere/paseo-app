@@ -2389,6 +2389,12 @@ export const es: TranslationResources = {
         description: "Muestra un esquema para saltar entre instrucciones",
       },
       sidebar: {
+        projects: {
+          title: "Proyectos",
+          flattenSingleWorkspace: "No expandir proyectos con un solo espacio de trabajo",
+          description: "Abrir el único espacio de trabajo desde la fila del proyecto",
+          saveFailed: "No se pudo guardar la configuración de la barra lateral",
+        },
         header: {
           title: "Encabezado",
           description:

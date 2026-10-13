@@ -2388,6 +2388,12 @@ export const fr: TranslationResources = {
         description: "Afficher un plan pour naviguer entre les prompts",
       },
       sidebar: {
+        projects: {
+          title: "Projets",
+          flattenSingleWorkspace: "Ne pas développer les projets avec un seul espace de travail",
+          description: "Ouvrir directement l’espace de travail depuis la ligne du projet",
+          saveFailed: "Impossible d’enregistrer les paramètres de la barre latérale",
+        },
         header: {
           title: "En-tête",
           description:

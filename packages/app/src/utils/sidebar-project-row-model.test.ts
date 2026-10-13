@@ -65,6 +65,86 @@ function project(overrides: ProjectOverrides = {}): SidebarProjectEntry {
 }
 
 describe("buildSidebarProjectRowModel", () => {
+  it.each([true, false])(
+    "flattens a sole workspace regardless of saved collapsed state (%s)",
+    (collapsed) => {
+      const entry = project();
+      const result = buildSidebarProjectRowModel({
+        project: entry,
+        collapsed,
+        flattenSingleWorkspaceProjects: true,
+      });
+      expect(result).toEqual({
+        kind: "project_workspace",
+        chevron: null,
+        workspace: entry.workspaces[0],
+        trailingAction: {
+          kind: "new_workspace",
+          target: { serverId: "srv", projectId: "project-srv", iconWorkingDir: "/repo" },
+        },
+      });
+    },
+  );
+
+  it("preserves non-git workspace creation capability when flattened", () => {
+    const result = buildSidebarProjectRowModel({
+      project: project({ projectKind: "directory" }),
+      collapsed: false,
+      flattenSingleWorkspaceProjects: true,
+      supportsMultiplicityByServerId: new Map([["srv", true]]),
+    });
+    expect(result.kind).toBe("project_workspace");
+    expect(result.trailingAction.kind).toBe("new_workspace");
+  });
+
+  it("uses the sole workspace's host as the navigation target", () => {
+    const soleWorkspace = workspace({ serverId: "host-b", workspaceId: "ws-b" });
+    const result = buildSidebarProjectRowModel({
+      project: project({ workspaces: [soleWorkspace] }),
+      collapsed: false,
+      flattenSingleWorkspaceProjects: true,
+    });
+    expect(result).toMatchObject({
+      kind: "project_workspace",
+      workspace: { serverId: "host-b", workspaceId: "ws-b" },
+    });
+  });
+
+  it("restores the tree after a second workspace is added and flattens again after removal", () => {
+    const entry = project();
+    const build = () =>
+      buildSidebarProjectRowModel({
+        project: entry,
+        collapsed: false,
+        flattenSingleWorkspaceProjects: true,
+      });
+    expect(build().kind).toBe("project_workspace");
+    entry.workspaces.push(workspace({ workspaceId: "second", workspaceKey: "srv:second" }));
+    expect(build()).toMatchObject({ kind: "project_section", chevron: "collapse" });
+    entry.workspaces.pop();
+    expect(build().kind).toBe("project_workspace");
+  });
+
+  it("keeps empty projects expandable when flattening is enabled", () => {
+    expect(
+      buildSidebarProjectRowModel({
+        project: project({ workspaces: [] }),
+        collapsed: false,
+        flattenSingleWorkspaceProjects: true,
+      }),
+    ).toMatchObject({ kind: "project_section", chevron: "collapse" });
+  });
+
+  it("keeps the single-workspace tree when the preference is disabled", () => {
+    expect(
+      buildSidebarProjectRowModel({
+        project: project(),
+        collapsed: true,
+        flattenSingleWorkspaceProjects: false,
+      }),
+    ).toMatchObject({ kind: "project_section", chevron: "expand" });
+  });
+
   it("renders a non-git single-workspace project as an expandable section", () => {
     const result = buildSidebarProjectRowModel({
       project: project({

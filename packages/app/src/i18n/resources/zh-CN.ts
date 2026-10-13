@@ -2306,6 +2306,12 @@ export const zhCN: TranslationResources = {
         description: "显示用于在提示词之间跳转的大纲",
       },
       sidebar: {
+        projects: {
+          title: "项目",
+          flattenSingleWorkspace: "不展开只有一个工作区的项目",
+          description: "从项目行直接打开唯一的工作区",
+          saveFailed: "无法保存侧边栏设置",
+        },
         header: {
           title: "顶部",
           description: "选择侧边栏顶部显示的项目及其顺序",

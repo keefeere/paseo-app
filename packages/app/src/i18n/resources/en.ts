@@ -2456,6 +2456,12 @@ export const en = {
         description: "Show an outline for jumping between prompts",
       },
       sidebar: {
+        projects: {
+          title: "Projects",
+          flattenSingleWorkspace: "Don't expand projects with a single workspace",
+          description: "Open the only workspace directly from the project row",
+          saveFailed: "Failed to save sidebar settings",
+        },
         header: {
           title: "Header",
           description: "Choose which items appear at the top of the sidebar and in what order",

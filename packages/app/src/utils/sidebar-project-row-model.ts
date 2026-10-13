@@ -1,4 +1,7 @@
-import type { SidebarProjectEntry } from "@/hooks/use-sidebar-workspaces-list";
+import type {
+  SidebarProjectEntry,
+  SidebarWorkspacePlacement,
+} from "@/hooks/use-sidebar-workspaces-list";
 import { createProjectIconTarget, type ProjectIconTarget } from "@/projects/icon-target";
 
 export interface SidebarProjectHostTarget {
@@ -19,7 +22,16 @@ export interface SidebarProjectSectionRowModel {
   trailingAction: SidebarProjectTrailingAction;
 }
 
-export type SidebarProjectRowModel = SidebarProjectSectionRowModel;
+export interface SidebarProjectWorkspaceRowModel {
+  kind: "project_workspace";
+  chevron: null;
+  workspace: SidebarWorkspacePlacement;
+  trailingAction: SidebarProjectTrailingAction;
+}
+
+export type SidebarProjectRowModel =
+  | SidebarProjectSectionRowModel
+  | SidebarProjectWorkspaceRowModel;
 
 const EMPTY_MULTIPLICITY_MAP: ReadonlyMap<string, boolean> = new Map();
 function hostTarget(input: {
@@ -110,14 +122,21 @@ function projectTrailingAction(
 export function buildSidebarProjectRowModel(input: {
   project: SidebarProjectEntry;
   collapsed: boolean;
+  flattenSingleWorkspaceProjects?: boolean;
   supportsMultiplicityByServerId?: ReadonlyMap<string, boolean>;
 }): SidebarProjectRowModel {
+  const trailingAction = projectTrailingAction(
+    input.project,
+    input.supportsMultiplicityByServerId ?? EMPTY_MULTIPLICITY_MAP,
+  );
+  const [workspace] = input.project.workspaces;
+  const isSingleWorkspace = input.project.workspaces.length === 1;
+  if (input.flattenSingleWorkspaceProjects && isSingleWorkspace && workspace) {
+    return { kind: "project_workspace", chevron: null, workspace, trailingAction };
+  }
   return {
     kind: "project_section",
     chevron: input.collapsed ? "expand" : "collapse",
-    trailingAction: projectTrailingAction(
-      input.project,
-      input.supportsMultiplicityByServerId ?? EMPTY_MULTIPLICITY_MAP,
-    ),
+    trailingAction,
   };
 }

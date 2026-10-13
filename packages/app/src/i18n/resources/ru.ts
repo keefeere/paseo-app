@@ -2375,6 +2375,12 @@ export const ru: TranslationResources = {
         description: "Показывать оглавление для перехода между запросами",
       },
       sidebar: {
+        projects: {
+          title: "Проекты",
+          flattenSingleWorkspace: "Не разворачивать проекты с одним воркспейсом",
+          description: "Открывать единственный воркспейс нажатием на строку проекта",
+          saveFailed: "Не удалось сохранить настройки боковой панели",
+        },
         header: {
           title: "Верх",
           description:
