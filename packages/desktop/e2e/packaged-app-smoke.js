@@ -157,6 +157,9 @@ function createDefaultDaemonEnv(extraEnv) {
 function createIsolatedDesktopEnv({ home, listen, userData, cdpPort }) {
   return {
     ...createDefaultDaemonEnv({ HOME: home, USERPROFILE: home }),
+    // AppImage extraction is cached by image digest under TMPDIR. A previous
+    // runtime can still be cleaning that cache after its launch wrapper exits.
+    TMPDIR: userData,
     PASEO_HOME: home,
     PASEO_LISTEN: listen,
     PASEO_ELECTRON_USER_DATA_DIR: userData,
