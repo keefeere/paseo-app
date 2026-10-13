@@ -90,29 +90,31 @@ export function UnavailableResource({
       : t("panels.file.binaryPreviewUnavailable");
   return (
     <View style={styles.container} testID="workspace-file-pane">
-      <ResourceActions
-        serverId={serverId}
-        cwd={cwd}
-        path={resource.path}
-        downloadable={resource.mimeType !== "inode/special"}
-      />
-      <View style={styles.center} testID="file-preview-unavailable">
-        {errorMessage || retrying ? (
-          <>
-            <Text style={styles.text}>{errorMessage}</Text>
-            <Button variant="outline" size="sm" onPress={onRetry} loading={retrying}>
-              {t("common.actions.retry")}
-            </Button>
-          </>
-        ) : (
-          <Text style={styles.text}>{message}</Text>
-        )}
-        <Text selectable style={styles.text}>
-          {resource.path}
-        </Text>
-        <Text style={styles.text}>
-          {resource.mimeType} · {resource.size.toLocaleString()} B
-        </Text>
+      <View style={styles.container} testID="file-preview-unavailable">
+        <ResourceActions
+          serverId={serverId}
+          cwd={cwd}
+          path={resource.path}
+          downloadable={resource.mimeType !== "inode/special"}
+        />
+        <View style={styles.center}>
+          {errorMessage || retrying ? (
+            <>
+              <Text style={styles.text}>{errorMessage}</Text>
+              <Button variant="outline" size="sm" onPress={onRetry} loading={retrying}>
+                {t("common.actions.retry")}
+              </Button>
+            </>
+          ) : (
+            <Text style={styles.text}>{message}</Text>
+          )}
+          <Text selectable style={styles.text}>
+            {resource.path}
+          </Text>
+          <Text style={styles.text}>
+            {resource.mimeType} · {resource.size.toLocaleString()} B
+          </Text>
+        </View>
       </View>
     </View>
   );
