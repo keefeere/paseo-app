@@ -1,6 +1,7 @@
 import { defineLanguageFacet, Language, StreamLanguage } from "@codemirror/language";
 import { dart } from "@codemirror/legacy-modes/mode/clike";
 import { swift } from "@codemirror/legacy-modes/mode/swift";
+import { shell } from "@codemirror/legacy-modes/mode/shell";
 import { parser as jsParser } from "@lezer/javascript";
 import { parser as jsonParser } from "@lezer/json";
 import { parser as cssParser } from "@lezer/css";
@@ -27,7 +28,33 @@ function language(parser: Parser): Language {
   return new Language(defineLanguageFacet(), parser);
 }
 
+const shellLanguage = StreamLanguage.define(shell);
+const consoleLanguage = StreamLanguage.define({
+  startState(indentUnit) {
+    return { command: false, indentUnit, shellState: shell.startState?.(indentUnit) };
+  },
+  token(stream, state) {
+    if (stream.sol()) {
+      state.command = Boolean(stream.match(/^[ \t]*\$(?:[ \t]+|$)/));
+      // Each prompt starts a new command; output must not inherit shell string state.
+      state.shellState = shell.startState?.(state.indentUnit);
+      if (state.command) return null;
+    }
+    if (!state.command) {
+      stream.skipToEnd();
+      return null;
+    }
+    return shell.token(stream, state.shellState);
+  },
+});
+
 const languagesByExtension: Record<string, Language> = {
+  // Shell
+  bash: shellLanguage,
+  sh: shellLanguage,
+  shell: shellLanguage,
+  zsh: shellLanguage,
+  console: consoleLanguage,
   // JavaScript/TypeScript
   js: language(jsParser),
   jsx: language(jsParser.configure({ dialect: "jsx" })),

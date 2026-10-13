@@ -30,6 +30,23 @@ describe("tokenizeToLines", () => {
     expect(lines?.[0].some((token) => token.style === "keyword")).toBe(true);
   });
 
+  it.each(["bash", "sh", "shell", "zsh"])(
+    "tokenizes %s Markdown fences with shell syntax colors",
+    (language) => {
+      const lines = tokenizeToLines("if true; then\nfi", language);
+      expect(lines).toHaveLength(2);
+      expect(lines?.[0]).toContainEqual({ text: "if", style: "keyword" });
+      expect(lines?.[1]).toEqual([{ text: "fi", style: "keyword" }]);
+    },
+  );
+
+  it("keeps console fence output uncolored", () => {
+    const lines = tokenizeToLines('$ echo "hello"\nhello', "console");
+    expect(lines).toHaveLength(2);
+    expect(lines?.[0]).toContainEqual({ text: '"hello"', style: "string" });
+    expect(lines?.[1]).toEqual([{ text: "hello", style: null }]);
+  });
+
   it("returns null when there is no extension", () => {
     expect(tokenizeToLines("whatever", null)).toBeNull();
   });
