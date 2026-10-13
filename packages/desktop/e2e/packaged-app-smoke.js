@@ -820,7 +820,8 @@ async function assertSandboxState({ browser, page, expectedSandbox, stdout, stde
       `Unexpected sandbox decision: ${JSON.stringify(diagnostics)}; expected enabled=${expectedSandbox}`,
     );
   }
-  if (!stdout.join("").includes("[desktop] app startup")) {
+  const appLogs = await page.evaluate(() => window.paseoDesktop.invoke("desktop_app_logs"));
+  if (!fs.readFileSync(appLogs.logPath, "utf8").includes("[desktop] app startup")) {
     throw new Error("Missing production app startup log");
   }
   const session = await browser.newBrowserCDPSession();

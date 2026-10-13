@@ -25,6 +25,10 @@ This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cove
 
 Existing higher legacy versions can make a build under this policy look like a downgrade. Check the installed Desktop and host-updater versions before deployment. Handle that transition explicitly; do not change the base or counter to satisfy an updater. Preserve historical tags and branches unless the user separately requests cleanup.
 
+## CI
+
+Keep CI, Desktop Packages, Desktop Release and Docker enabled. The fork does not deploy the upstream app, relay or website, publish Android APKs, roll out upstream desktop releases, sync release notes, or maintain Nix packages. Disable those workflows in the fork settings; deployment and maintenance jobs also require the upstream repository identity so a later import cannot execute them here.
+
 ## Update feed
 
 `packages/desktop/electron-builder.yml` publishes to keefeere/paseo-app. The auto-updater downloads any newer release from that feed. Pointed at upstream, it would replace the fork build with vanilla Paseo the first time upstream releases a higher version. The fork publishes no releases, so fork builds see no updates.

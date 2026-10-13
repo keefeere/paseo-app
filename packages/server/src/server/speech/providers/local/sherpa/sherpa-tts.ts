@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import type pino from "pino";
 import { Readable } from "node:stream";
 import { existsSync } from "node:fs";
@@ -24,22 +25,22 @@ function assertFileExists(filePath: string, label: string): void {
 }
 
 function buildModelSection(config: SherpaTtsConfig): Record<string, unknown> {
-  const tokensPath = `${config.modelDir}/tokens.txt`;
+  const tokensPath = join(config.modelDir, "tokens.txt");
   assertFileExists(tokensPath, "TTS tokens");
 
   if (config.preset !== "kokoro-en-v0_19") {
     // Character-based VITS models: no voices.bin and no espeak-ng-data. Passing a dataDir
     // would route text through the English espeak phonemizer and garble it.
-    const modelPath = `${config.modelDir}/model.onnx`;
+    const modelPath = join(config.modelDir, "model.onnx");
     assertFileExists(modelPath, "TTS model");
     return {
       vits: { model: modelPath, tokens: tokensPath, lengthScale: config.lengthScale ?? 1.0 },
     };
   }
 
-  const modelPath = `${config.modelDir}/model.onnx`;
-  const voicesPath = `${config.modelDir}/voices.bin`;
-  const dataDir = `${config.modelDir}/espeak-ng-data`;
+  const modelPath = join(config.modelDir, "model.onnx");
+  const voicesPath = join(config.modelDir, "voices.bin");
+  const dataDir = join(config.modelDir, "espeak-ng-data");
   assertFileExists(modelPath, "TTS model");
   assertFileExists(voicesPath, "TTS voices");
   assertFileExists(dataDir, "TTS espeak-ng dataDir");

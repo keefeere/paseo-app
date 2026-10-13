@@ -10,6 +10,11 @@ interface SurfaceRect {
   y: number;
 }
 
+interface LayoutShiftEntry extends PerformanceEntry {
+  value: number;
+  sources: Array<{ node: Node | null }>;
+}
+
 interface LayoutObservation {
   active: boolean;
   layoutShift: number;
@@ -143,7 +148,11 @@ export async function startCommandCenterLayoutObservation(page: Page): Promise<v
       try {
         const performanceObserver = new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
-            observation.layoutShift += (entry as PerformanceEntry & { value?: number }).value ?? 0;
+            const shift = entry as LayoutShiftEntry;
+            const panel = document.querySelector(selectors.panel);
+            if (shift.sources.some((source) => source.node && panel?.contains(source.node))) {
+              observation.layoutShift += shift.value;
+            }
           }
         });
         performanceObserver.observe({ type: "layout-shift", buffered: false });

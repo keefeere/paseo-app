@@ -229,14 +229,14 @@ test.describe("CodeMirror workspace file editing", () => {
     try {
       await openAgentRoute(page, session);
       await openWorkspaceFile(page, "too-large.txt");
-      await expect(page.getByTestId("file-source-too-large")).toContainText(
+      await expect(page.getByTestId("file-preview-unavailable")).toContainText(
         "This file is too large to display",
       );
 
       await page.getByTestId(`workspace-tab-agent_${session.agentId}`).first().click();
       await expect(page.getByTestId("message-input-root")).toBeVisible();
       await page.getByTestId("workspace-tab-file_too-large.txt").first().click();
-      await expect(page.getByTestId("file-source-too-large")).toBeVisible();
+      await expect(page.getByTestId("file-preview-unavailable")).toBeVisible();
     } finally {
       await session.cleanup();
     }
@@ -797,7 +797,7 @@ test.describe("Resource links", () => {
       },
     );
     try {
-      const tabs = page.locator('[data-testid^="workspace-tab-"]');
+      const tabs = page.getByTestId(/^workspace-tab-(?:agent|file)_/).filter({ visible: true });
       await expect(tabs).toHaveCount(1);
       await page.getByRole("link", { name: "Open folder" }).first().click();
       const selected = page

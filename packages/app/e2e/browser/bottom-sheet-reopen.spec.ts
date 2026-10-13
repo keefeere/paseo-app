@@ -89,8 +89,15 @@ async function dismissStackedModelPickerWithBackdrop(page: Page) {
     .getByTestId("agent-controls-settings-list")
     .getByRole("button", { name: /Select model/ })
     .click();
-  await expect(page.getByTestId("agent-controls-model-browser-sheet")).toBeVisible();
-  await page.mouse.click(MOBILE_VIEWPORT.width / 2, 24);
+  const browserSheet = page.getByTestId("agent-controls-model-browser-sheet");
+  await expect(browserSheet).toBeVisible();
+  // A visible portal can precede the push animation and modal-stack ownership.
+  await browserSheet.getByRole("button", { name: "Close", exact: true }).click({ trial: true });
+  await page
+    .getByRole("button", { name: "Bottom sheet backdrop" })
+    .filter({ visible: true })
+    .last()
+    .click({ position: { x: MOBILE_VIEWPORT.width / 2, y: 24 } });
   await expect(page.getByTestId("agent-controls-model-browser-sheet")).not.toBeVisible();
   await expect(page.getByTestId("agent-controls-model-sheet")).toBeVisible();
   await expect(page.getByTestId("agent-controls-settings-list")).toBeVisible();

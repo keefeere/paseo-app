@@ -95,7 +95,7 @@ test("applies the interface font size to settings text", async ({ page }) => {
   await expect(sectionTitle).toHaveCSS("font-size", "10px");
 });
 
-test("adjusts and persists interface and text spacing independently", async ({
+test("adjusts and persists interface spacing and line height independently", async ({
   page,
 }, testInfo) => {
   await page.goto("/settings");
@@ -108,20 +108,20 @@ test("adjusts and persists interface and text spacing independently", async ({
   await expect(sample).toHaveCSS("font-size", "15px");
   await expect(sample).toHaveCSS("line-height", "21px");
 
-  await page.getByLabel("Interface spacing: 100%", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "50%", exact: true }).click();
+  const interfaceSpacing = page.getByRole("slider", { name: "Interface spacing", exact: true });
+  await interfaceSpacing.press("Home");
   await expect(interfaceRow).toHaveCSS("padding-top", "8px");
   await expect(sample).toHaveCSS("line-height", "21px");
 
-  await page.getByLabel("Text spacing: 100%", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "50%", exact: true }).click();
-  await expect(sample).toHaveCSS("line-height", "18px");
+  const lineHeight = page.getByRole("slider", { name: "Line height", exact: true });
+  await lineHeight.press("Home");
+  await expect(sample).toHaveCSS("line-height", "17px");
   await expect(sample).toHaveCSS("font-size", "15px");
   await expect(interfaceRow).toHaveCSS("padding-top", "8px");
 
   await page.reload();
-  await expect(page.getByLabel("Interface spacing: 50%", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Text spacing: 50%", { exact: true })).toBeVisible();
-  await expect(sample).toHaveCSS("line-height", "18px");
+  await expect(interfaceSpacing).toHaveValue("50");
+  await expect(lineHeight).toHaveValue("110");
+  await expect(sample).toHaveCSS("line-height", "17px");
   await page.screenshot({ path: testInfo.outputPath("appearance-spacing.png"), fullPage: true });
 });

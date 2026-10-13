@@ -852,7 +852,7 @@ async function revealCompactChanges(page: Page) {
   await expect(compactReviewSurface(page).getByTestId("diff-file-0-body")).toBeVisible();
 }
 async function expectReviewEditorBody(page: Page, body: string) {
-  await expect(page.getByRole("textbox", { name: "Review comment", exact: true })).toHaveValue(
-    body,
-  );
+  await expect(
+    page.getByRole("textbox", { name: "Review comment", exact: true }).filter({ visible: true }),
+  ).toHaveValue(body);
 }

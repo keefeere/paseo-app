@@ -15,10 +15,15 @@ export interface FilePanePreview {
 
 export type FilePreviewLifecycleSnapshot =
   | { status: "initial" }
-  | { status: "read_pending"; preview?: FilePanePreview }
-  | { status: "preparing"; preview?: FilePanePreview }
+  | { status: "read_pending"; preview?: FilePanePreview; resource?: FilePreviewUnavailable }
+  | { status: "preparing"; preview?: FilePanePreview; resource?: FilePreviewUnavailable }
   | { status: "ready"; preview: FilePanePreview }
-  | { status: "error"; message: string; preview?: FilePanePreview }
+  | {
+      status: "error";
+      message: string;
+      preview?: FilePanePreview;
+      resource?: FilePreviewUnavailable;
+    }
   | { status: "unsupported" }
   | { status: "unavailable"; resource: FilePreviewUnavailable };
 
@@ -54,6 +59,7 @@ export class FilePreviewLifecycleModel {
   private generation = 0;
   private preparedSourceKey: string | null = null;
   private targetKey: string | null = null;
+  private retainedResource: FilePreviewUnavailable | null = null;
 
   constructor(
     private readonly prepare: (file: FileReadResult) => Promise<FilePanePreview | null>,
@@ -71,6 +77,7 @@ export class FilePreviewLifecycleModel {
     const retainedPreview = targetChanged ? undefined : filePreviewFromLifecycle(this.snapshot);
     if (targetChanged) {
       this.targetKey = input.targetKey;
+      this.retainedResource = null;
       this.preparedSourceKey = null;
       this.generation += 1;
     }
@@ -80,6 +87,7 @@ export class FilePreviewLifecycleModel {
       if (source.key === this.preparedSourceKey) {
         return;
       }
+      this.retainedResource = null;
       this.preparedSourceKey = source.key;
       const generation = ++this.generation;
       this.setSnapshot({
@@ -90,14 +98,33 @@ export class FilePreviewLifecycleModel {
       return;
     }
 
-    const nextSnapshot = getNonReadySnapshot(input.liveFileSnapshot);
+    let nextSnapshot = getNonReadySnapshot(input.liveFileSnapshot);
+    // A directory discovered on first open can redirect to the explorer. A live
+    // replacement must keep the existing file tab and its retry/conflict state.
+    if (
+      nextSnapshot.status === "unavailable" &&
+      nextSnapshot.resource.reason === "directory" &&
+      (retainedPreview || this.retainedResource)
+    ) {
+      nextSnapshot = {
+        status: "error",
+        message: directoryReplacementMessage(input.liveFileSnapshot),
+      };
+    }
+    if (nextSnapshot.status === "unavailable") this.retainedResource = nextSnapshot.resource;
+    if (
+      (nextSnapshot.status === "error" || nextSnapshot.status === "read_pending") &&
+      this.retainedResource
+    ) {
+      nextSnapshot = { ...nextSnapshot, resource: this.retainedResource };
+    }
     if (nextSnapshot.status === "initial" && retainedPreview) {
       return;
     }
     const retainedSnapshot = retainedPreview
       ? { ...nextSnapshot, preview: retainedPreview }
       : nextSnapshot;
-    if (sameNonReadyState(this.snapshot, retainedSnapshot)) {
+    if (!targetChanged && sameNonReadyState(this.snapshot, retainedSnapshot)) {
       return;
     }
     this.preparedSourceKey = null;
@@ -142,6 +169,18 @@ export function resolveFilePreviewLifecycle(snapshot: FilePreviewLifecycleSnapsh
 } {
   const preview = filePreviewFromLifecycle(snapshot);
   return preview ?? { file: null, imageAttachment: null };
+}
+
+function directoryReplacementMessage(snapshot: LiveFileSnapshot): string {
+  return snapshot.observation?.status === "error"
+    ? snapshot.observation.error
+    : "Requested path is not a file";
+}
+
+export function getUnavailablePreviewResource(
+  snapshot: FilePreviewLifecycleSnapshot,
+): FilePreviewUnavailable | null {
+  return "resource" in snapshot ? (snapshot.resource ?? null) : null;
 }
 
 function getReadySource(input: {
