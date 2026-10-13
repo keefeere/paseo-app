@@ -30,6 +30,55 @@ describe("highlightCode", () => {
     expect(stringToken?.style).toBe("string");
   });
 
+  it.each(["bash", "sh", "shell", "zsh"])("highlights %s shell code", (extension) => {
+    const code = 'if true; then\n  echo "hello" # greeting\nfi';
+    const result = highlightCode(code, `script.${extension}`);
+
+    const sourceLines = code.split("\n");
+    expect(result).toHaveLength(sourceLines.length);
+    for (const [index, line] of result.entries()) {
+      expect(line.map((token) => token.text).join("")).toBe(sourceLines[index]);
+    }
+    expect(result[0].find((token) => token.text === "if")?.style).toBe("keyword");
+    expect(result[1]).toEqual(
+      expect.arrayContaining([
+        { text: '"hello"', style: "string" },
+        { text: "# greeting", style: "comment" },
+      ]),
+    );
+    expect(result[2]).toEqual([{ text: "fi", style: "keyword" }]);
+  });
+
+  it("highlights only dollar-prompt commands in console transcripts", () => {
+    const code =
+      '$ echo "hello"\nhello\n  $ if true; then\nif true; then\n$HOME is output\n$\n\n$ echo "bye"\n';
+    const result = highlightCode(code, "session.CONSOLE");
+
+    const sourceLines = code.split("\n");
+    expect(result).toHaveLength(sourceLines.length);
+    for (const [index, line] of result.entries()) {
+      expect(line.map((token) => token.text).join("")).toBe(sourceLines[index]);
+    }
+    expect(result[0]).toContainEqual({ text: '"hello"', style: "string" });
+    expect(result[0][0]).toEqual({ text: "$ ", style: null });
+    expect(result[1]).toEqual([{ text: "hello", style: null }]);
+    expect(result[2][0]).toEqual({ text: "  $ ", style: null });
+    expect(result[2]).toContainEqual({ text: "if", style: "keyword" });
+    expect(result[3]).toEqual([{ text: "if true; then", style: null }]);
+    expect(result[4]).toEqual([{ text: "$HOME is output", style: null }]);
+    expect(result[5]).toEqual([{ text: "$", style: null }]);
+    expect(result[6]).toEqual([{ text: "", style: null }]);
+    expect(result[7]).toContainEqual({ text: '"bye"', style: "string" });
+    expect(result[8]).toEqual([{ text: "", style: null }]);
+  });
+
+  it("keeps console output and later commands out of unfinished command strings", () => {
+    const result = highlightCode('$ echo "unfinished\noutput\n$ if true; then', "session.console");
+
+    expect(result[1]).toEqual([{ text: "output", style: null }]);
+    expect(result[2]).toContainEqual({ text: "if", style: "keyword" });
+  });
+
   it("highlights Swift code", () => {
     const code = 'struct Greeter {\n    let message = "hello"\n}';
     const result = highlightCode(code, "test.swift");
