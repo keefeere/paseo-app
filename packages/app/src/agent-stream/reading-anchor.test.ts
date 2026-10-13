@@ -1,3 +1,7 @@
+import {
+  findScrollJumps,
+  type ScrollFrame,
+} from "../../e2e/support/helpers/timeline-scroll-smoothness";
 import { describe, expect, it } from "vitest";
 import { createReadingAnchor } from "./reading-anchor";
 
@@ -118,5 +122,109 @@ describe("reading anchor", () => {
         rows.map((row) => ({ id: row.id, height: row.height, top: row.top + 2000 })),
       ),
     ).toBe(0);
+  });
+});
+
+describe("scroll jump evidence", () => {
+  function frame(input: Partial<ScrollFrame>): ScrollFrame {
+    return {
+      at: 0,
+      scrollTop: 2000,
+      scrollHeight: 5000,
+      viewportHeight: 800,
+      virtualized: true,
+      loading: false,
+      rows: [],
+      anchor: "reader",
+      wheelTotal: 0,
+      lastWheelAt: 0,
+      inputFinishedAt: null,
+      imageLoads: 0,
+      mounted: 2,
+      unmounted: 0,
+      ...input,
+    };
+  }
+
+  it("accepts wheel movement into an image that shrinks after loading", () => {
+    const before = frame({
+      rows: [
+        { id: "image", top: -600, height: 560 },
+        { id: "reader", top: -40, height: 150 },
+      ],
+    });
+    const after = frame({
+      at: 50,
+      scrollTop: 1828,
+      wheelTotal: 160,
+      rows: [
+        { id: "image", top: -440, height: 225 },
+        { id: "reader", top: -215, height: 150 },
+      ],
+    });
+    expect(findScrollJumps([before, after])).toEqual([]);
+    expect(
+      findScrollJumps([
+        before,
+        {
+          ...after,
+          rows: [
+            { id: "image", top: -800, height: 225 },
+            { id: "reader", top: -575, height: 150 },
+          ],
+        },
+      ]),
+    ).toHaveLength(1);
+  });
+
+  it("accepts image growth while scrollTop includes a virtualizer correction", () => {
+    const before = frame({
+      rows: [
+        { id: "image", top: -700, height: 560 },
+        { id: "reader", top: -140, height: 150 },
+      ],
+    });
+    const after = frame({
+      at: 50,
+      scrollTop: 1730,
+      wheelTotal: 320,
+      rows: [
+        { id: "image", top: -540, height: 1632 },
+        { id: "reader", top: 1092, height: 150 },
+      ],
+    });
+    expect(findScrollJumps([before, after])).toEqual([]);
+    expect(
+      findScrollJumps([
+        before,
+        {
+          ...after,
+          rows: [
+            { id: "image", top: -250, height: 1632 },
+            { id: "reader", top: 1382, height: 150 },
+          ],
+        },
+      ]),
+    ).toHaveLength(1);
+  });
+
+  it("still detects text movement after wheel input stops", () => {
+    const before = frame({
+      at: 1000,
+      inputFinishedAt: 0,
+      rows: [
+        { id: "image", top: -600, height: 560 },
+        { id: "reader", top: -40, height: 150 },
+      ],
+    });
+    const after = frame({
+      at: 1050,
+      inputFinishedAt: 0,
+      rows: [
+        { id: "image", top: -600, height: 225 },
+        { id: "reader", top: -375, height: 150 },
+      ],
+    });
+    expect(findScrollJumps([before, after])).toHaveLength(1);
   });
 });

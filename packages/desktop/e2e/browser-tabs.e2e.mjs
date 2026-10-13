@@ -1083,6 +1083,9 @@ async function main() {
   const workspaceRoot = path.join(runtimeDir, "workspaces");
   fs.mkdirSync(paseoHome, { recursive: true });
 
+  // Start the ephemeral HTTP fixture before releasing ports for the child services.
+  // Otherwise it can reclaim Metro's port before the dev runner binds it.
+  const target = await startTargetPage();
   const [daemonPort, expoPort, cdpPort, inspectorPort, remotePort] = await Promise.all([
     reservePort(),
     reservePort(),
@@ -1092,7 +1095,6 @@ async function main() {
   ]);
   const listen = `127.0.0.1:${daemonPort}`;
   seedPaseoHome(paseoHome, listen, workspaceRoot);
-  const target = await startTargetPage();
   seedPluginLinks(paseoHome, workspaceIds[0], target.url, workspaceIds[1]);
   const remoteHome = path.join(runtimeDir, "remote-home");
   seedPaseoHome(remoteHome, `127.0.0.1:${remotePort}`, path.join(runtimeDir, "remote-workspaces"));

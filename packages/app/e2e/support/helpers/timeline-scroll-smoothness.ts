@@ -320,21 +320,28 @@ export function findScrollJumps(frames: ScrollFrame[]) {
     // applied in earlier frames. Locate the reader with this frame's scroll,
     // bounded by recent input. Growth below it can move the old anchor without
     // moving the reading line.
+    // scrollTop also includes virtualizer corrections. Use the intended row's
+    // viewport movement to distinguish wheel input from layout drift.
+    const intendedMovement =
+      intendedRow && currentRows.has(intendedRow.id)
+        ? currentRows.get(intendedRow.id)!.top - intendedRow.top
+        : null;
     const readerFollowsInput =
-      intendedRow &&
-      currentRows.has(intendedRow.id) &&
-      Math.abs(currentRows.get(intendedRow.id)!.top - intendedRow.top - availableScroll) <= 32;
-    const enteredRowGrowth = readerFollowsInput
-      ? previous.rows.reduce((growth, row) => {
-          if (row.top < intendedRow.top || row.top >= before.top) return growth;
-          const height = currentRows.get(row.id)?.height ?? row.height;
-          return growth + Math.max(0, height - row.height);
-        }, 0)
-      : 0;
-    const excessForward = movement > wheelBudget + enteredRowGrowth + 32;
+      intendedMovement !== null && intendedMovement >= -8 && intendedMovement <= wheelBudget + 32;
+    const enteredRowResize =
+      intendedRow && readerFollowsInput
+        ? previous.rows.reduce((growth, row) => {
+            if (row.top < intendedRow.top || row.top >= before.top) return growth;
+            const height = currentRows.get(row.id)?.height ?? row.height;
+            return growth + height - row.height;
+          }, 0)
+        : 0;
+    const readingMovement = movement - enteredRowResize;
+    const excessForward = readingMovement > wheelBudget + 32;
     // Upward wheel input moves the same text DOWN the viewport. A negative move
     // is a reversal, independent of legitimate scrollTop compensation on prepend.
-    if (movement >= -8 && (!idle || Math.abs(movement) <= 8) && !excessForward) return [];
+    if (readingMovement >= -8 && (!idle || Math.abs(readingMovement) <= 8) && !excessForward)
+      return [];
     return [
       {
         frame: index,
