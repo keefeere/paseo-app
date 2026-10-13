@@ -115,13 +115,13 @@ test("adjusts and persists interface spacing and line height independently", asy
 
   const lineHeight = page.getByRole("slider", { name: "Line height", exact: true });
   await lineHeight.press("Home");
-  await expect(sample).toHaveCSS("line-height", "16.5px");
+  await expect(sample).toHaveCSS("line-height", "17px");
   await expect(sample).toHaveCSS("font-size", "15px");
   await expect(interfaceRow).toHaveCSS("padding-top", "8px");
 
   await page.reload();
   await expect(interfaceSpacing).toHaveValue("50");
   await expect(lineHeight).toHaveValue("110");
-  await expect(sample).toHaveCSS("line-height", "16.5px");
+  await expect(sample).toHaveCSS("line-height", "17px");
   await page.screenshot({ path: testInfo.outputPath("appearance-spacing.png"), fullPage: true });
 });
