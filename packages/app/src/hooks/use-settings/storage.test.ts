@@ -481,6 +481,7 @@ describe("loadAppSettingsFromStorage", () => {
 
     expect(result.openInSidePane).toMatchObject({ chatFiles: true });
     expect(result.chatLinkBehavior).toBe("ask");
+    expect(result.systemLinkBehavior).toBe("ask");
   });
 
   it("loads configured terminal scrollback lines from app settings", async () => {

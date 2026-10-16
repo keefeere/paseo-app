@@ -7,6 +7,7 @@ import {
   type OpenInSidePanePreferences,
   type PullRequestOpenLocation,
   type ServiceUrlBehavior,
+  type SystemLinkBehavior,
 } from "@/hooks/use-settings";
 
 const SOURCES = [
@@ -38,6 +39,13 @@ const CHAT_LINK_LABEL_KEYS: Record<ChatLinkBehavior, string> = {
   "internal-side": "settings.general.chatLinks.options.internalSide",
   "internal-tab": "settings.general.chatLinks.options.internalTab",
   external: "settings.general.chatLinks.options.external",
+};
+
+const SYSTEM_LINK_BEHAVIORS: readonly SystemLinkBehavior[] = ["ask", "open"];
+
+const SYSTEM_LINK_LABEL_KEYS: Record<SystemLinkBehavior, string> = {
+  ask: "settings.general.systemLinks.options.ask",
+  open: "settings.general.systemLinks.options.open",
 };
 
 type OpenLocationSource = keyof OpenInSidePanePreferences | "pullRequests";
@@ -120,6 +128,28 @@ function ChatLinkRow() {
   );
 }
 
+function SystemLinkRow() {
+  const { t } = useTranslation();
+  const { settings, updateSettings } = useAppSettings();
+  const options = useMemo(
+    () =>
+      SYSTEM_LINK_BEHAVIORS.map((value) => ({ value, label: t(SYSTEM_LINK_LABEL_KEYS[value]) })),
+    [t],
+  );
+  const change = useCallback(
+    (systemLinkBehavior: SystemLinkBehavior) => void updateSettings({ systemLinkBehavior }),
+    [updateSettings],
+  );
+  return (
+    <SettingsSelect
+      label={t("settings.layout.openInSidePane.sources.systemLinks.label")}
+      value={settings.systemLinkBehavior}
+      options={options}
+      onValueChange={change}
+    />
+  );
+}
+
 /** Where things open: files, diffs, subagents, pull requests, chat URLs, and script URLs. */
 export function OpenLocationSection() {
   const { t } = useTranslation();
@@ -154,6 +184,7 @@ export function OpenLocationSection() {
           onDestinationChange={handleDestinationChange}
         />
         <ChatLinkRow />
+        <SystemLinkRow />
         <ServiceUrlRow />
       </SettingsCard>
     </SettingsSection>

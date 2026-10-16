@@ -10,19 +10,25 @@ import { parseExternalUrl } from "@getpaseo/protocol/external-url";
 import { AdaptiveModalSheet } from "@/components/adaptive-modal-sheet";
 import { Button } from "@/components/ui/button";
 import { openSystemUrl } from "@/utils/open-external-url";
+import { persistAppSettings } from "@/hooks/use-settings";
 
 export default function SystemLinkDialog({ url, onClose }: { url: string; onClose: () => void }) {
   const { t } = useTranslation();
   const active = useRetainedPanelActive();
   const supported = parseExternalUrl(url) !== null;
   const action = useMutation({
-    mutationFn: async (kind: "open" | "copy") => {
-      if (kind === "copy") await Clipboard.setStringAsync(url);
-      else await openSystemUrl(url);
+    mutationFn: async (kind: "open" | "openAlways" | "copy") => {
+      if (kind === "copy") {
+        await Clipboard.setStringAsync(url);
+        return;
+      }
+      await openSystemUrl(url);
+      if (kind === "openAlways") await persistAppSettings({ systemLinkBehavior: "open" });
     },
   });
   const header = useMemo(() => ({ title: t("common.links.title") }), [t]);
   const open = useStableEvent(() => action.mutate("open"));
+  const openAlways = useStableEvent(() => action.mutate("openAlways"));
   const copy = useStableEvent(() => action.mutate("copy"));
   return (
     <AdaptiveModalSheet
@@ -48,6 +54,17 @@ export default function SystemLinkDialog({ url, onClose }: { url: string; onClos
               testID="system-link-open"
             >
               {t("common.links.open")}
+            </Button>
+          ) : null}
+          {supported ? (
+            <Button
+              variant="outline"
+              disabled={action.isPending}
+              loading={action.isPending && action.variables === "openAlways"}
+              onPress={openAlways}
+              testID="system-link-open-always"
+            >
+              {t("common.links.openAlways")}
             </Button>
           ) : null}
           <Button
