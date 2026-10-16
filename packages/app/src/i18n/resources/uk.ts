@@ -1728,13 +1728,18 @@ export const uk: TranslationResources = {
     title: "Додати провайдера",
     search: "Пошук провайдерів",
     noProviders: "Провайдерів не знайдено",
+    clearSearch: "Очистити пошук",
     actions: {
       add: "Додати",
+      addProvider: "Додати {{provider}}",
       adding: "Додавання",
       installed: "Встановлено",
       cancel: "Скасувати",
       installInstructions: "Інструкції зі встановлення",
       installInstructionsFor: "Інструкції зі встановлення {{provider}}",
+    },
+    types: {
+      acp: "ACP",
     },
     errors: {
       unableToInstall: "Не вдалося встановити провайдера",
