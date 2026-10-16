@@ -34,6 +34,12 @@ const SYSTEM_URL_PROTOCOLS = new Set([
   "cursor:",
   "zed:",
   "jetbrains:",
+  "obsidian:",
+  "logseq:",
+  "notion:",
+  "slack:",
+  "tg:",
+  "discord:",
 ]);
 
 export function parseExternalUrl(input: unknown): URL | null {

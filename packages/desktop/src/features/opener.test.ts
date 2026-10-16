@@ -18,6 +18,8 @@ describe("desktop opener", () => {
     "rdp://host",
     "magnet:?xt=urn:btih:abc",
     "vscode://file/tmp/file.ts",
+    "obsidian://open?vault=DevOps&file=%D0%98%D0%BD%D1%84%D0%B0%2FAnsible%20Best%20practices",
+    "logseq://graph/notes?page=Inbox",
   ])("dispatches %s to the system handler", async (url) => {
     const opened: string[] = [];
     await createExternalUrlOpener({
