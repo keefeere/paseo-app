@@ -28,6 +28,7 @@ export const en = {
       unsupported:
         "This link cannot be opened here. You can copy its address to another application.",
       open: "Open in application",
+      openAlways: "Open and don't ask again",
       copy: "Copy address",
       failed:
         "Could not open or copy the link. Check that an application for this link type is installed, or copy the address.",
@@ -2053,6 +2054,9 @@ export const en = {
           chatLinks: {
             label: "Clicking a URL in an agent chat",
           },
+          systemLinks: {
+            label: "Clicking a link for another application (smb://, obsidian://, ssh://…)",
+          },
           diffFiles: {
             label: "Clicking a file in a diff",
             description: "Open source files selected from a diff beside it",
@@ -2213,6 +2217,12 @@ export const en = {
           ask: "Ask",
           inApp: "In Paseo",
           external: "External browser",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Ask",
+          open: "Open without asking",
         },
       },
       chatLinks: {

@@ -4,7 +4,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import type { OpenFileDisposition } from "@/workspace/file-open";
-import { openExternalUrl } from "@/utils/open-external-url";
+import { openExternalUrl, openSystemUrl } from "@/utils/open-external-url";
+import { loadAppSettingsFromStorage } from "@/hooks/use-settings";
+import { parseExternalUrl } from "@getpaseo/protocol/external-url";
 import type { InlinePathTarget } from "./parse";
 import {
   useAssistantFileLinkResolverContext,
@@ -315,6 +317,15 @@ async function dispatchExternalUrl(input: {
     return;
   }
   if (!isHttpUrl(input.url)) {
+    const settings = await loadAppSettingsFromStorage();
+    if (settings.systemLinkBehavior === "open" && parseExternalUrl(input.url) !== null) {
+      try {
+        await openSystemUrl(input.url);
+        return;
+      } catch {
+        // Fall through to the dialog, which shows the failure and the copy action.
+      }
+    }
     input.context.showSystemLink(input.url);
     return;
   }

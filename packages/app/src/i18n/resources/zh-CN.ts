@@ -31,6 +31,7 @@ export const zhCN: TranslationResources = {
       systemHandler: "使用此设备上安装的应用打开。",
       unsupported: "无法在此处打开此链接。你可以将地址复制到其他应用。",
       open: "在应用中打开",
+      openAlways: "打开并不再询问",
       copy: "复制地址",
       failed: "无法打开或复制链接。请检查是否安装了支持此类链接的应用，或复制地址。",
       opened: "链接已发送到系统。在浏览器中，请允许打开应用。",
@@ -2059,6 +2060,12 @@ export const zhCN: TranslationResources = {
           ask: "询问",
           inApp: "在 Paseo 中",
           external: "外部浏览器",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "询问",
+          open: "直接打开",
         },
       },
       chatLinks: {

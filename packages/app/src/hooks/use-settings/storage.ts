@@ -36,6 +36,7 @@ export const APP_SETTINGS_QUERY_KEY = ["app-settings"];
 export type SendBehavior = ActiveTurnBehavior | "queue";
 export type ReleaseChannel = "stable" | "beta";
 export type ServiceUrlBehavior = "ask" | "in-app" | "external";
+export type SystemLinkBehavior = "ask" | "open";
 export type ChatLinkBehavior = "ask" | "internal-side" | "internal-tab" | "external";
 export type WorkspaceTitleSource = "title" | "branch";
 export type PullRequestOpenLocation = "main" | "side" | "explorer";
@@ -82,6 +83,7 @@ export interface AppSettings {
   sendBehavior: SendBehavior;
   serviceUrlBehavior: ServiceUrlBehavior;
   chatLinkBehavior: ChatLinkBehavior;
+  systemLinkBehavior: SystemLinkBehavior;
   terminalScrollbackLines: number;
   useLegacyTerminalRenderer: boolean;
   uiFontFamily: string; // "" = platform default UI stack
@@ -143,6 +145,7 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   sendBehavior: "steer",
   serviceUrlBehavior: "ask",
   chatLinkBehavior: "ask",
+  systemLinkBehavior: "ask",
   terminalScrollbackLines: DEFAULT_TERMINAL_SCROLLBACK_LINES,
   useLegacyTerminalRenderer: false,
   uiFontFamily: "",
@@ -222,6 +225,7 @@ const StoredAppSettingsSchema = z
     sendBehavior: z.enum(["interrupt", "steer", "queue"]).catch("steer"),
     serviceUrlBehavior: z.enum(["ask", "in-app", "external"]).catch("ask"),
     chatLinkBehavior: z.enum(["ask", "internal-side", "internal-tab", "external"]).catch("ask"),
+    systemLinkBehavior: z.enum(["ask", "open"]).catch("ask"),
     terminalScrollbackLines: clampedNumber(
       MIN_TERMINAL_SCROLLBACK_LINES,
       MAX_TERMINAL_SCROLLBACK_LINES,

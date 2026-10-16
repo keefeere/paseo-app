@@ -31,6 +31,7 @@ export const ko: TranslationResources = {
       systemHandler: "이 기기에 설치된 앱으로 엽니다.",
       unsupported: "여기에서 이 링크를 열 수 없습니다. 주소를 다른 앱에 복사할 수 있습니다.",
       open: "앱에서 열기",
+      openAlways: "열고 다시 묻지 않기",
       copy: "주소 복사",
       failed:
         "링크를 열거나 복사하지 못했습니다. 지원하는 앱이 설치되어 있는지 확인하거나 주소를 복사하세요.",
@@ -2096,6 +2097,12 @@ export const ko: TranslationResources = {
           ask: "물어보기",
           inApp: "Paseo에서",
           external: "외부 브라우저",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "묻기",
+          open: "묻지 않고 열기",
         },
       },
       chatLinks: {

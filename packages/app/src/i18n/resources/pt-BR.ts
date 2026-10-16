@@ -33,6 +33,7 @@ export const ptBR: TranslationResources = {
       unsupported:
         "Este link não pode ser aberto aqui. Você pode copiar o endereço para outro aplicativo.",
       open: "Abrir em um aplicativo",
+      openAlways: "Abrir e não perguntar novamente",
       copy: "Copiar endereço",
       failed:
         "Não foi possível abrir ou copiar o link. Verifique se há um aplicativo compatível instalado ou copie o endereço.",
@@ -2120,6 +2121,12 @@ export const ptBR: TranslationResources = {
           ask: "Perguntar",
           inApp: "No Paseo",
           external: "Navegador externo",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Perguntar",
+          open: "Abrir sem perguntar",
         },
       },
       chatLinks: {
