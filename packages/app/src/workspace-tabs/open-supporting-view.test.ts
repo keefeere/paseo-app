@@ -343,6 +343,9 @@ describe("terminal open preference", () => {
     [true, false],
     [true, true],
   ])("side=%s compact=%s reveals one terminal and preserves its location", (side, compact) => {
+    if (compact) {
+      useWorkspaceLayoutStore.getState().setLayoutMode("compact");
+    }
     useWorkspaceLayoutStore.getState().openTab({
       workspaceKey: WORKSPACE_KEY,
       target: { kind: "agent", agentId: "parent" },
@@ -353,7 +356,6 @@ describe("terminal open preference", () => {
       target: { kind: "terminal" as const, terminalId: "term" },
       source: "terminals" as const,
       preferences: { ...DEFAULT_APP_SETTINGS.openInSidePane, terminals: side },
-      isCompact: compact,
     };
     const tabId = openPreferredWorkspaceTarget(input);
     const before = useWorkspaceLayoutStore.getState();

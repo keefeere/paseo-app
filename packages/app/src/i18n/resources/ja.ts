@@ -78,6 +78,29 @@ export const ja: TranslationResources = {
       error: "エラー",
       idle: "アイドル",
     },
+    links: {
+      title: "リンクを開く",
+      systemHandler: "このデバイスにインストールされているアプリで開きます。",
+      unsupported: "このリンクはここでは開けません。アドレスを別のアプリにコピーできます。",
+      open: "アプリで開く",
+      openAlways: "開いて次回から確認しない",
+      copy: "アドレスをコピー",
+      failed:
+        "リンクを開くかコピーできませんでした。対応するアプリがインストールされているか確認するか、アドレスをコピーしてください。",
+      opened: "リンクをシステムに送信しました。ブラウザではアプリを開く許可を与えてください。",
+    },
+    time: {
+      justNow: "たった今",
+      now: "今",
+      ago: "{{time}}前",
+      minutes: "{{count}}分",
+      hours: "{{count}}時間",
+      days: "{{count}}日",
+      seconds: "{{count}}秒",
+      minutesSeconds: "{{minutes}}分{{seconds}}秒",
+      hoursMinutes: "{{hours}}時間{{minutes}}分",
+      milliseconds: "{{count}}ミリ秒",
+    },
   },
   shell: {
     menu: {
@@ -1331,6 +1354,8 @@ export const ja: TranslationResources = {
         hideFromSidebar: "サイドバーから非表示",
         archiving: "アーカイブ中...",
         hiding: "非表示にしています...",
+        markAsRead: "既読にする",
+        markAsUnread: "未読にする",
       },
       confirmations: {
         hideTitle: "ワークスペースを非表示にしますか？",
@@ -1926,6 +1951,9 @@ export const ja: TranslationResources = {
     failed: "ファイルのダウンロードに失敗しました。",
     shareFile: "ファイルを共有",
     shareFileNamed: "{{fileName}}を共有",
+    open: "開く",
+    showInFolder: "ファイルのフォルダーを開く",
+    openFailed: "ファイルを開けませんでした。",
   },
   menu: {
     backdrop: "メニューの背景",
@@ -2004,6 +2032,8 @@ export const ja: TranslationResources = {
         reloadTitle: "ディスクから再読み込みしますか？",
         reloadMessage: "ローカルの変更は失われます。",
       },
+      showDirectory: "親フォルダーを表示",
+      resourceActions: "ファイル操作",
     },
     files: {
       label: "ファイル",
@@ -2420,6 +2450,21 @@ export const ja: TranslationResources = {
           ptBR: "ブラジルポルトガル語",
           ru: "ロシア語",
           zhCN: "簡体字中国語",
+          uk: "ウクライナ語",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "確認する",
+          open: "確認せずに開く",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "確認する",
+          internalSide: "内部ブラウザ — サイド",
+          internalTab: "内部ブラウザ — タブ",
+          external: "外部ブラウザ",
         },
       },
     },
@@ -2673,6 +2718,8 @@ export const ja: TranslationResources = {
         title: "ブラウザツール",
         warning:
           "エージェントがログイン状態を含むPaseoのブラウザタブにアクセスして制御することを許可します。信頼できるエージェントに対してのみ有効にしてください。",
+        updating: "ブラウザツールを更新中…",
+        accessibilityLabel: "ブラウザツールを有効にする",
       },
       terminals: {
         agentsTitle: "ターミナルエージェント",
@@ -2817,6 +2864,12 @@ export const ja: TranslationResources = {
       },
       workspaces: {
         unavailable: "ワークスペースを管理するにはこのホストに接続してください",
+        autoArchiveAfterMerge: {
+          title: "マージ済みPRのワークスペースをアーカイブ",
+          hint: "プルリクエストがマージされた後、クリーンなPaseoワークスペースを自動的にアーカイブします",
+          accessibilityLabel: "マージ済みPRのワークスペースをアーカイブ",
+          failedToUpdate: "ワークスペースを更新できませんでした",
+        },
       },
       terminalProfiles: {
         unavailable: "ターミナルプロファイルを管理するにはこのホストに接続してください",
@@ -2953,6 +3006,14 @@ export const ja: TranslationResources = {
           errorTitle: "エラー",
           errorMessage: "ホストを削除できません",
           localErrorMessage: "localhost接続を削除できません",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "ターミナルエージェントのフックを有効化",
+          hint: "ターミナルエージェントからの通知とステータスを取得します。エージェント設定ファイルにフックをインストールします。",
+          accessibilityLabel: "ターミナルエージェントのフックを有効化",
+          failedToUpdate: "ターミナルエージェントフックを更新できませんでした",
         },
       },
     },
@@ -3109,5 +3170,17 @@ export const ja: TranslationResources = {
         cancel: "キャンセル",
       },
     },
+  },
+  hostPicker: {
+    addHost: "ホストを追加",
+    allHosts: "すべてのホスト",
+    enableBuiltInDaemon: "組み込みデーモンを有効にする",
+    fallback: "ホスト",
+  },
+  chatLink: {
+    title: "URLを開く",
+    message: "{{url}} を Paseo または外部ブラウザで開きますか？",
+    internalTab: "内部ブラウザ — タブ",
+    externalBrowser: "外部ブラウザ",
   },
 } as const;

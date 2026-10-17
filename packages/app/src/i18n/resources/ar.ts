@@ -77,6 +77,29 @@ export const ar: TranslationResources = {
       error: "خطأ",
       idle: "عاطل",
     },
+    links: {
+      title: "فتح الرابط",
+      systemHandler: "الفتح باستخدام تطبيق مثبت على هذا الجهاز.",
+      unsupported: "لا يمكن فتح هذا الرابط هنا. يمكنك نسخ عنوانه إلى تطبيق آخر.",
+      open: "فتح في تطبيق",
+      openAlways: "افتح ولا تسأل مرة أخرى",
+      copy: "نسخ العنوان",
+      failed:
+        "تعذر فتح الرابط أو نسخه. تحقق من تثبيت تطبيق يدعم هذا النوع من الروابط، أو انسخ العنوان.",
+      opened: "تم إرسال الرابط إلى النظام. في المتصفح، اسمح بفتح التطبيق.",
+    },
+    time: {
+      justNow: "منذ لحظات",
+      now: "الآن",
+      ago: "منذ {{time}}",
+      minutes: "{{count}} د",
+      hours: "{{count}} س",
+      days: "{{count}} ي",
+      seconds: "{{count}} ث",
+      minutesSeconds: "{{minutes}} د {{seconds}} ث",
+      hoursMinutes: "{{hours}} س {{minutes}} د",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -1317,6 +1340,8 @@ export const ar: TranslationResources = {
         hideFromSidebar: "إخفاء من الشريط الجانبي",
         archiving: "أرشفة...",
         hiding: "إخفاء...",
+        markAsRead: "وضع علامة مقروء",
+        markAsUnread: "وضع علامة غير مقروء",
       },
       confirmations: {
         hideTitle: "إخفاء مساحة العمل؟",
@@ -1907,6 +1932,9 @@ export const ar: TranslationResources = {
     failed: "فشل تنزيل الملف.",
     shareFile: "مشاركة الملف",
     shareFileNamed: "مشاركة{{fileName}}",
+    open: "فتح",
+    showInFolder: "فتح المجلد الذي يحتوي على الملف",
+    openFailed: "تعذر فتح الملف.",
   },
   menu: {
     backdrop: "خلفية القائمة",
@@ -1985,6 +2013,8 @@ export const ar: TranslationResources = {
         reloadTitle: "إعادة التحميل من القرص؟",
         reloadMessage: "ستفقد تغييراتك المحلية.",
       },
+      showDirectory: "عرض المجلد الحاوي",
+      resourceActions: "إجراءات الملف",
     },
     files: {
       label: "الملفات",
@@ -2436,6 +2466,21 @@ export const ar: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Русский",
           zhCN: "中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "اسأل",
+          open: "افتح دون سؤال",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "اسأل",
+          internalSide: "المتصفح الداخلي — الجانب",
+          internalTab: "المتصفح الداخلي — علامة تبويب",
+          external: "المتصفح الخارجي",
         },
       },
     },
@@ -2687,6 +2732,8 @@ export const ar: TranslationResources = {
         title: "أدوات المتصفح",
         warning:
           "السماح للوكلاء بالوصول إلى علامات تبويب متصفح Paseo والتحكم فيها، بما في ذلك حالة تسجيل الدخول. قم بتمكين هذا فقط للوكلاء الموثوقين.",
+        updating: "جارٍ تحديث أدوات المتصفح…",
+        accessibilityLabel: "تفعيل أدوات المتصفح",
       },
       terminals: {
         agentsTitle: "وكلاء الطرفية",
@@ -2828,6 +2875,12 @@ export const ar: TranslationResources = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "أرشفة مساحات عمل طلبات السحب المدمجة",
+          hint: "أرشفة مساحات عمل Paseo النظيفة تلقائيًا بعد دمج طلب السحب الخاص بها",
+          accessibilityLabel: "أرشفة مساحات عمل طلبات السحب المدمجة",
+          failedToUpdate: "تعذر تحديث مساحات العمل",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2960,6 +3013,14 @@ export const ar: TranslationResources = {
           errorTitle: "خطأ",
           errorMessage: "غير قادر على إزالة المضيف",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "تفعيل خطافات وكلاء الطرفية",
+          hint: "الحصول على الإشعارات والحالة من وكلاء الطرفية. يؤدي ذلك إلى تثبيت خطافات في ملفات تكوين الوكيل.",
+          accessibilityLabel: "تفعيل خطافات وكلاء الطرفية",
+          failedToUpdate: "تعذر تحديث خطافات وكلاء الطرفية",
         },
       },
     },
@@ -3115,5 +3176,17 @@ export const ar: TranslationResources = {
         cancel: "يلغي",
       },
     },
+  },
+  hostPicker: {
+    addHost: "أضف مضيفًا",
+    allHosts: "كل المضيفين",
+    enableBuiltInDaemon: "تفعيل البرنامج الخفي المدمج",
+    fallback: "المضيف",
+  },
+  chatLink: {
+    title: "فتح عنوان URL",
+    message: "هل تريد فتح {{url}} في Paseo أم في متصفحك الخارجي؟",
+    internalTab: "المتصفح الداخلي — علامة تبويب",
+    externalBrowser: "المتصفح الخارجي",
   },
 };

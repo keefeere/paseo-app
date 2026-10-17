@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ReactElement } from "react";
+import { useCallback, useRef, useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { Pressable, Text, View, type PressableStateCallbackType } from "react-native";
 import { ChevronDown, Server } from "lucide-react-native";
@@ -45,12 +45,9 @@ export function HostFilter({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterAnchorRef = useRef<View>(null);
 
-  const { i18n } = useTranslation();
-  // The label is translated outside React, so the active language is a dependency.
-  const selectedHostLabel = useMemo(
-    () => getHostPickerLabel(hosts, selectedHost, { includeAllHost }),
-    [hosts, includeAllHost, selectedHost, i18n.language],
-  );
+  // The label is translated outside React; subscribing re-renders this on a language change.
+  useTranslation();
+  const selectedHostLabel = getHostPickerLabel(hosts, selectedHost, { includeAllHost });
 
   const handleFilterOpen = useCallback(() => setIsFilterOpen(true), []);
 

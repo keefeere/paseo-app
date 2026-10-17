@@ -78,6 +78,30 @@ export const es: TranslationResources = {
       error: "Error",
       idle: "Inactivo",
     },
+    links: {
+      title: "Abrir enlace",
+      systemHandler: "Abrir con una aplicación instalada en este dispositivo.",
+      unsupported:
+        "Este enlace no se puede abrir aquí. Puedes copiar su dirección en otra aplicación.",
+      open: "Abrir en una aplicación",
+      openAlways: "Abrir y no volver a preguntar",
+      copy: "Copiar dirección",
+      failed:
+        "No se pudo abrir o copiar el enlace. Comprueba que haya una aplicación compatible instalada o copia la dirección.",
+      opened: "Enlace enviado al sistema. En un navegador, permite abrir la aplicación.",
+    },
+    time: {
+      justNow: "justo ahora",
+      now: "ahora",
+      ago: "hace {{time}}",
+      minutes: "{{count}} min",
+      hours: "{{count}} h",
+      days: "{{count}} d",
+      seconds: "{{count}} s",
+      minutesSeconds: "{{minutes}} min {{seconds}} s",
+      hoursMinutes: "{{hours}} h {{minutes}} min",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -1353,6 +1377,8 @@ export const es: TranslationResources = {
         hideFromSidebar: "Ocultar de la barra lateral",
         archiving: "Archivando...",
         hiding: "Ocultación...",
+        markAsRead: "Marcar como leído",
+        markAsUnread: "Marcar como no leído",
       },
       confirmations: {
         hideTitle: "¿Ocultar espacio de trabajo?",
@@ -1955,6 +1981,9 @@ export const es: TranslationResources = {
     failed: "No se pudo descargar el archivo.",
     shareFile: "compartir archivo",
     shareFileNamed: "Compartir{{fileName}}",
+    open: "Abrir",
+    showInFolder: "Abrir carpeta contenedora",
+    openFailed: "No se pudo abrir el archivo.",
   },
   menu: {
     backdrop: "Fondo del menú",
@@ -2033,6 +2062,8 @@ export const es: TranslationResources = {
         reloadTitle: "¿Recargar desde el disco?",
         reloadMessage: "Se perderán tus cambios locales.",
       },
+      showDirectory: "Mostrar carpeta contenedora",
+      resourceActions: "Acciones del archivo",
     },
     files: {
       label: "Archivos",
@@ -2454,6 +2485,21 @@ export const es: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Русский",
           zhCN: "中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Preguntar",
+          open: "Abrir sin preguntar",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Preguntar",
+          internalSide: "Navegador interno — lateral",
+          internalTab: "Navegador interno — pestaña",
+          external: "Navegador externo",
         },
       },
     },
@@ -2708,6 +2754,8 @@ export const es: TranslationResources = {
         title: "Herramientas de navegador",
         warning:
           "Permitir que los agentes accedan y controlen las pestañas del navegador Paseo, incluido el estado de inicio de sesión. Habilítelo solo para agentes de confianza.",
+        updating: "Actualizando herramientas del navegador…",
+        accessibilityLabel: "Activar herramientas del navegador",
       },
       terminals: {
         agentsTitle: "Agentes de terminal",
@@ -2851,6 +2899,12 @@ export const es: TranslationResources = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "Archivar espacios de trabajo de PR fusionados",
+          hint: "Archivar automáticamente espacios de trabajo limpios de Paseo tras fusionar su pull request",
+          accessibilityLabel: "Archivar espacios de trabajo de PR fusionados",
+          failedToUpdate: "No se pudieron actualizar los espacios de trabajo",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2987,6 +3041,14 @@ export const es: TranslationResources = {
           errorTitle: "Error",
           errorMessage: "No se puede eliminar el host",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "Habilitar hooks de agentes de terminal",
+          hint: "Reciba notificaciones y estado de los agentes de terminal. Esto instala hooks en sus archivos de configuración de agentes.",
+          accessibilityLabel: "Habilitar hooks de agentes de terminal",
+          failedToUpdate: "No se pudieron actualizar los hooks de agentes de terminal",
         },
       },
     },
@@ -3144,5 +3206,17 @@ export const es: TranslationResources = {
         cancel: "Cancelar",
       },
     },
+  },
+  hostPicker: {
+    addHost: "Agregar anfitrión",
+    allHosts: "Todos los hosts",
+    enableBuiltInDaemon: "Activar el demonio integrado",
+    fallback: "Host",
+  },
+  chatLink: {
+    title: "Abrir URL",
+    message: "¿Abrir {{url}} en Paseo o en tu navegador externo?",
+    internalTab: "Navegador interno — pestaña",
+    externalBrowser: "Navegador externo",
   },
 };

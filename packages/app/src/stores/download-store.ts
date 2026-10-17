@@ -74,6 +74,41 @@ function generateDownloadId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+async function downloadThroughSession(params: {
+  path: string;
+  fileName: string;
+  size: number | null;
+  mimeType: string | null;
+  readFile: (path: string, maxBytes: number) => Promise<{ bytes: Uint8Array; size: number }>;
+  saveFile: typeof saveDownloadedBytes;
+  onComplete: () => void;
+}): Promise<void> {
+  // Relay, SSH, socket and pipe hosts have no HTTP endpoint: read the file over the
+  // session socket that is already connected (#543).
+  if (typeof params.size === "number" && params.size > MAX_SESSION_DOWNLOAD_BYTES) {
+    throw new Error(
+      i18n.t("composer.errors.fileTooLarge", { fileName: params.fileName, size: "64 MB" }),
+    );
+  }
+  const { bytes, size } = await params.readFile(params.path, MAX_SESSION_DOWNLOAD_BYTES);
+  // A daemon without a binary channel answers `encoding: "none"` for a binary file: no
+  // content, real size. Never save that as a complete download.
+  if (bytes.byteLength !== size) {
+    throw new Error(
+      `File transfer incomplete: expected ${size} bytes, received ${bytes.byteLength}.`,
+    );
+  }
+  const savedUri = await params.saveFile({
+    bytes,
+    fileName: params.fileName,
+    mimeType: params.mimeType,
+  });
+  params.onComplete();
+  if (savedUri !== null) {
+    await shareSavedFile(savedUri, params.mimeType, params.fileName);
+  }
+}
+
 export const useDownloadStore = create<DownloadState>()((set, get) => ({
   downloads: new Map(),
   activeDownloadId: null,
@@ -113,33 +148,15 @@ export const useDownloadStore = create<DownloadState>()((set, get) => ({
       const resolvedFileName = tokenResponse.fileName ?? fileName;
       const downloadTarget = resolveDaemonDownloadTarget(daemonProfile, activeConnectionId);
       if (!downloadTarget) {
-        // Relay, SSH, socket and pipe hosts have no HTTP endpoint: read the file over the
-        // session socket that is already connected (#543).
-        if (
-          typeof tokenResponse.size === "number" &&
-          tokenResponse.size > MAX_SESSION_DOWNLOAD_BYTES
-        ) {
-          throw new Error(
-            i18n.t("composer.errors.fileTooLarge", { fileName: resolvedFileName, size: "64 MB" }),
-          );
-        }
-        const { bytes, size } = await readFile(path, MAX_SESSION_DOWNLOAD_BYTES);
-        // A daemon without a binary channel answers `encoding: "none"` for a binary file: no
-        // content, real size. Never save that as a complete download.
-        if (bytes.byteLength !== size) {
-          throw new Error(
-            `File transfer incomplete: expected ${size} bytes, received ${bytes.byteLength}.`,
-          );
-        }
-        const savedUri = await saveFile({
-          bytes,
+        await downloadThroughSession({
+          path,
           fileName: resolvedFileName,
+          size: tokenResponse.size,
           mimeType: tokenResponse.mimeType,
+          readFile,
+          saveFile,
+          onComplete: () => get().completeDownload(id),
         });
-        get().completeDownload(id);
-        if (savedUri !== null) {
-          await shareSavedFile(savedUri, tokenResponse.mimeType, resolvedFileName);
-        }
         return;
       }
       if (!downloadTarget.baseUrl) {

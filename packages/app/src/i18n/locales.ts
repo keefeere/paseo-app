@@ -1,4 +1,14 @@
-export type SupportedLocale = "ar" | "en" | "es" | "fr" | "ja" | "ko" | "pt-BR" | "ru" | "uk" | "zh-CN";
+export type SupportedLocale =
+  | "ar"
+  | "en"
+  | "es"
+  | "fr"
+  | "ja"
+  | "ko"
+  | "pt-BR"
+  | "ru"
+  | "uk"
+  | "zh-CN";
 export type AppLanguage = "system" | SupportedLocale;
 
 export interface LanguageOption {

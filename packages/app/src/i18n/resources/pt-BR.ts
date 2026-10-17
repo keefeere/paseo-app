@@ -78,6 +78,30 @@ export const ptBR: TranslationResources = {
       error: "Erro",
       idle: "Ocioso",
     },
+    links: {
+      title: "Abrir link",
+      systemHandler: "Abrir com um aplicativo instalado neste dispositivo.",
+      unsupported:
+        "Este link não pode ser aberto aqui. Você pode copiar o endereço para outro aplicativo.",
+      open: "Abrir em um aplicativo",
+      openAlways: "Abrir e não perguntar novamente",
+      copy: "Copiar endereço",
+      failed:
+        "Não foi possível abrir ou copiar o link. Verifique se há um aplicativo compatível instalado ou copie o endereço.",
+      opened: "Link enviado ao sistema. No navegador, permita a abertura do aplicativo.",
+    },
+    time: {
+      justNow: "agora mesmo",
+      now: "agora",
+      ago: "há {{time}}",
+      minutes: "{{count}} min",
+      hours: "{{count}} h",
+      days: "{{count}} d",
+      seconds: "{{count}} s",
+      minutesSeconds: "{{minutes}} min {{seconds}} s",
+      hoursMinutes: "{{hours}} h {{minutes}} min",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -1343,6 +1367,8 @@ export const ptBR: TranslationResources = {
         hideFromSidebar: "Ocultar da barra lateral",
         archiving: "Arquivando...",
         hiding: "Ocultando...",
+        markAsRead: "Marcar como lido",
+        markAsUnread: "Marcar como não lido",
       },
       confirmations: {
         hideTitle: "Ocultar workspace?",
@@ -1940,6 +1966,9 @@ export const ptBR: TranslationResources = {
     failed: "Falha ao baixar arquivo.",
     shareFile: "Compartilhar arquivo",
     shareFileNamed: "Compartilhar {{fileName}}",
+    open: "Abrir",
+    showInFolder: "Abrir pasta do arquivo",
+    openFailed: "Não foi possível abrir o arquivo.",
   },
   menu: {
     backdrop: "Fundo do menu",
@@ -2018,6 +2047,8 @@ export const ptBR: TranslationResources = {
         reloadTitle: "Recarregar do disco?",
         reloadMessage: "Suas alterações locais serão perdidas.",
       },
+      showDirectory: "Mostrar pasta do arquivo",
+      resourceActions: "Ações do arquivo",
     },
     files: {
       label: "Arquivos",
@@ -2437,6 +2468,21 @@ export const ptBR: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Russo",
           zhCN: "Chinês simplificado",
+          uk: "Ucraniano",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Perguntar",
+          open: "Abrir sem perguntar",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Perguntar",
+          internalSide: "Navegador interno — lateral",
+          internalTab: "Navegador interno — aba",
+          external: "Navegador externo",
         },
       },
     },
@@ -2689,6 +2735,8 @@ export const ptBR: TranslationResources = {
         title: "Ferramentas do navegador",
         warning:
           "Permitir que agentes acessem e controlem abas do navegador Paseo, incluindo estado de login. Ative apenas para agentes de confiança.",
+        updating: "Atualizando ferramentas do navegador…",
+        accessibilityLabel: "Ativar ferramentas do navegador",
       },
       terminals: {
         agentsTitle: "Agentes de terminal",
@@ -2832,6 +2880,12 @@ export const ptBR: TranslationResources = {
       },
       workspaces: {
         unavailable: "Conecte-se a este host para gerenciar workspaces",
+        autoArchiveAfterMerge: {
+          title: "Arquivar workspaces de PRs mesclados",
+          hint: "Arquivar automaticamente workspaces limpos do Paseo após o merge de seu pull request",
+          accessibilityLabel: "Arquivar workspaces de PRs mesclados",
+          failedToUpdate: "Não foi possível atualizar os workspaces",
+        },
       },
       terminalProfiles: {
         unavailable: "Conecte-se a este host para gerenciar perfis de terminal",
@@ -2968,6 +3022,14 @@ export const ptBR: TranslationResources = {
           errorTitle: "Erro",
           errorMessage: "Não foi possível remover host",
           localErrorMessage: "Não foi possível remover a conexão localhost",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "Ativar hooks de agentes de terminal",
+          hint: "Receba notificações e status dos agentes de terminal. Isso instala hooks nos arquivos de configuração dos seus agentes.",
+          accessibilityLabel: "Ativar hooks de agentes de terminal",
+          failedToUpdate: "Não foi possível atualizar os hooks de agentes de terminal",
         },
       },
     },
@@ -3124,5 +3186,17 @@ export const ptBR: TranslationResources = {
         cancel: "Cancelar",
       },
     },
+  },
+  hostPicker: {
+    addHost: "Adicionar host",
+    allHosts: "Todos os hosts",
+    enableBuiltInDaemon: "Ativar o daemon integrado",
+    fallback: "Host",
+  },
+  chatLink: {
+    title: "Abrir URL",
+    message: "Abrir {{url}} no Paseo ou no navegador externo?",
+    internalTab: "Navegador interno — aba",
+    externalBrowser: "Navegador externo",
   },
 };

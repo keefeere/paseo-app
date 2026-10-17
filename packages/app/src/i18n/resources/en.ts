@@ -73,6 +73,30 @@ export const en = {
       error: "Error",
       idle: "Idle",
     },
+    links: {
+      title: "Open link",
+      systemHandler: "Open with an application installed on this device.",
+      unsupported:
+        "This link cannot be opened here. You can copy its address to another application.",
+      open: "Open in application",
+      openAlways: "Open and don't ask again",
+      copy: "Copy address",
+      failed:
+        "Could not open or copy the link. Check that an application for this link type is installed, or copy the address.",
+      opened: "Link sent to the system. In a browser, allow the prompt to open the application.",
+    },
+    time: {
+      justNow: "just now",
+      now: "now",
+      ago: "{{time}} ago",
+      minutes: "{{count}}m",
+      hours: "{{count}}h",
+      days: "{{count}}d",
+      seconds: "{{count}}s",
+      minutesSeconds: "{{minutes}}m {{seconds}}s",
+      hoursMinutes: "{{hours}}h {{minutes}}m",
+      milliseconds: "{{count}}ms",
+    },
   },
   shell: {
     menu: {
@@ -1325,6 +1349,8 @@ export const en = {
         hideFromSidebar: "Hide from sidebar",
         archiving: "Archiving...",
         hiding: "Hiding...",
+        markAsRead: "Mark as read",
+        markAsUnread: "Mark as unread",
       },
       confirmations: {
         hideTitle: "Hide workspace?",
@@ -1932,6 +1958,9 @@ export const en = {
     failed: "Failed to download file.",
     shareFile: "Share file",
     shareFileNamed: "Share {{fileName}}",
+    open: "Open",
+    showInFolder: "Open containing folder",
+    openFailed: "Couldn't open the file.",
   },
   menu: {
     backdrop: "Menu backdrop",
@@ -2010,6 +2039,8 @@ export const en = {
         reloadTitle: "Reload from disk?",
         reloadMessage: "Your local changes will be lost.",
       },
+      showDirectory: "Show containing folder",
+      resourceActions: "File actions",
     },
     files: {
       label: "Files",
@@ -2259,6 +2290,15 @@ export const en = {
           },
           serviceUrls: {
             label: "Clicking a script's service URL",
+          },
+          chatLinks: {
+            label: "Clicking a URL in an agent chat",
+          },
+          systemLinks: {
+            label: "Clicking a link for another application (smb://, obsidian://, ssh://…)",
+          },
+          terminals: {
+            label: "Opening a terminal",
           },
         },
       },
@@ -2525,6 +2565,21 @@ export const en = {
           ptBR: "Brazilian Portuguese",
           ru: "Russian",
           zhCN: "Simplified Chinese",
+          uk: "Ukrainian",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Ask",
+          open: "Open without asking",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Ask",
+          internalSide: "Internal browser — side",
+          internalTab: "Internal browser — tab",
+          external: "External browser",
         },
       },
     },
@@ -2776,6 +2831,8 @@ export const en = {
         title: "Browser tools",
         warning:
           "Allow agents to access and control Paseo browser tabs, including logged-in browser state. Only enable this for agents you trust.",
+        updating: "Updating browser tools…",
+        accessibilityLabel: "Enable browser tools",
       },
       terminals: {
         agentsTitle: "Terminal agents",
@@ -2921,6 +2978,12 @@ export const en = {
       },
       workspaces: {
         unavailable: "Connect to this host to manage workspaces",
+        autoArchiveAfterMerge: {
+          title: "Archive merged PR workspaces",
+          hint: "Automatically archive clean Paseo workspaces after their pull request is merged",
+          accessibilityLabel: "Archive merged PR workspaces",
+          failedToUpdate: "Unable to update workspaces",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -3054,6 +3117,14 @@ export const en = {
           errorTitle: "Error",
           errorMessage: "Unable to remove host",
           localErrorMessage: "Unable to remove localhost connection",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "Enable terminal agent hooks",
+          hint: "Get notifications and status from terminal agents. This installs hooks in your agent config files.",
+          accessibilityLabel: "Enable terminal agent hooks",
+          failedToUpdate: "Unable to update terminal agent hooks",
         },
       },
     },
@@ -3210,6 +3281,18 @@ export const en = {
         cancel: "Cancel",
       },
     },
+  },
+  hostPicker: {
+    addHost: "Add host",
+    allHosts: "All hosts",
+    enableBuiltInDaemon: "Enable built-in daemon",
+    fallback: "Host",
+  },
+  chatLink: {
+    title: "Open URL",
+    message: "Open {{url}} in Paseo or your external browser?",
+    internalTab: "Internal browser — tab",
+    externalBrowser: "External browser",
   },
 } as const;
 

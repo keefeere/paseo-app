@@ -78,6 +78,30 @@ export const ru: TranslationResources = {
       error: "Ошибка",
       idle: "Ожидание",
     },
+    links: {
+      title: "Открыть ссылку",
+      systemHandler: "Открыть в приложении, установленном на этом устройстве.",
+      unsupported:
+        "Эту ссылку нельзя открыть здесь. Можно скопировать её адрес в другое приложение.",
+      open: "Открыть в приложении",
+      openAlways: "Открыть и больше не спрашивать",
+      copy: "Копировать адрес",
+      failed:
+        "Не удалось открыть или скопировать ссылку. Проверьте наличие подходящего приложения или скопируйте адрес.",
+      opened: "Ссылка передана системе. В браузере разрешите открытие приложения.",
+    },
+    time: {
+      justNow: "только что",
+      now: "сейчас",
+      ago: "{{time}} назад",
+      minutes: "{{count}} мин",
+      hours: "{{count}} ч",
+      days: "{{count}} д",
+      seconds: "{{count}} с",
+      minutesSeconds: "{{minutes}} мин {{seconds}} с",
+      hoursMinutes: "{{hours}} ч {{minutes}} мин",
+      milliseconds: "{{count}} мс",
+    },
   },
   shell: {
     menu: {
@@ -1335,6 +1359,8 @@ export const ru: TranslationResources = {
         hideFromSidebar: "Скрыть на боковой панели",
         archiving: "Архивирование...",
         hiding: "Скрытие...",
+        markAsRead: "Отметить прочитанным",
+        markAsUnread: "Отметить непрочитанным",
       },
       confirmations: {
         hideTitle: "Скрыть рабочее пространство?",
@@ -1939,6 +1965,9 @@ export const ru: TranslationResources = {
     failed: "Не удалось загрузить файл.",
     shareFile: "Поделиться файлом",
     shareFileNamed: "Поделиться {{fileName}}",
+    open: "Открыть",
+    showInFolder: "Открыть папку с файлом",
+    openFailed: "Не удалось открыть файл.",
   },
   menu: {
     backdrop: "Фон меню",
@@ -2018,6 +2047,8 @@ export const ru: TranslationResources = {
         reloadTitle: "Перезагрузить с диска?",
         reloadMessage: "Локальные изменения будут потеряны.",
       },
+      showDirectory: "Показать содержащую папку",
+      resourceActions: "Действия с файлом",
     },
     files: {
       label: "Файлы",
@@ -2440,6 +2471,21 @@ export const ru: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Русский",
           zhCN: "简体中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Спрашивать",
+          open: "Открывать без вопроса",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Спрашивать",
+          internalSide: "Встроенный браузер — сбоку",
+          internalTab: "Встроенный браузер — вкладка",
+          external: "Внешний браузер",
         },
       },
     },
@@ -2695,6 +2741,8 @@ export const ru: TranslationResources = {
         title: "Инструменты браузера",
         warning:
           "Разрешить агентам доступ и управление вкладками браузера Paseo, включая состояние авторизации. Включайте только для доверенных агентов.",
+        updating: "Обновление инструментов браузера…",
+        accessibilityLabel: "Включить инструменты браузера",
       },
       terminals: {
         agentsTitle: "Терминальные агенты",
@@ -2842,6 +2890,12 @@ export const ru: TranslationResources = {
       },
       workspaces: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять рабочими пространствами",
+        autoArchiveAfterMerge: {
+          title: "Архивировать рабочие пространства слитых PR",
+          hint: "Автоматически архивировать чистые рабочие пространства Paseo после слияния их pull request",
+          accessibilityLabel: "Архивировать рабочие пространства слитых PR",
+          failedToUpdate: "Не удалось обновить рабочие пространства",
+        },
       },
       terminalProfiles: {
         unavailable: "Подключитесь к этому хосту, чтобы управлять профилями терминала",
@@ -2978,6 +3032,14 @@ export const ru: TranslationResources = {
           errorTitle: "Ошибка",
           errorMessage: "Не удалось удалить хост",
           localErrorMessage: "Не удалось удалить подключение к localhost",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "Включить хуки терминальных агентов",
+          hint: "Получайте уведомления и статус от терминальных агентов. Это установит хуки в файлы конфигурации ваших агентов.",
+          accessibilityLabel: "Включить хуки терминальных агентов",
+          failedToUpdate: "Не удалось обновить хуки терминальных агентов",
         },
       },
     },
@@ -3137,5 +3199,17 @@ export const ru: TranslationResources = {
         cancel: "Отмена",
       },
     },
+  },
+  hostPicker: {
+    addHost: "Добавить хост",
+    allHosts: "Все хосты",
+    enableBuiltInDaemon: "Включить встроенный демон",
+    fallback: "Хост",
+  },
+  chatLink: {
+    title: "Открыть URL",
+    message: "Открыть {{url}} в Paseo или во внешнем браузере?",
+    internalTab: "Встроенный браузер — вкладка",
+    externalBrowser: "Внешний браузер",
   },
 };

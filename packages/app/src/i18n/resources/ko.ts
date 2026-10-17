@@ -77,6 +77,29 @@ export const ko: TranslationResources = {
       error: "오류",
       idle: "대기 중",
     },
+    links: {
+      title: "링크 열기",
+      systemHandler: "이 기기에 설치된 앱으로 엽니다.",
+      unsupported: "여기에서 이 링크를 열 수 없습니다. 주소를 다른 앱에 복사할 수 있습니다.",
+      open: "앱에서 열기",
+      openAlways: "열고 다시 묻지 않기",
+      copy: "주소 복사",
+      failed:
+        "링크를 열거나 복사하지 못했습니다. 지원하는 앱이 설치되어 있는지 확인하거나 주소를 복사하세요.",
+      opened: "링크를 시스템에 전달했습니다. 브라우저에서 앱 열기를 허용하세요.",
+    },
+    time: {
+      justNow: "방금",
+      now: "지금",
+      ago: "{{time}} 전",
+      minutes: "{{count}}분",
+      hours: "{{count}}시간",
+      days: "{{count}}일",
+      seconds: "{{count}}초",
+      minutesSeconds: "{{minutes}}분 {{seconds}}초",
+      hoursMinutes: "{{hours}}시간 {{minutes}}분",
+      milliseconds: "{{count}}ms",
+    },
   },
   shell: {
     menu: {
@@ -1324,6 +1347,8 @@ export const ko: TranslationResources = {
         hideFromSidebar: "사이드바에서 숨기기",
         archiving: "보관하는 중...",
         hiding: "숨기는 중...",
+        markAsRead: "읽음으로 표시",
+        markAsUnread: "읽지 않음으로 표시",
       },
       confirmations: {
         hideTitle: "워크스페이스를 숨길까요?",
@@ -1917,6 +1942,9 @@ export const ko: TranslationResources = {
     failed: "파일을 다운로드하지 못했습니다.",
     shareFile: "파일 공유",
     shareFileNamed: "{{fileName}} 공유",
+    open: "열기",
+    showInFolder: "파일이 있는 폴더 열기",
+    openFailed: "파일을 열 수 없습니다.",
   },
   menu: {
     backdrop: "메뉴 배경",
@@ -1995,6 +2023,8 @@ export const ko: TranslationResources = {
         reloadTitle: "디스크에서 다시 로드하시겠습니까?",
         reloadMessage: "로컬 변경사항이 손실됩니다.",
       },
+      showDirectory: "상위 폴더 표시",
+      resourceActions: "파일 작업",
     },
     files: {
       label: "파일",
@@ -2413,6 +2443,21 @@ export const ko: TranslationResources = {
           ptBR: "브라질 포르투갈어",
           ru: "Русский",
           zhCN: "简体中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "묻기",
+          open: "묻지 않고 열기",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "물어보기",
+          internalSide: "내부 브라우저 — 측면",
+          internalTab: "내부 브라우저 — 탭",
+          external: "외부 브라우저",
         },
       },
     },
@@ -2663,6 +2708,8 @@ export const ko: TranslationResources = {
         title: "브라우저 도구",
         warning:
           "에이전트가 로그인 상태를 포함한 Paseo 브라우저 탭에 접근하고 제어하도록 허용합니다. 신뢰할 수 있는 에이전트에 대해서만 활성화하세요.",
+        updating: "브라우저 도구 업데이트 중…",
+        accessibilityLabel: "브라우저 도구 활성화",
       },
       terminals: {
         agentsTitle: "터미널 에이전트",
@@ -2805,6 +2852,12 @@ export const ko: TranslationResources = {
       },
       workspaces: {
         unavailable: "워크스페이스를 관리하려면 이 호스트에 연결하세요",
+        autoArchiveAfterMerge: {
+          title: "병합된 PR 워크스페이스 보관",
+          hint: "풀 리퀘스트가 병합된 후 변경사항이 없는 Paseo 워크스페이스를 자동으로 보관합니다",
+          accessibilityLabel: "병합된 PR 워크스페이스 보관",
+          failedToUpdate: "워크스페이스를 업데이트할 수 없습니다",
+        },
       },
       terminalProfiles: {
         unavailable: "터미널 프로필을 관리하려면 이 호스트에 연결하세요",
@@ -2940,6 +2993,14 @@ export const ko: TranslationResources = {
           errorTitle: "오류",
           errorMessage: "호스트를 제거할 수 없습니다",
           localErrorMessage: "localhost 연결을 제거할 수 없습니다",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "터미널 에이전트 훅 활성화",
+          hint: "터미널 에이전트로부터 알림과 상태를 받습니다. 에이전트 설정 파일에 훅이 설치됩니다.",
+          accessibilityLabel: "터미널 에이전트 훅 활성화",
+          failedToUpdate: "터미널 에이전트 훅을 업데이트할 수 없습니다",
         },
       },
     },
@@ -3096,5 +3157,17 @@ export const ko: TranslationResources = {
         cancel: "취소",
       },
     },
+  },
+  hostPicker: {
+    addHost: "호스트 추가",
+    allHosts: "모든 호스트",
+    enableBuiltInDaemon: "내장 데몬 활성화",
+    fallback: "호스트",
+  },
+  chatLink: {
+    title: "URL 열기",
+    message: "{{url}}을(를) Paseo 또는 외부 브라우저에서 여시겠습니까?",
+    internalTab: "내부 브라우저 — 탭",
+    externalBrowser: "외부 브라우저",
   },
 };

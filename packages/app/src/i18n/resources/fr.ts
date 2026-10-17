@@ -78,6 +78,31 @@ export const fr: TranslationResources = {
       error: "Erreur",
       idle: "Inactif",
     },
+    links: {
+      title: "Ouvrir le lien",
+      systemHandler: "Ouvrir avec une application installée sur cet appareil.",
+      unsupported:
+        "Ce lien ne peut pas être ouvert ici. Vous pouvez copier son adresse dans une autre application.",
+      open: "Ouvrir dans une application",
+      openAlways: "Ouvrir et ne plus demander",
+      copy: "Copier l’adresse",
+      failed:
+        "Impossible d’ouvrir ou de copier le lien. Vérifiez qu’une application adaptée est installée, ou copiez l’adresse.",
+      opened:
+        "Lien transmis au système. Dans un navigateur, autorisez l’ouverture de l’application.",
+    },
+    time: {
+      justNow: "à l’instant",
+      now: "maintenant",
+      ago: "il y a {{time}}",
+      minutes: "{{count}} min",
+      hours: "{{count}} h",
+      days: "{{count}} j",
+      seconds: "{{count}} s",
+      minutesSeconds: "{{minutes}} min {{seconds}} s",
+      hoursMinutes: "{{hours}} h {{minutes}} min",
+      milliseconds: "{{count}} ms",
+    },
   },
   shell: {
     menu: {
@@ -1347,6 +1372,8 @@ export const fr: TranslationResources = {
         hideFromSidebar: "Masquer de la barre latérale",
         archiving: "Archivage…",
         hiding: "Masquage…",
+        markAsRead: "Marquer comme lu",
+        markAsUnread: "Marquer comme non lu",
       },
       confirmations: {
         hideTitle: "Masquer l’espace de travail ?",
@@ -1953,6 +1980,9 @@ export const fr: TranslationResources = {
     failed: "Impossible de télécharger le fichier.",
     shareFile: "Partager le fichier",
     shareFileNamed: "Partager {{fileName}}",
+    open: "Ouvrir",
+    showInFolder: "Ouvrir le dossier contenant",
+    openFailed: "Impossible d'ouvrir le fichier.",
   },
   menu: {
     backdrop: "Arrière-plan du menu",
@@ -2031,6 +2061,8 @@ export const fr: TranslationResources = {
         reloadTitle: "Recharger depuis le disque ?",
         reloadMessage: "Vos modifications locales seront perdues.",
       },
+      showDirectory: "Afficher le dossier parent",
+      resourceActions: "Actions du fichier",
     },
     files: {
       label: "Fichiers",
@@ -2452,6 +2484,21 @@ export const fr: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Русский",
           zhCN: "中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Demander",
+          open: "Ouvrir sans demander",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "Demander",
+          internalSide: "Navigateur interne — sur le côté",
+          internalTab: "Navigateur interne — onglet",
+          external: "Navigateur externe",
         },
       },
     },
@@ -2711,6 +2758,8 @@ export const fr: TranslationResources = {
         title: "Outils de navigateur",
         warning:
           "Autoriser les agents à accéder et contrôler les onglets du navigateur Paseo, y compris l'état de connexion. N'activez cette option que pour les agents de confiance.",
+        updating: "Mise à jour des outils du navigateur…",
+        accessibilityLabel: "Activer les outils du navigateur",
       },
       terminals: {
         agentsTitle: "Agents de terminal",
@@ -2855,6 +2904,12 @@ export const fr: TranslationResources = {
       },
       workspaces: {
         unavailable: "Connectez-vous à cet hôte pour gérer les espaces de travail",
+        autoArchiveAfterMerge: {
+          title: "Archiver les espaces de travail des PR fusionnées",
+          hint: "Archiver automatiquement les espaces de travail Paseo propres après la fusion de leur pull request",
+          accessibilityLabel: "Archiver les espaces de travail des PR fusionnées",
+          failedToUpdate: "Impossible de mettre à jour les espaces de travail",
+        },
       },
       terminalProfiles: {
         unavailable: "Connectez-vous à cet hôte pour gérer les profils de terminal",
@@ -2994,6 +3049,14 @@ export const fr: TranslationResources = {
           errorTitle: "Erreur",
           errorMessage: "Impossible de supprimer l’hôte",
           localErrorMessage: "Impossible de supprimer la connexion localhost",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "Activer les hooks d'agents de terminal",
+          hint: "Recevez des notifications et l'état des agents de terminal. Cela installe des hooks dans vos fichiers de configuration d'agents.",
+          accessibilityLabel: "Activer les hooks d'agents de terminal",
+          failedToUpdate: "Impossible de mettre à jour les hooks d'agents de terminal",
         },
       },
     },
@@ -3154,5 +3217,17 @@ export const fr: TranslationResources = {
         cancel: "Annuler",
       },
     },
+  },
+  hostPicker: {
+    addHost: "Ajouter un hôte",
+    allHosts: "Tous les hôtes",
+    enableBuiltInDaemon: "Activer le démon intégré",
+    fallback: "Hôte",
+  },
+  chatLink: {
+    title: "Ouvrir l’URL",
+    message: "Ouvrir {{url}} dans Paseo ou dans votre navigateur externe ?",
+    internalTab: "Navigateur interne — onglet",
+    externalBrowser: "Navigateur externe",
   },
 };

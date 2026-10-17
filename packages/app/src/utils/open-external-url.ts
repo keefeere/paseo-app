@@ -3,7 +3,6 @@ import * as Linking from "expo-linking";
 import { getDesktopHost } from "@/desktop/host";
 import { isWeb } from "@/constants/platform";
 
-
 export async function openExternalUrl(url: string): Promise<void> {
   // Support HTTP(S) as well as desktop/mobile deep link handlers (obsidian, slack, tg, etc.)
   let parsedUrl: URL;
@@ -13,9 +12,26 @@ export async function openExternalUrl(url: string): Promise<void> {
     return;
   }
   const allowed = new Set([
-    "http:", "https:", "mailto:", "tel:", "sms:", "ssh:", "smb:", "vnc:", "rdp:",
-    "vscode:", "vscode-insiders:", "cursor:", "zed:", "jetbrains:",
-    "obsidian:", "logseq:", "notion:", "slack:", "tg:", "discord:"
+    "http:",
+    "https:",
+    "mailto:",
+    "tel:",
+    "sms:",
+    "ssh:",
+    "smb:",
+    "vnc:",
+    "rdp:",
+    "vscode:",
+    "vscode-insiders:",
+    "cursor:",
+    "zed:",
+    "jetbrains:",
+    "obsidian:",
+    "logseq:",
+    "notion:",
+    "slack:",
+    "tg:",
+    "discord:",
   ]);
   if (!allowed.has(parsedUrl.protocol)) return;
   if (isWeb) {

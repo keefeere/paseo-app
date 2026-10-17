@@ -77,6 +77,28 @@ export const zhCN: TranslationResources = {
       error: "错误",
       idle: "空闲",
     },
+    links: {
+      title: "打开链接",
+      systemHandler: "使用此设备上安装的应用打开。",
+      unsupported: "无法在此处打开此链接。你可以将地址复制到其他应用。",
+      open: "在应用中打开",
+      openAlways: "打开并不再询问",
+      copy: "复制地址",
+      failed: "无法打开或复制链接。请检查是否安装了支持此类链接的应用，或复制地址。",
+      opened: "链接已发送到系统。在浏览器中，请允许打开应用。",
+    },
+    time: {
+      justNow: "刚刚",
+      now: "现在",
+      ago: "{{time}}前",
+      minutes: "{{count}} 分钟",
+      hours: "{{count}} 小时",
+      days: "{{count}} 天",
+      seconds: "{{count}} 秒",
+      minutesSeconds: "{{minutes}} 分 {{seconds}} 秒",
+      hoursMinutes: "{{hours}} 小时 {{minutes}} 分",
+      milliseconds: "{{count}} 毫秒",
+    },
   },
   shell: {
     menu: {
@@ -1307,6 +1329,8 @@ export const zhCN: TranslationResources = {
         hideFromSidebar: "从侧边栏隐藏",
         archiving: "正在归档...",
         hiding: "正在隐藏...",
+        markAsRead: "标记为已读",
+        markAsUnread: "标记为未读",
       },
       confirmations: {
         hideTitle: "隐藏 workspace？",
@@ -1885,6 +1909,9 @@ export const zhCN: TranslationResources = {
     failed: "下载文件失败。",
     shareFile: "共享文件",
     shareFileNamed: "共享 {{fileName}}",
+    open: "打开",
+    showInFolder: "打开所在文件夹",
+    openFailed: "无法打开文件。",
   },
   menu: {
     backdrop: "菜单背景",
@@ -1963,6 +1990,8 @@ export const zhCN: TranslationResources = {
         reloadTitle: "从磁盘重新加载？",
         reloadMessage: "本地更改将丢失。",
       },
+      showDirectory: "显示所在文件夹",
+      resourceActions: "文件操作",
     },
     files: {
       label: "文件",
@@ -2374,6 +2403,21 @@ export const zhCN: TranslationResources = {
           ptBR: "Português brasileiro",
           ru: "Русский",
           zhCN: "简体中文",
+          uk: "Українська",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "询问",
+          open: "直接打开",
+        },
+      },
+      chatLinks: {
+        options: {
+          ask: "询问",
+          internalSide: "内置浏览器 — 侧边",
+          internalTab: "内置浏览器 — 标签页",
+          external: "外部浏览器",
         },
       },
     },
@@ -2622,6 +2666,8 @@ export const zhCN: TranslationResources = {
         title: "浏览器工具",
         warning:
           "允许智能体访问和控制 Paseo 浏览器标签页，包括登录状态。请仅为您信任的智能体启用此功能。",
+        updating: "正在更新浏览器工具…",
+        accessibilityLabel: "启用浏览器工具",
       },
       terminals: {
         agentsTitle: "终端智能体",
@@ -2763,6 +2809,12 @@ export const zhCN: TranslationResources = {
       },
       workspaces: {
         unavailable: "连接到这个 Host 以管理 Workspace",
+        autoArchiveAfterMerge: {
+          title: "归档已合并 PR 的工作区",
+          hint: "在 Pull Request 合并后自动归档干净的 Paseo 工作区",
+          accessibilityLabel: "归档已合并 PR 的工作区",
+          failedToUpdate: "无法更新工作区",
+        },
       },
       terminalProfiles: {
         unavailable: "Connect to this host to manage terminal profiles",
@@ -2890,6 +2942,14 @@ export const zhCN: TranslationResources = {
           errorTitle: "错误",
           errorMessage: "无法移除 Host",
           localErrorMessage: "无法移除 localhost 连接",
+        },
+      },
+      terminalAgents: {
+        enableHooks: {
+          title: "启用终端 Agent hooks",
+          hint: "接收来自终端 Agent 的通知和状态。这会在您的 Agent 配置文件中安装 hooks。",
+          accessibilityLabel: "启用终端 Agent hooks",
+          failedToUpdate: "无法更新终端 Agent hooks",
         },
       },
     },
@@ -3044,5 +3104,17 @@ export const zhCN: TranslationResources = {
         cancel: "取消",
       },
     },
+  },
+  hostPicker: {
+    addHost: "添加主机",
+    allHosts: "所有主机",
+    enableBuiltInDaemon: "启用内置 daemon",
+    fallback: "主机",
+  },
+  chatLink: {
+    title: "打开 URL",
+    message: "要在 Paseo 还是外部浏览器中打开 {{url}}？",
+    internalTab: "内置浏览器 — 标签页",
+    externalBrowser: "外部浏览器",
   },
 };
