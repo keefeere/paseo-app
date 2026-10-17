@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.repository == 'keefeere/paseo-app' && github.event_name == 'push') }}
 
 env:
   # CI does not use the CUDA execution provider, and the onnxruntime-node
@@ -24,8 +24,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      actions: read
     outputs:
-      full: ${{ github.event_name != 'pull_request' || steps.filter.outputs.routing != 'false' || steps.filter.outputs.workspace != 'false' || steps.filter.outputs.ci != 'false' }}
+      full: ${{ (github.event_name != 'pull_request' && !(github.repository == 'keefeere/paseo-app' && github.event_name == 'push' && steps.baseline.outputs.known == 'true')) || steps.filter.outputs.routing != 'false' || steps.filter.outputs.workspace != 'false' || steps.filter.outputs.ci != 'false' }}
       format: ${{ steps.filter.outputs.format }}
       quality: ${{ steps.filter.outputs.quality }}
       hub: ${{ steps.filter.outputs.hub }}
@@ -45,11 +46,28 @@ jobs:
         with:
           node-version: "22"
 
+      # Compare main to the last green push, so canceling a superseded run cannot
+      # lose coverage for files changed by an earlier push in the same burst.
+      - name: Resolve tested main baseline
+        id: baseline
+        if: ${{ github.repository == 'keefeere/paseo-app' && github.event_name == 'push' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          baseline="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?branch=main&event=push&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // ""' 2>/dev/null || true)"
+          if [[ -n "$baseline" ]] && git merge-base --is-ancestor "$baseline" HEAD; then
+            echo "base=$baseline" >> "$GITHUB_OUTPUT"
+            echo "known=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "known=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Detect affected CI contracts
         id: filter
         uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
         with:
           filters: .github/ci-paths.yml
+          base: ${{ steps.baseline.outputs.base || '' }}
 
       - name: Validate CI contracts
         run: node --test scripts/ci-workflow.test.mjs scripts/daemon-launch-contract.test.mjs scripts/sync-fdroid-changelogs.test.mjs scripts/upload-release-assets.test.mjs
@@ -124,12 +142,15 @@ jobs:
         run: npm run typecheck
 
       - name: Run website tests
+        if: ${{ github.repository == 'getpaseo/paseo' }}
         run: npx vitest run packages/website/src --bail=1
 
       - name: Install website test browsers
+        if: ${{ github.repository == 'getpaseo/paseo' }}
         run: npx playwright install --with-deps chromium webkit
 
       - name: Verify website mockups
+        if: ${{ github.repository == 'getpaseo/paseo' }}
         run: npm run test:e2e --workspace=@getpaseo/website
 
       - name: Verify public package contents
@@ -186,7 +207,7 @@ jobs:
   server-tests-windows:
     name: server-tests (windows-latest)
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.server != 'false' || needs.changes.outputs.hub != 'false') }}
+    if: ${{ github.repository == 'getpaseo/paseo' && !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.server != 'false' || needs.changes.outputs.hub != 'false') }}
     runs-on: windows-latest
     steps: *server_test_steps
 
@@ -197,7 +218,7 @@ jobs:
   server-tests-macos:
     name: server-tests (macos-14, file observation)
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.server != 'false') }}
+    if: ${{ github.repository == 'getpaseo/paseo' && !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.server != 'false') }}
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -271,7 +292,7 @@ jobs:
           name: desktop-lifecycle
           path: ${{ runner.temp }}/desktop-lifecycle
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
       - name: Run desktop lifecycle E2E (Windows)
         if: ${{ runner.os == 'Windows' }}
@@ -294,12 +315,12 @@ jobs:
           name: desktop-browser-e2e
           path: ${{ runner.temp }}/desktop-browser-e2e
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
   desktop-tests-windows:
     name: desktop-tests (windows-latest)
     needs: changes
-    if: ${{ !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.desktop != 'false') }}
+    if: ${{ github.repository == 'getpaseo/paseo' && !cancelled() && (needs.changes.outputs.full != 'false' || needs.changes.outputs.desktop != 'false') }}
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -417,7 +438,7 @@ jobs:
           path: |
             packages/app/test-results/
             packages/app/playwright-report/
-          retention-days: 7
+          retention-days: 3
 
   playwright-2:
     name: playwright (shard 2/4)

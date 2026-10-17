@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { relative as relativePath } from "node:path";
 import test from "node:test";
+import { runInNewContext } from "node:vm";
 
 const repoRoot = new URL("../", import.meta.url);
 const ciWorkflowPath = new URL(".github/workflows/ci.yml", repoRoot);
@@ -301,5 +304,157 @@ test("desktop packaging smokes main pushes and only the pull requests that touch
   assert.doesNotMatch(source, /dorny\/paths-filter/);
   for (const action of ["actions/checkout", "actions/setup-node", "actions/upload-artifact"]) {
     assert.match(source, new RegExp(`${action}@[0-9a-f]{40} # v\\d+\\.\\d+\\.\\d+`));
+  }
+});
+
+function evaluateWorkflowExpression(expression, context) {
+  return runInNewContext(
+    expression
+      .replace(/^\$\{\{\s*|\s*\}\}$/g, "")
+      .replaceAll("needs.create-release", 'needs["create-release"]'),
+    {
+      cancelled: () => false,
+      always: () => true,
+      startsWith: (value, prefix) => value.startsWith(prefix),
+      ...context,
+    },
+  );
+}
+
+test("the personal fork skips unused OS runners even for a full CI run", () => {
+  const workflows = [
+    [ciWorkflowPath, ["server-tests-windows", "server-tests-macos", "desktop-tests-windows"]],
+    [
+      new URL(".github/workflows/desktop-release.yml", repoRoot),
+      ["publish-macos", "publish-windows"],
+    ],
+  ];
+  for (const [workflowPath, ids] of workflows) {
+    const jobs = jobBlocks(readFileSync(workflowPath, "utf8"));
+    for (const id of ids) {
+      const condition = jobs
+        .get(id)
+        .find((line) => line.startsWith("    if: "))
+        .trim()
+        .slice(4);
+      const context = {
+        github: {
+          repository: "keefeere/paseo-app",
+          event_name: "workflow_dispatch",
+          event: { inputs: { platform: "all" } },
+        },
+        needs: { changes: { outputs: { full: "true" } }, "create-release": { result: "success" } },
+      };
+      assert.equal(evaluateWorkflowExpression(condition, context), false, id);
+      context.github.repository = "getpaseo/paseo";
+      assert.equal(evaluateWorkflowExpression(condition, context), true, id);
+    }
+  }
+});
+
+test("fork main pushes route affected contracts while manual CI keeps full coverage", () => {
+  const source = readFileSync(ciWorkflowPath, "utf8");
+  const expression = source.match(/^      full: (.+)$/m)[1];
+  const context = {
+    github: { repository: "keefeere/paseo-app", event_name: "push" },
+    steps: {
+      baseline: { outputs: { known: "true" } },
+      filter: { outputs: { routing: "false", workspace: "false", ci: "false" } },
+    },
+  };
+  assert.equal(evaluateWorkflowExpression(expression, context), false);
+  context.steps.baseline.outputs.known = "false";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+  context.steps.baseline.outputs.known = "true";
+  assert.match(source, /base: \$\{\{ steps\.baseline\.outputs\.base \|\| '' \}\}/);
+  assert.match(source, /status=success/);
+  assert.match(source, /git merge-base --is-ancestor/);
+  context.steps.filter.outputs.workspace = "true";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+  context.steps.filter.outputs.workspace = "false";
+  context.github.event_name = "workflow_dispatch";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+  context.github.event_name = "push";
+  context.github.repository = "getpaseo/paseo";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+});
+
+test("fork Docker builds allocate runners only for manual runs and tags", () => {
+  const jobs = jobBlocks(readFileSync(dockerWorkflowPath, "utf8"));
+  const expression = jobs
+    .get("setup")
+    .find((line) => line.startsWith("    if: "))
+    .trim()
+    .slice(4);
+  const context = {
+    github: { repository: "keefeere/paseo-app", event_name: "push", ref: "refs/heads/main" },
+  };
+  assert.equal(evaluateWorkflowExpression(expression, context), false);
+  context.github.event_name = "workflow_dispatch";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+  context.github.event_name = "push";
+  context.github.ref = "refs/tags/v0.11.2-beta.907";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+  context.github.ref = "refs/heads/main";
+  context.github.repository = "getpaseo/paseo";
+  assert.equal(evaluateWorkflowExpression(expression, context), true);
+});
+
+test("main routing retains changes from canceled pushes and fails open without a baseline", () => {
+  const source = readFileSync(ciWorkflowPath, "utf8");
+  const step = source
+    .split("      - name: Resolve tested main baseline")[1]
+    .split("      - name: Detect affected CI contracts")[0];
+  const script = step
+    .split("        run: |\n")[1]
+    .split("\n")
+    .map((line) => line.slice(10))
+    .join("\n");
+  const cwd = mkdtempSync(`${tmpdir()}/paseo-ci-baseline-`);
+  const git = (...args) =>
+    execFileSync("git", args, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  try {
+    git("init");
+    git("config", "user.name", "CI test");
+    git("config", "user.email", "ci@example.invalid");
+    const commit = () => {
+      git("add", ".");
+      git("-c", "commit.gpgsign=false", "commit", "-m", "fixture");
+    };
+    writeFileSync(`${cwd}/initial`, "tested\n");
+    commit();
+    const baseline = git("rev-parse", "HEAD");
+    writeFileSync(`${cwd}/cli`, "changed by the canceled push\n");
+    commit();
+    writeFileSync(`${cwd}/app`, "changed by the current push\n");
+    commit();
+    const output = `${cwd}/outputs`;
+    const result = spawnSync(
+      "bash",
+      ["-euc", 'gh() { printf "%s\\n" "$TEST_BASELINE"; };\n' + script],
+      {
+        cwd,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          GITHUB_REPOSITORY: "keefeere/paseo-app",
+          GITHUB_OUTPUT: output,
+          TEST_BASELINE: baseline,
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(output, "utf8"), `base=${baseline}\nknown=true\n`);
+    assert.deepEqual(git("diff", "--name-only", baseline, "HEAD").split("\n"), ["app", "cli"]);
+    rmSync(output);
+    const unavailable = spawnSync("bash", ["-euc", "gh() { return 1; };\n" + script], {
+      cwd,
+      encoding: "utf8",
+      env: { ...process.env, GITHUB_REPOSITORY: "keefeere/paseo-app", GITHUB_OUTPUT: output },
+    });
+    assert.equal(unavailable.status, 0, unavailable.stderr);
+    assert.equal(readFileSync(output, "utf8"), "known=false\n");
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
   }
 });

@@ -3,6 +3,15 @@ name: Desktop Packages
 on:
   push:
     branches: [main]
+    paths:
+      - "packages/**"
+      - "plugins/**"
+      - "scripts/**"
+      - "patches/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/desktop-packages.yml"
   # Packaging leaves ordinary PR CI, but a PR that changes what gets packaged
   # or how it is smoked still proves the real artifacts before merge.
   pull_request:
@@ -15,7 +24,7 @@ on:
 
 concurrency:
   group: desktop-packages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || (github.repository == 'keefeere/paseo-app' && github.event_name == 'push') }}
 
 permissions:
   contents: read
@@ -88,4 +97,4 @@ jobs:
           name: desktop-packaged-smoke-linux-x64
           path: ${{ runner.temp }}/desktop-smoke
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
