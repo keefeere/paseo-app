@@ -33,6 +33,7 @@ export const es: TranslationResources = {
       unsupported:
         "Este enlace no se puede abrir aquí. Puedes copiar su dirección en otra aplicación.",
       open: "Abrir en una aplicación",
+      openAlways: "Abrir y no volver a preguntar",
       copy: "Copiar dirección",
       failed:
         "No se pudo abrir o copiar el enlace. Comprueba que haya una aplicación compatible instalada o copia la dirección.",
@@ -2268,6 +2269,12 @@ export const es: TranslationResources = {
           ask: "Preguntar",
           inApp: "EnPaseo",
           external: "Navegador externo",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Preguntar",
+          open: "Abrir sin preguntar",
         },
       },
       chatLinks: {

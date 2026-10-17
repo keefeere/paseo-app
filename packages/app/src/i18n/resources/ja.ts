@@ -32,6 +32,7 @@ export const ja: TranslationResources = {
       systemHandler: "このデバイスにインストールされているアプリで開きます。",
       unsupported: "このリンクはここでは開けません。アドレスを別のアプリにコピーできます。",
       open: "アプリで開く",
+      openAlways: "開いて次回から確認しない",
       copy: "アドレスをコピー",
       failed:
         "リンクを開くかコピーできませんでした。対応するアプリがインストールされているか確認するか、アドレスをコピーしてください。",
@@ -2237,6 +2238,12 @@ export const ja: TranslationResources = {
           ask: "確認する",
           inApp: "Paseoで",
           external: "外部ブラウザ",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "確認する",
+          open: "確認せずに開く",
         },
       },
       chatLinks: {

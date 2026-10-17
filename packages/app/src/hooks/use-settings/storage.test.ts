@@ -441,6 +441,7 @@ describe("loadAppSettingsFromStorage", () => {
 
     expect(result.openInSidePane).toMatchObject({ chatFiles: true });
     expect(result.chatLinkBehavior).toBe("ask");
+    expect(result.systemLinkBehavior).toBe("ask");
   });
 
   it("uses the native terminal renderer by default", async () => {

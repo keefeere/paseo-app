@@ -31,6 +31,7 @@ export const ar: TranslationResources = {
       systemHandler: "الفتح باستخدام تطبيق مثبت على هذا الجهاز.",
       unsupported: "لا يمكن فتح هذا الرابط هنا. يمكنك نسخ عنوانه إلى تطبيق آخر.",
       open: "فتح في تطبيق",
+      openAlways: "افتح ولا تسأل مرة أخرى",
       copy: "نسخ العنوان",
       failed:
         "تعذر فتح الرابط أو نسخه. تحقق من تثبيت تطبيق يدعم هذا النوع من الروابط، أو انسخ العنوان.",
@@ -2216,6 +2217,12 @@ export const ar: TranslationResources = {
           ask: "بسأل",
           inApp: "في Paseo",
           external: "متصفح خارجي",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "اسأل",
+          open: "افتح دون سؤال",
         },
       },
       chatLinks: {

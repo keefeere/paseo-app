@@ -33,6 +33,7 @@ export const fr: TranslationResources = {
       unsupported:
         "Ce lien ne peut pas être ouvert ici. Vous pouvez copier son adresse dans une autre application.",
       open: "Ouvrir dans une application",
+      openAlways: "Ouvrir et ne plus demander",
       copy: "Copier l’adresse",
       failed:
         "Impossible d’ouvrir ou de copier le lien. Vérifiez qu’une application adaptée est installée, ou copiez l’adresse.",
@@ -2266,6 +2267,12 @@ export const fr: TranslationResources = {
           ask: "Demander",
           inApp: "Dans Paseo",
           external: "Navigateur externe",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Demander",
+          open: "Ouvrir sans demander",
         },
       },
       chatLinks: {
