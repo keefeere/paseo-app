@@ -29,6 +29,12 @@ Existing higher legacy versions can make a build under this policy look like a d
 
 Keep CI, Desktop Packages, Desktop Release and Docker enabled. The fork does not deploy the upstream app, relay or website, publish Android APKs, roll out upstream desktop releases, sync release notes, or maintain Nix packages. Disable those workflows in the fork settings; deployment and maintenance jobs also require the upstream repository identity so a later import cannot execute them here.
 
+The personal fork runs Linux CI only. Windows/macOS checks and release jobs require the upstream repository identity. Keep app unit tests and browser/Electron coverage: `packages/app` also owns the Linux Desktop UI. Website mockup/browser tests run only upstream; mobile APK publishing remains disabled.
+
+Route both pull requests and main pushes by `.github/ci-paths.yml`. Compare main pushes to the last successful main CI commit so canceled pushes cannot lose coverage. If that baseline is unavailable, run every enabled contract. Manual CI also runs every enabled contract. Superseded main CI and packaging runs are canceled. Desktop Packages ignores pushes that cannot change its packages, dependencies or build scripts. Docker main pushes allocate no runners in this fork; build/export/publish images through manual dispatch or a release tag, for `linux/amd64` only.
+
+Keep CI diagnostics and artifact-only Desktop binaries for three days, Docker exports for seven. Published release assets are independent of workflow artifact retention. Do not delete historical build artifacts or caches as part of changing these defaults.
+
 ## Update feed
 
 `packages/desktop/electron-builder.yml` publishes to keefeere/paseo-app. The auto-updater downloads any newer release from that feed. Pointed at upstream, it would replace the fork build with vanilla Paseo the first time upstream releases a higher version. Publish Linux beta builds as GitHub prereleases with `beta-linux.yml`. Beta Desktop installations check this feed for newer versions. The release workflow validates the Linux manifest and publishes only after the requested Linux build succeeds. macOS and Windows manifests are required only when those platforms are selected. Linux releases use immediate rollout (`rollout_hours=0`).

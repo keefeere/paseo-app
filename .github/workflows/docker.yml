@@ -42,10 +42,11 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  PLATFORMS: linux/amd64,linux/arm64
+  PLATFORMS: ${{ github.repository == 'keefeere/paseo-app' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
 
 jobs:
   setup:
+    if: ${{ github.repository == 'getpaseo/paseo' || github.event_name != 'push' || startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.values.outputs.image }}
@@ -218,4 +219,4 @@ jobs:
           name: paseo-image
           path: image-artifact/
           compression-level: 0
-          retention-days: 14
+          retention-days: 7
