@@ -32,6 +32,7 @@ export const uk: TranslationResources = {
       unsupported:
         "Це посилання не можна відкрити тут. Скопіюйте адресу, щоб відкрити її в іншому застосунку.",
       open: "Відкрити в застосунку",
+      openAlways: "Відкрити й більше не питати",
       copy: "Копіювати адресу",
       failed:
         "Не вдалося відкрити або скопіювати посилання. Перевірте, чи встановлено застосунок для такого типу посилань, або скопіюйте адресу.",
@@ -2197,6 +2198,9 @@ export const uk: TranslationResources = {
           chatLinks: {
             label: "Клік на URL у чаті агента",
           },
+          systemLinks: {
+            label: "Клік на посилання для іншого застосунку (smb://, obsidian://, ssh://…)",
+          },
           diffFiles: {
             label: "Клік на файл у diff",
             description: "Відкривати вихідні файли, вибрані в diff, поруч із ним",
@@ -2298,6 +2302,12 @@ export const uk: TranslationResources = {
           ask: "Запитувати",
           inApp: "У Paseo",
           external: "Зовнішній браузер",
+        },
+      },
+      systemLinks: {
+        options: {
+          ask: "Запитувати",
+          open: "Відкривати без питання",
         },
       },
       chatLinks: {
