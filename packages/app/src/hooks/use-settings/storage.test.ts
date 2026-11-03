@@ -1249,3 +1249,15 @@ describe("font family CSS safety", () => {
     },
   );
 });
+
+it("defaults old settings to main and retains the terminal side preference", async () => {
+  for (const terminals of [undefined, false, true]) {
+    const deps = makeDeps({
+      storage: createInMemoryKeyValueStorage({
+        [APP_SETTINGS_KEY]: JSON.stringify({ openInSidePane: { terminals } }),
+      }),
+    });
+    const settings = await loadAppSettingsFromStorage(deps);
+    expect(settings.openInSidePane.terminals).toBe(terminals ?? false);
+  }
+});

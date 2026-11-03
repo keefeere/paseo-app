@@ -42,6 +42,12 @@ interface PluginNavigableHostProps extends PluginHostProps {
       readonly workspaceId: string;
       readonly serverId?: string;
     }) => void;
+    /** Reveal an existing terminal using the client's terminal open-location preference. */
+    readonly openTerminal?: (input: {
+      readonly workspaceId: string;
+      readonly terminalId: string;
+      readonly serverId?: string;
+    }) => void;
     readonly openAgent: (input: { readonly agentId: string; readonly serverId?: string }) => void;
     readonly openWorkspace: (input: {
       readonly workspaceId: string;

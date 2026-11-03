@@ -275,6 +275,7 @@ export interface WorkspaceTabSnapshot {
   knownTerminalIds?: Iterable<string>;
   standaloneTerminalIds: Iterable<string>;
   hasActivePendingTerminalCreate?: boolean;
+  terminalPlacement?: WorkspaceTabPlacement;
   hasActivePendingDraftCreate?: boolean;
 }
 
@@ -2281,6 +2282,7 @@ function isTerminalTab(
 }
 
 function openEntityTabWithoutFocusing(input: {
+  placement?: WorkspaceTabPlacement;
   layout: WorkspaceLayout;
   target: WorkspaceTabTarget;
   explorerSidebarPaneId: string | null;
@@ -2290,7 +2292,7 @@ function openEntityTabWithoutFocusing(input: {
       layout: input.layout,
       target: input.target,
       now: Date.now(),
-      placement: AMBIENT_PLACEMENT,
+      placement: input.placement ?? AMBIENT_PLACEMENT,
       explorerSidebarPaneId: input.explorerSidebarPaneId,
       createTabId: () => buildDeterministicWorkspaceTabId(input.target),
       focus: false,
@@ -2375,6 +2377,7 @@ function collapseStaleEntityTabs(input: {
 }
 
 function addMissingEntityTabs(input: {
+  terminalPlacement?: WorkspaceTabPlacement;
   layout: WorkspaceLayout;
   autoOpenAgentIds: Set<string>;
   representedAgentIds: Set<string>;
@@ -2425,6 +2428,7 @@ function addMissingEntityTabs(input: {
       nextLayout = openEntityTabWithoutFocusing({
         layout: nextLayout,
         target: { kind: "terminal", terminalId },
+        placement: input.terminalPlacement,
         explorerSidebarPaneId,
       });
       currentTerminalIds.add(terminalId);
@@ -2522,6 +2526,7 @@ export function reconcileWorkspaceTabs(
     autoOpenAgentIds: autoOpenSet,
     representedAgentIds,
     standaloneTerminalIds,
+    terminalPlacement: snapshot.terminalPlacement,
     hasActivePendingTerminalCreate: snapshot.hasActivePendingTerminalCreate ?? false,
     hasActivePendingDraftCreate: snapshot.hasActivePendingDraftCreate ?? false,
     explorerSidebarPaneId: state.explorerSidebarPaneId,

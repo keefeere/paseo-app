@@ -1,3 +1,5 @@
+import { useSettings } from "@/hooks/use-settings";
+import { resolveWorkspaceTargetPlacement } from "@/workspace-tabs/open-beside";
 import type { PluginSurfaceProps } from "@getpaseo/plugin/client";
 import { useSessionStore } from "@/stores/session-store";
 import { resolveWorkspaceMapKeyByIdentity } from "@/utils/workspace-identity";
@@ -12,11 +14,21 @@ import { createPluginHostNavigation } from "./host-navigation-model";
 export function usePluginHostNavigation(
   serverId: string,
 ): NonNullable<PluginSurfaceProps["navigation"]> {
+  const terminalOnSide = useSettings((settings) => settings.openInSidePane.terminals);
   return useMemo(
     () =>
       createPluginHostNavigation(serverId, {
         browserAvailable: getIsElectron(),
         openAgent: navigateToAgent,
+        openTerminal: ({ serverId: targetServerId, workspaceId, terminalId }) => {
+          const target = { kind: "terminal" as const, terminalId };
+          const placement = resolveWorkspaceTargetPlacement({
+            workspaceKey: `${targetServerId}:${workspaceId}`,
+            target,
+            location: terminalOnSide ? "side" : "main",
+          });
+          navigateToWorkspace({ serverId: targetServerId, workspaceId, target, placement });
+        },
         openWorkspace: navigateToWorkspace,
         createBrowser: createWorkspaceBrowser,
         resolveWorkspace: ({ serverId: targetServerId, workspaceId }) =>
@@ -25,6 +37,6 @@ export function usePluginHostNavigation(
             workspaceId,
           }),
       }),
-    [serverId],
+    [serverId, terminalOnSide],
   );
 }
