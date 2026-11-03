@@ -511,6 +511,7 @@ test("Windows units and integration run independently with complete routed cover
   }
   function selected(expression, outputs, cancelled = false) {
     return runInNewContext(expression, {
+      github: { repository: "getpaseo/paseo" },
       needs: { changes: { outputs } },
       cancelled: () => cancelled,
     });
