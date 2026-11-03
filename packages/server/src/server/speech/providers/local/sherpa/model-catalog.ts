@@ -302,6 +302,15 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     ...releaseArchive("asr-models", "sherpa-onnx-whisper-base"),
     engine: whisperEngine("base"),
   },
+  "whisper-small": {
+    kind: "stt-offline",
+    label: "Whisper Small",
+    description: "Mid-size Whisper model for 99 languages. More accurate than Base, faster than Turbo.",
+    languages: WHISPER_LANGUAGES,
+    downloadSizeBytes: 639_387_718,
+    ...releaseArchive("asr-models", "sherpa-onnx-whisper-small"),
+    engine: whisperEngine("small"),
+  },
   "whisper-turbo": {
     kind: "stt-offline",
     label: "Whisper Turbo",
