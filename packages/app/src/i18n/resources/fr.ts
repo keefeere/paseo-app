@@ -743,7 +743,13 @@ export const fr: TranslationResources = {
         },
       },
     },
-    header: {
+          projects: {
+        title: "Projets",
+        flattenSingleWorkspace: "Ne pas développer les projets avec un seul espace de travail",
+        description: "Ouvrir l'unique espace de travail directement depuis la ligne du projet",
+        saveFailed: "Échec de l'enregistrement des paramètres de la barre latérale",
+      },
+header: {
       actions: {
         workspaceActions: "Actions de l’espace de travail",
         workspaceActionsUnhealthy:

@@ -721,7 +721,13 @@ export const uk = {
         }
       }
     },
-    "header": {
+          projects: {
+        title: "Проєкти",
+        flattenSingleWorkspace: "Не розгортати проєкти з одним робочим простором",
+        description: "Відкривати єдиний робочий простір прямо з рядка проєкту",
+        saveFailed: "Не вдалося зберегти налаштування бічної панелі",
+      },
+"header": {
       "actions": {
         "workspaceActions": "Дії з робочим простором",
         "workspaceActionsUnhealthy": "Дії з робочим простором: один із сервісів несправний",

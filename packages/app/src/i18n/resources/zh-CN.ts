@@ -732,7 +732,13 @@ export const zhCN: TranslationResources = {
         },
       },
     },
-    header: {
+          projects: {
+        title: "项目",
+        flattenSingleWorkspace: "不展开只有一个工作区的项目",
+        description: "直接从项目行打开唯一的工作区",
+        saveFailed: "保存侧边栏设置失败",
+      },
+header: {
       actions: {
         workspaceActions: "Workspace 操作",
         workspaceActionsUnhealthy: "Workspace 操作，有服务异常",

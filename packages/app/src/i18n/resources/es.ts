@@ -743,7 +743,13 @@ export const es: TranslationResources = {
         },
       },
     },
-    header: {
+          projects: {
+        title: "Proyectos",
+        flattenSingleWorkspace: "No expandir proyectos con un solo espacio de trabajo",
+        description: "Abrir el único espacio de trabajo directamente desde la fila del proyecto",
+        saveFailed: "Error al guardar la configuración de la barra lateral",
+      },
+header: {
       actions: {
         workspaceActions: "AccionesWorkspace",
         workspaceActionsUnhealthy: "Acciones del workspace, hay un servicio con problemas",

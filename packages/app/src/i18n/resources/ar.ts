@@ -736,7 +736,13 @@ export const ar: TranslationResources = {
         },
       },
     },
-    header: {
+          projects: {
+        title: "المشاريع",
+        flattenSingleWorkspace: "عدم توسيع المشاريع ذات مساحة العمل الواحدة",
+        description: "افتح مساحة العمل الوحيدة مباشرة من صف المشروع",
+        saveFailed: "فشل حفظ إعدادات الشريط الجانبي",
+      },
+header: {
       actions: {
         workspaceActions: "إجراءات Workspace",
         workspaceActionsUnhealthy: "إجراءات Workspace، توجد خدمة غير سليمة",

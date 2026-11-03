@@ -65,6 +65,7 @@ export function ProjectLeadingVisual({
   backdrop,
   chevron = null,
   showChevron = false,
+  unreadBadgeOnLeft = false,
   isArchiving = false,
 }: {
   displayName: string;
@@ -76,6 +77,7 @@ export function ProjectLeadingVisual({
   backdrop: SidebarSurfaceBackdrop;
   chevron?: "expand" | "collapse" | null;
   showChevron?: boolean;
+  unreadBadgeOnLeft?: boolean;
   isArchiving?: boolean;
 }) {
   if (showChevron && chevron !== null) {
@@ -100,6 +102,7 @@ export function ProjectLeadingVisual({
       displayName={displayName}
       projectViewKey={projectViewKey}
       statusBucket={statusBucket}
+      unreadBadgeOnLeft={unreadBadgeOnLeft}
       backdrop={backdrop}
     />
   );
@@ -117,6 +120,7 @@ export function ProjectStatusIndicator({
   statusBucket,
   backdrop,
   loading = false,
+  unreadBadgeOnLeft = false,
   testID,
 }: {
   iconDataUri: string | null;
@@ -126,6 +130,7 @@ export function ProjectStatusIndicator({
   /** The row's current background, so the status badge can knock out of it. */
   backdrop: SidebarSurfaceBackdrop;
   loading?: boolean;
+  unreadBadgeOnLeft?: boolean;
   testID?: string;
 }) {
   const placeholderInitial = projectIconPlaceholderLabelFromDisplayName(displayName)
@@ -136,6 +141,7 @@ export function ProjectStatusIndicator({
   // and they share one badge.
   const badgeBucket = loading ? "running" : statusBucket;
   const badgeContent = getProjectStatusBadgeContent(badgeBucket);
+  const hasUnread = badgeBucket === "attention" || badgeBucket === "failed";
 
   return (
     <View
@@ -158,6 +164,7 @@ export function ProjectStatusIndicator({
             content={badgeContent}
             statusBucket={badgeBucket}
             backdrop={backdrop}
+            onLeft={unreadBadgeOnLeft && hasUnread}
           />
         )}
       </View>
@@ -169,7 +176,12 @@ function ProjectStatusBadge({
   content,
   statusBucket,
   backdrop,
+  onLeft,
 }: {
+  content: ProjectStatusBadgeContent;
+  statusBucket: SidebarStateBucket;
+  backdrop: SidebarSurfaceBackdrop;
+  onLeft: boolean;
   content: ProjectStatusBadgeContent;
   statusBucket: SidebarStateBucket;
   backdrop: SidebarSurfaceBackdrop;
@@ -194,8 +206,12 @@ function ProjectStatusBadge({
     <View
       role="status"
       accessibilityLabel={getStatusBucketLabel(statusBucket, t)}
-      style={[styles.statusBadge, getStatusBadgeBackdropStyle(backdrop)]}
-      testID="project-status-badge"
+      style={[
+        styles.statusBadge,
+        onLeft ? styles.unreadBadgeOnLeft : styles.statusBadgeOnRight,
+        getStatusBadgeBackdropStyle(backdrop),
+      ]}
+      testID={onLeft ? "project-unread-badge" : "project-status-badge"}
     >
       {content.kind === "alert" ? (
         <ThemedCircleAlert size={STATUS_INDICATOR_ALERT_SIZE} uniProps={needsInputColorMapping} />
@@ -299,7 +315,6 @@ const styles = StyleSheet.create((theme) => {
     // dot read as a gap in the icon rather than as a white halo drawn on top of it.
     statusBadge: {
       position: "absolute",
-      right: STATUS_BADGE_OFFSET,
       bottom: STATUS_BADGE_OFFSET,
       width: STATUS_BADGE_SIZE,
       height: STATUS_BADGE_SIZE,
@@ -308,6 +323,8 @@ const styles = StyleSheet.create((theme) => {
       justifyContent: "center",
       overflow: "hidden",
     },
+    unreadBadgeOnLeft: { left: STATUS_BADGE_OFFSET },
+    statusBadgeOnRight: { right: STATUS_BADGE_OFFSET },
     // Same corner as the shell, re-centred for the wider ring.
     statusRingAnchor: {
       position: "absolute",
