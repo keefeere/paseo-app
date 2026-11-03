@@ -256,6 +256,14 @@ export const ru: TranslationResources = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "Инструменты браузера",
+        warning:
+          "Разрешить агентам доступ и управление вкладками браузера Paseo, включая состояние авторизации. Включайте только для доверенных агентов.",
+      },
+      terminals: {
+        agentsTitle: "Терминальные агенты",
+      },
       notFound: "Агент не найден",
       failedToLoad: "Не удалось загрузить агента",
       reconnecting: "Повторное подключение к хосту",

@@ -254,6 +254,14 @@ export const zhCN: TranslationResources = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "浏览器工具",
+        warning:
+          "允许智能体访问和控制 Paseo 浏览器标签页，包括登录状态。请仅为您信任的智能体启用此功能。",
+      },
+      terminals: {
+        agentsTitle: "终端智能体",
+      },
       notFound: "未找到 Agent",
       failedToLoad: "加载 Agent 失败",
       reconnecting: "正在重新连接主机",

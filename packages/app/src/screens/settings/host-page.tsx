@@ -1707,6 +1707,7 @@ function TerminalProfilesSection({ serverId }: { serverId: string }) {
 }
 
 export function HostTerminalsPage({ serverId }: { serverId: string }) {
+  const { t } = useTranslation();
   const host = useHostProfile(serverId);
 
   if (!host) {
@@ -1715,7 +1716,7 @@ export function HostTerminalsPage({ serverId }: { serverId: string }) {
 
   return (
     <View>
-      <SettingsSection title="Terminal agents">
+      <SettingsSection title={t("settings.host.terminals.agentsTitle")}>
         <EnableTerminalAgentHooksCard serverId={serverId} />
       </SettingsSection>
       <TerminalProfilesSection serverId={serverId} />

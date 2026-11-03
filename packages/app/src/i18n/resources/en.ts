@@ -250,6 +250,14 @@ export const en = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "Browser tools",
+        warning:
+          "Allow agents to access and control Paseo browser tabs, including logged-in browser state. Only enable this for agents you trust.",
+      },
+      terminals: {
+        agentsTitle: "Terminal agents",
+      },
       notFound: "Agent not found",
       failedToLoad: "Failed to load agent",
       reconnecting: "Reconnecting to host",

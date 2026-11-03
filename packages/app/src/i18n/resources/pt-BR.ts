@@ -255,6 +255,14 @@ export const ptBR: TranslationResources = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "Ferramentas do navegador",
+        warning:
+          "Permitir que agentes acessem e controlem abas do navegador Paseo, incluindo estado de login. Ative apenas para agentes de confiança.",
+      },
+      terminals: {
+        agentsTitle: "Agentes de terminal",
+      },
       notFound: "Agente não encontrado",
       failedToLoad: "Falha ao carregar agente",
       reconnecting: "Reconectando ao host",

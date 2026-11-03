@@ -254,6 +254,14 @@ export const ar: TranslationResources = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "أدوات المتصفح",
+        warning:
+          "السماح للوكلاء بالوصول إلى علامات تبويب متصفح Paseo والتحكم فيها، بما في ذلك حالة تسجيل الدخول. قم بتمكين هذا فقط للوكلاء الموثوقين.",
+      },
+      terminals: {
+        agentsTitle: "وكلاء الطرفية",
+      },
       notFound: "لم يتم العثور على Agent",
       failedToLoad: "فشل تحميل الوكيل",
       reconnecting: "جارٍ إعادة الاتصال بالمضيف",

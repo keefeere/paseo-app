@@ -254,6 +254,14 @@ export const ko: TranslationResources = {
   },
   agentPanel: {
     states: {
+      browserTools: {
+        title: "브라우저 도구",
+        warning:
+          "에이전트가 로그인 상태를 포함한 Paseo 브라우저 탭에 접근하고 제어하도록 허용합니다. 신뢰할 수 있는 에이전트에 대해서만 활성화하세요.",
+      },
+      terminals: {
+        agentsTitle: "터미널 에이전트",
+      },
       notFound: "에이전트를 찾을 수 없습니다",
       failedToLoad: "에이전트를 불러오지 못했습니다",
       reconnecting: "호스트에 다시 연결하는 중",
