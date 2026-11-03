@@ -25,7 +25,8 @@ export type TtsEngine =
       ruleFsts?: readonly string[];
     }
   | { family: "kitten"; model: string; voices: string; tokens: string; dataDir: string }
-  | { family: "vits"; model: string; tokens: string; dataDir: string };
+  // Character-based VITS voices (Coqui, MMS) ship without espeak-ng data.
+  | { family: "vits"; model: string; tokens: string; dataDir?: string };
 
 interface SherpaOnnxCatalogEntryBase {
   label: string;
@@ -476,7 +477,6 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
       family: "vits",
       model: "model.onnx",
       tokens: "tokens.txt",
-      dataDir: "espeak-ng-data",
     },
   },
   "vits-mms-ukr": {
@@ -490,7 +490,6 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
       family: "vits",
       model: "model.onnx",
       tokens: "tokens.txt",
-      dataDir: "espeak-ng-data",
     },
   },
 } as const satisfies Record<string, SherpaOnnxCatalogEntry>;
@@ -578,7 +577,7 @@ export function getSherpaOnnxModelSpec(id: SherpaOnnxModelId): SherpaOnnxModelSp
 // Every path an engine names, so the downloader can verify an install.
 export function engineFiles(engine: SttEngine | TtsEngine): string[] {
   return Object.entries(engine).flatMap(([key, value]) => {
-    if (key === "family") return [];
+    if (key === "family" || value === undefined) return [];
     return typeof value === "string" ? [value] : (value as readonly string[]);
   });
 }

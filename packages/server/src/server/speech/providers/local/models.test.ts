@@ -78,4 +78,13 @@ describe("local speech models", () => {
     expect(await stateOf()).toEqual({ status: "not_installed" });
     expect(existsSync(getLocalSpeechModelDir(modelsDir, modelId))).toBe(false);
   });
+
+  test.each(["vits-coqui-uk-mai", "vits-mms-ukr"])(
+    "requires only the files the character-based %s archive ships",
+    (id) => {
+      // The upstream archives carry model.onnx and tokens.txt but no espeak-ng-data.
+      const ukrainian = listLocalSpeechModels().find((model) => model.id === id)!;
+      expect(ukrainian.requiredFiles).toEqual(["model.onnx", "tokens.txt"]);
+    },
+  );
 });

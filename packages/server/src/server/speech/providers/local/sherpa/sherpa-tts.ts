@@ -59,7 +59,7 @@ function buildTtsModelConfig(
         vits: {
           model: file(engine.model),
           tokens: file(engine.tokens),
-          dataDir: file(engine.dataDir),
+          dataDir: engine.dataDir ? file(engine.dataDir) : "",
           lengthScale,
         },
       };
