@@ -47,8 +47,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@getpaseo/protocol": "0.15.0",
-    "@getpaseo/relay": "0.15.0",
+    "@getpaseo/protocol": "0.15.0-beta.901",
+    "@getpaseo/relay": "0.15.0-beta.901",
     "ws": "^8.20.0",
     "zod": "^4.4.3"
   },
