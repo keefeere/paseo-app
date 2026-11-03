@@ -29,6 +29,7 @@ describe("parseAppLanguage", () => {
       "ko",
       "pt-BR",
       "ru",
+      "uk",
       "zh-CN",
     ]);
   });
@@ -114,6 +115,7 @@ describe("resolveSupportedLocale", () => {
     expect(resolveSupportedLocale("system", ["pt-BR"])).toBe("pt-BR");
     expect(resolveSupportedLocale("system", ["pt"])).toBe("pt-BR");
     expect(resolveSupportedLocale("system", ["ru-RU"])).toBe("ru");
+    expect(resolveSupportedLocale("system", ["uk-UA"])).toBe("uk");
   });
 
   it("maps Korean system locales to Korean", () => {

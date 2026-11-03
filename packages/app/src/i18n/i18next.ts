@@ -35,6 +35,9 @@ const bundledTranslations: BackendModule = {
       case "ru":
         callback(null, require("./resources/ru").ru);
         return;
+      case "uk":
+        callback(null, require("./resources/uk").uk);
+        return;
       case "zh-CN":
         callback(null, require("./resources/zh-CN").zhCN);
         return;
