@@ -1,4 +1,7 @@
 export const MIN_SPACING_PERCENT = 50;
+export const MIN_TEXT_SPACING_PERCENT = 0;
+export const MIN_TEXT_LINE_HEIGHT_PERCENT = 110;
+export const MAX_TEXT_LINE_HEIGHT_PERCENT = 180;
 export const MAX_UI_SPACING_PERCENT = 125;
 export const MAX_TEXT_SPACING_PERCENT = 150;
 

@@ -27,6 +27,7 @@ import {
   type ThemePreference,
 } from "@/styles/theme";
 import { z } from "zod";
+import { proseLineHeight } from "@/appearance/spacing";
 import { APP_SETTINGS_KEY, LEGACY_SETTINGS_KEY } from "./keys";
 import { migrateAppSettings } from "./migrations";
 
@@ -88,11 +89,16 @@ export interface AppSettings {
   monoFontFamily: string; // "" = platform default mono stack
   uiBaseFontSize: number; // clamped px, platform default 14 or 15
   contentFontSize: number; // clamped px, platform default 15 or 16
+  uiSpacingPercent: number; // 50–125, independent of font size
+  textSpacingPercent: number; // 0–150, block spacing only
+  textLineHeightPercent: number; // 110–180, independent of block spacing
+  sidebarSpacingPercent: number; // 0–125, vertical padding multiplier for sidebar lists
   codeFontSize: number; // clamped px, default 12
   /** Max width of chat and markdown content in px; null follows the current default. */
   contentMaxWidth: number | null;
   syntaxTheme: SyntaxThemeId; // default "one"
   workspaceTitleSource: WorkspaceTitleSource;
+  flattenSingleWorkspaceProjects: boolean;
   sidebarWorkspaceTrailing: SidebarWorkspaceTrailing;
   sidebarRowItems: SidebarRowItems;
   sidebarChecksDisplay: SidebarChecksDisplay;
@@ -149,6 +155,10 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   monoFontFamily: "",
   uiBaseFontSize: DEFAULT_UI_BASE_FONT_SIZE,
   contentFontSize: DEFAULT_CONTENT_FONT_SIZE,
+  uiSpacingPercent: 100,
+  textSpacingPercent: 100,
+  textLineHeightPercent: 140,
+  sidebarSpacingPercent: 100,
   codeFontSize: DEFAULT_CODE_FONT_SIZE,
   contentMaxWidth: null,
   syntaxTheme: "one",
@@ -156,6 +166,7 @@ export const DEFAULT_CLIENT_SETTINGS: AppSettings = {
   sidebarWorkspaceTrailing: "timestamp",
   sidebarRowItems: DEFAULT_SIDEBAR_ROW_ITEMS,
   sidebarChecksDisplay: DEFAULT_SIDEBAR_CHECKS_DISPLAY,
+  flattenSingleWorkspaceProjects: false,
   sidebarNavItems: [],
   sidebarFooterItems: [],
   usage: DEFAULT_USAGE_PREFERENCES,
@@ -236,6 +247,10 @@ const StoredAppSettingsSchema = z
     contentFontSize: clampedNumber(MIN_CONTENT_FONT_SIZE, MAX_CONTENT_FONT_SIZE)
       .optional()
       .catch(DEFAULT_CONTENT_FONT_SIZE),
+    uiSpacingPercent: clampedNumber(50, 125).catch(100),
+    textSpacingPercent: clampedNumber(0, 150).catch(100),
+    textLineHeightPercent: clampedNumber(110, 180).optional().catch(undefined),
+    sidebarSpacingPercent: clampedNumber(0, 125).catch(100),
     // COMPAT(uiFontSizeScale): replaced by the literal base size in v0.4, remove after 2027-08-17.
     uiFontSize: clampedNumber(11, 24).optional().catch(undefined),
     codeFontSize: clampedNumber(MIN_CODE_FONT_SIZE, MAX_CODE_FONT_SIZE).catch(
@@ -247,6 +262,7 @@ const StoredAppSettingsSchema = z
       .catch(null),
     syntaxTheme: z.string().refine(isSyntaxThemeId).catch("one"),
     workspaceTitleSource: z.enum(["title", "branch"]).catch("title"),
+    flattenSingleWorkspaceProjects: z.boolean().catch(false),
     sidebarWorkspaceTrailing: z.enum(["diff", "timestamp", "none"]).catch("timestamp"),
     sidebarRowItems: SidebarRowItemsSchema,
     sidebarChecksDisplay: z
@@ -325,7 +341,14 @@ const StoredAppSettingsSchema = z
         stored.pullRequestOpenLocation ?? (legacyPullRequestsInSidePane ? "side" : "explorer"),
       uiBaseFontSize,
       contentFontSize: stored.contentFontSize ?? uiBaseFontSize,
+      uiSpacingPercent: stored.uiSpacingPercent,
+      textSpacingPercent: stored.textSpacingPercent,
+      textLineHeightPercent:
+        stored.textLineHeightPercent ??
+        Math.round(proseLineHeight(stored.textSpacingPercent) * 100),
+      sidebarSpacingPercent: stored.sidebarSpacingPercent,
       sidebarChecksDisplay,
+      flattenSingleWorkspaceProjects: stored.flattenSingleWorkspaceProjects ?? false,
       sidebarRowItems: {
         ...stored.sidebarRowItems,
         services:
