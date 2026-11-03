@@ -1,4 +1,4 @@
-import { useSettings } from "@/hooks/use-settings";
+import { useAppSettings } from "@/hooks/use-settings";
 import { resolveWorkspaceTargetPlacement } from "@/workspace-tabs/open-beside";
 import type { PluginSurfaceProps } from "@getpaseo/plugin/client";
 import { useSessionStore } from "@/stores/session-store";
@@ -14,7 +14,7 @@ import { createPluginHostNavigation } from "./host-navigation-model";
 export function usePluginHostNavigation(
   serverId: string,
 ): NonNullable<PluginSurfaceProps["navigation"]> {
-  const terminalOnSide = useSettings((settings) => settings.openInSidePane.terminals);
+  const terminalOnSide = useAppSettings().settings.openInSidePane.terminals;
   return useMemo(
     () =>
       createPluginHostNavigation(serverId, {
