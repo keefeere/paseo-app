@@ -465,6 +465,34 @@ export const SHERPA_ONNX_MODEL_CATALOG = {
     ...releaseArchive("tts-models", "vits-piper-es_ES-davefx-medium-int8"),
     engine: piperEngine("es_ES-davefx-medium"),
   },
+  "vits-coqui-uk-mai": {
+    kind: "tts",
+    label: "Coqui VITS (Ukrainian)",
+    description: "Coqui VITS Ukrainian voice (Mai).",
+    languages: ["uk"],
+    downloadSizeBytes: 38_100_000,
+    ...releaseArchive("tts-models", "vits-coqui-uk-mai"),
+    engine: {
+      family: "vits",
+      model: "model.onnx",
+      tokens: "tokens.txt",
+      dataDir: "espeak-ng-data",
+    },
+  },
+  "vits-mms-ukr": {
+    kind: "tts",
+    label: "Meta MMS (Ukrainian)",
+    description: "Meta MMS Ukrainian voice.",
+    languages: ["uk"],
+    downloadSizeBytes: 38_100_000,
+    ...releaseArchive("tts-models", "vits-mms-ukr"),
+    engine: {
+      family: "vits",
+      model: "model.onnx",
+      tokens: "tokens.txt",
+      dataDir: "espeak-ng-data",
+    },
+  },
 } as const satisfies Record<string, SherpaOnnxCatalogEntry>;
 
 export type SherpaOnnxModelId = keyof typeof SHERPA_ONNX_MODEL_CATALOG;
