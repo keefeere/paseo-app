@@ -252,14 +252,6 @@ export const uk = {
   },
   agentPanel: {
     states: {
-      browserTools: {
-        title: "Інструменти браузера",
-        warning:
-          "Дозволити агентам доступ і керування вкладками браузера Paseo, включаючи стан авторизації. Вмикайте лише для довірених агентів.",
-      },
-      terminals: {
-        agentsTitle: "Термінальні агенти",
-      },
       notFound: "Агента не знайдено",
       failedToLoad: "Не вдалося завантажити агента",
       reconnecting: "Повторне під'єднання до хоста",
@@ -2345,11 +2337,11 @@ export const uk = {
       logs: {
         action: "Logs",
         title: "Logs: {{id}}",
-        loading: "Loading logs…",
+        loading: "Завантаження журналів…",
         refresh: "Refresh",
         refreshing: "Refreshing…",
-        errorTitle: "Unable to load plugin logs",
-        empty: "No plugin output yet",
+        errorTitle: "Не вдалося завантажити журнали плагіна",
+        empty: "Плагін ще нічого не вивів",
       },
       status: {
         running: "работает",
@@ -2545,15 +2537,15 @@ export const uk = {
         description: "Мова застосунку",
         options: {
           system: "Системна",
-          ar: "Arabic",
-          en: "English",
-          es: "Spanish",
-          fr: "French",
-          ja: "Japanese",
-          ko: "Korean",
-          ptBR: "Brazilian Portuguese",
-          ru: "Russian",
-          zhCN: "Simplified Chinese",
+          ar: "Арабська",
+          en: "Англійська",
+          es: "Іспанська",
+          fr: "Французька",
+          ja: "Японська",
+          ko: "Корейська",
+          ptBR: "Бразильська португальська",
+          ru: "Російська",
+          zhCN: "Китайська (спрощена)",
         },
       },
     },
@@ -2805,6 +2797,14 @@ export const uk = {
       },
     },
     host: {
+      browserTools: {
+        title: "Інструменти браузера",
+        warning:
+          "Дозволити агентам доступ і керування вкладками браузера Paseo, включаючи стан авторизації. Вмикайте лише для довірених агентів.",
+      },
+      terminals: {
+        agentsTitle: "Термінальні агенти",
+      },
       password: {
         guidance: "Вилучіть цей хост і додайте його знову з паролем, якого вимагає цей демон.",
       },

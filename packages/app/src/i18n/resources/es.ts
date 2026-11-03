@@ -256,14 +256,6 @@ export const es: TranslationResources = {
   },
   agentPanel: {
     states: {
-      browserTools: {
-        title: "Herramientas de navegador",
-        warning:
-          "Permitir que los agentes accedan y controlen las pestañas del navegador Paseo, incluido el estado de inicio de sesión. Habilítelo solo para agentes de confianza.",
-      },
-      terminals: {
-        agentsTitle: "Agentes de terminal",
-      },
       notFound: "Agentno encontrado",
       failedToLoad: "No se pudo cargar el agente",
       reconnecting: "Reconectando al host",
@@ -2712,6 +2704,14 @@ export const es: TranslationResources = {
       },
     },
     host: {
+      browserTools: {
+        title: "Herramientas de navegador",
+        warning:
+          "Permitir que los agentes accedan y controlen las pestañas del navegador Paseo, incluido el estado de inicio de sesión. Habilítelo solo para agentes de confianza.",
+      },
+      terminals: {
+        agentsTitle: "Agentes de terminal",
+      },
       password: {
         guidance: "Elimina este host y vuelve a añadirlo con la contraseña que pide este daemon.",
       },

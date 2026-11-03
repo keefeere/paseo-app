@@ -250,14 +250,6 @@ export const en = {
   },
   agentPanel: {
     states: {
-      browserTools: {
-        title: "Browser tools",
-        warning:
-          "Allow agents to access and control Paseo browser tabs, including logged-in browser state. Only enable this for agents you trust.",
-      },
-      terminals: {
-        agentsTitle: "Terminal agents",
-      },
       notFound: "Agent not found",
       failedToLoad: "Failed to load agent",
       reconnecting: "Reconnecting to host",
@@ -2780,6 +2772,14 @@ export const en = {
       },
     },
     host: {
+      browserTools: {
+        title: "Browser tools",
+        warning:
+          "Allow agents to access and control Paseo browser tabs, including logged-in browser state. Only enable this for agents you trust.",
+      },
+      terminals: {
+        agentsTitle: "Terminal agents",
+      },
       password: {
         guidance: "Remove this host and add it again with the password this daemon asks for.",
       },

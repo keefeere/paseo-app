@@ -257,14 +257,6 @@ export const fr: TranslationResources = {
   },
   agentPanel: {
     states: {
-      browserTools: {
-        title: "Outils de navigateur",
-        warning:
-          "Autoriser les agents à accéder et contrôler les onglets du navigateur Paseo, y compris l'état de connexion. N'activez cette option que pour les agents de confiance.",
-      },
-      terminals: {
-        agentsTitle: "Agents de terminal",
-      },
       notFound: "Agent introuvable",
       failedToLoad: "Impossible de charger l’agent",
       reconnecting: "Reconnexion à l’hôte…",
@@ -2715,6 +2707,14 @@ export const fr: TranslationResources = {
       },
     },
     host: {
+      browserTools: {
+        title: "Outils de navigateur",
+        warning:
+          "Autoriser les agents à accéder et contrôler les onglets du navigateur Paseo, y compris l'état de connexion. N'activez cette option que pour les agents de confiance.",
+      },
+      terminals: {
+        agentsTitle: "Agents de terminal",
+      },
       password: {
         guidance:
           "Supprimez cet hôte puis ajoutez-le à nouveau avec le mot de passe demandé par ce daemon.",

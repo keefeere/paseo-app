@@ -256,14 +256,6 @@ export const ja: TranslationResources = {
   },
   agentPanel: {
     states: {
-      browserTools: {
-        title: "ブラウザツール",
-        warning:
-          "エージェントがログイン状態を含むPaseoのブラウザタブにアクセスして制御することを許可します。信頼できるエージェントに対してのみ有効にしてください。",
-      },
-      terminals: {
-        agentsTitle: "ターミナルエージェント",
-      },
       notFound: "エージェントが見つかりません",
       failedToLoad: "エージェントの読み込みに失敗しました",
       reconnecting: "ホストに再接続中",
@@ -2677,6 +2669,14 @@ export const ja: TranslationResources = {
       },
     },
     host: {
+      browserTools: {
+        title: "ブラウザツール",
+        warning:
+          "エージェントがログイン状態を含むPaseoのブラウザタブにアクセスして制御することを許可します。信頼できるエージェントに対してのみ有効にしてください。",
+      },
+      terminals: {
+        agentsTitle: "ターミナルエージェント",
+      },
       password: {
         guidance:
           "このホストを削除し、このデーモンが求めるパスワードを入力して追加し直してください。",
