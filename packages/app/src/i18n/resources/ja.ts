@@ -740,13 +740,7 @@ export const ja: TranslationResources = {
         },
       },
     },
-          projects: {
-        title: "プロジェクト",
-        flattenSingleWorkspace: "単一のワークスペースを持つプロジェクトを展開しない",
-        description: "プロジェクト行から唯一のワークスペースを直接開く",
-        saveFailed: "サイドバー設定の保存に失敗しました",
-      },
-header: {
+    header: {
       actions: {
         workspaceActions: "ワークスペースアクション",
         workspaceActionsUnhealthy: "ワークスペースアクション、異常なサービスがあります",

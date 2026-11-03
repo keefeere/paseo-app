@@ -743,13 +743,7 @@ export const ru: TranslationResources = {
         },
       },
     },
-          projects: {
-        title: "Проекты",
-        flattenSingleWorkspace: "Не разворачивать проекты с одним рабочим пространством",
-        description: "Открывать единственное рабочее пространство прямо из строки проекта",
-        saveFailed: "Не удалось сохранить настройки боковой панели",
-      },
-header: {
+    header: {
       actions: {
         workspaceActions: "Действия с рабочим пространством",
         workspaceActionsUnhealthy: "Действия с рабочим пространством, есть неисправный сервис",

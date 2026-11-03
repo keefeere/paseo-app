@@ -740,13 +740,7 @@ export const ptBR: TranslationResources = {
         },
       },
     },
-          projects: {
-        title: "Projetos",
-        flattenSingleWorkspace: "Não expandir projetos com um único espaço de trabalho",
-        description: "Abrir o único espaço de trabalho diretamente da linha do projeto",
-        saveFailed: "Falha ao salvar as configurações da barra lateral",
-      },
-header: {
+    header: {
       actions: {
         workspaceActions: "Ações do workspace",
         workspaceActionsUnhealthy: "Ações do workspace, há um serviço com problema",

@@ -736,13 +736,7 @@ export const ko: TranslationResources = {
         },
       },
     },
-          projects: {
-        title: "프로젝트",
-        flattenSingleWorkspace: "단일 워크스페이스가 있는 프로젝트를 확장하지 않음",
-        description: "프로젝트 행에서 유일한 워크스페이스를 직접 엽니다",
-        saveFailed: "사이드바 설정 저장 실패",
-      },
-header: {
+    header: {
       actions: {
         workspaceActions: "워크스페이스 작업",
         workspaceActionsUnhealthy: "워크스페이스 작업, 비정상 서비스가 있습니다",

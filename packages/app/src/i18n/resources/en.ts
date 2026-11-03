@@ -731,13 +731,7 @@ export const en = {
         },
       },
     },
-          projects: {
-        title: "Projects",
-        flattenSingleWorkspace: "Don't expand projects with a single workspace",
-        description: "Open the only workspace directly from the project row",
-        saveFailed: "Failed to save sidebar settings",
-      },
-header: {
+    header: {
       actions: {
         workspaceActions: "Workspace actions",
         workspaceActionsUnhealthy: "Workspace actions, a service is unhealthy",
