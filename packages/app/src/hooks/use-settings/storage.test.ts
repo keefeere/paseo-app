@@ -91,7 +91,6 @@ describe("loadAppSettingsFromStorage", () => {
     }
   });
 
-
   it("persists file panel associations, including panels absent from this host", async () => {
     const deps = makeDeps();
     const queryClient = new QueryClient();

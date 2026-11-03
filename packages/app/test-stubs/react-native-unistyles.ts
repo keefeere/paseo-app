@@ -38,6 +38,10 @@ const testTheme = {
   },
   borderWidth: { 1: 1 },
   spacing: [0, 4, 8, 12, 16, 20, 24, 28, 32],
+  textSpacing: [0, 4, 8, 12, 16, 20, 24, 28, 32],
+  sidebarSpacing: [0, 4, 8, 12, 16, 20, 24, 28, 32],
+  textLineHeight: 1.4,
+  sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20 },
   fontSize: {
     xs: 12,
     sm: 14,
