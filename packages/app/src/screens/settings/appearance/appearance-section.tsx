@@ -1,3 +1,12 @@
+import { Slider } from "@/components/ui/slider";
+import {
+  MIN_SPACING_PERCENT,
+  MIN_TEXT_SPACING_PERCENT,
+  MIN_TEXT_LINE_HEIGHT_PERCENT,
+  MAX_TEXT_LINE_HEIGHT_PERCENT,
+  MAX_UI_SPACING_PERCENT,
+  MAX_TEXT_SPACING_PERCENT,
+} from "@/appearance/spacing";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -471,6 +480,68 @@ function SyntaxRow({ value, onChange }: SyntaxRowProps) {
   );
 }
 
+type SpacingSetting =
+  | "uiSpacingPercent"
+  | "textSpacingPercent"
+  | "textLineHeightPercent"
+  | "sidebarSpacingPercent";
+
+const SPACING_RANGES: Record<SpacingSetting, { minimum: number; maximum: number }> = {
+  uiSpacingPercent: { minimum: MIN_SPACING_PERCENT, maximum: MAX_UI_SPACING_PERCENT },
+  textSpacingPercent: { minimum: MIN_TEXT_SPACING_PERCENT, maximum: MAX_TEXT_SPACING_PERCENT },
+  textLineHeightPercent: {
+    minimum: MIN_TEXT_LINE_HEIGHT_PERCENT,
+    maximum: MAX_TEXT_LINE_HEIGHT_PERCENT,
+  },
+  sidebarSpacingPercent: { minimum: MIN_TEXT_SPACING_PERCENT, maximum: MAX_UI_SPACING_PERCENT },
+};
+
+function SpacingRow({ setting }: { setting: SpacingSetting }) {
+  const { t } = useTranslation();
+  const { settings, updateSettings } = useAppSettings();
+  const persistedValue = settings[setting];
+  const [draft, setDraft] = useState(persistedValue);
+  useEffect(() => setDraft(persistedValue), [persistedValue]);
+  const label = t(`settings.appearance.spacing.${setting}`);
+  const commit = useCallback(
+    (percent: number) => {
+      if (percent !== settings[setting]) void updateSettings({ [setting]: percent });
+    },
+    [setting, settings, updateSettings],
+  );
+  // Persist after dragging: changing the theme mid-drag remounts web appearance boundaries.
+  return (
+    <View
+      style={[
+        settingsStyles.row,
+        styles.spacingRow,
+        setting !== "uiSpacingPercent" && settingsStyles.rowBorder,
+      ]}
+    >
+      <View style={settingsStyles.rowContent}>
+        <Text style={settingsStyles.rowTitle}>{label}</Text>
+        <Text style={settingsStyles.rowHint}>
+          {t(`settings.appearance.spacing.${setting}Hint`)}
+        </Text>
+      </View>
+      <View style={styles.spacingControl}>
+        <View style={styles.sliderTrack}>
+          <Slider
+            value={draft}
+            minimumValue={SPACING_RANGES[setting].minimum}
+            maximumValue={SPACING_RANGES[setting].maximum}
+            step={1}
+            accessibilityLabel={label}
+            onValueChange={setDraft}
+            onSlidingComplete={commit}
+          />
+        </View>
+        <Text style={styles.spacingValue}>{draft}%</Text>
+      </View>
+    </View>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
@@ -618,10 +689,11 @@ export function AppearanceSection() {
   const previewOverrides = useMemo(
     () => ({
       contentFontSize: sizeDraftToOverride(contentSizeDraft),
+      textLineHeightPercent: settings.textLineHeightPercent,
       monoFontFamily: monoFontDraft,
       codeFontSize: sizeDraftToOverride(codeSizeDraft),
     }),
-    [codeSizeDraft, contentSizeDraft, monoFontDraft],
+    [codeSizeDraft, contentSizeDraft, monoFontDraft, settings.textLineHeightPercent],
   );
 
   return (
@@ -690,6 +762,17 @@ export function AppearanceSection() {
           />
         </View>
       </SettingsSection>
+      <SettingsSection
+        title={t("settings.appearance.spacing.title")}
+        info={t("settings.appearance.spacing.info")}
+      >
+        <View style={settingsStyles.card}>
+          <SpacingRow setting="uiSpacingPercent" />
+          <SpacingRow setting="textSpacingPercent" />
+          <SpacingRow setting="textLineHeightPercent" />
+          <SpacingRow setting="sidebarSpacingPercent" />
+        </View>
+      </SettingsSection>
       <SettingsSection title={t("settings.appearance.layout.title")}>
         <View style={settingsStyles.card}>
           <ContentWidthRow
@@ -711,6 +794,23 @@ export function AppearanceSection() {
 }
 
 const styles = StyleSheet.create((theme) => ({
+  spacingRow: { flexWrap: "wrap", gap: theme.spacing[2] },
+  sliderTrack: { flex: 1, minWidth: 80 },
+  spacingControl: {
+    width: 200,
+    maxWidth: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  spacingValue: {
+    minWidth: 44,
+    textAlign: "right",
+    fontVariant: ["tabular-nums"],
+    color: theme.colors.foreground,
+    fontSize: theme.fontSize.base,
+  },
+
   preview: {
     marginTop: theme.spacing[4],
   },

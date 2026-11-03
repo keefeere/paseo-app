@@ -27,6 +27,7 @@ type RowType = "context" | "add" | "remove";
 
 interface PreviewOverrides {
   contentFontSize?: number;
+  textLineHeightPercent?: number;
   monoFontFamily?: string;
   codeFontSize?: number;
 }
@@ -67,7 +68,10 @@ function buildCodeOverride(overrides: PreviewOverrides | undefined): TextStyle {
 function buildContentOverride(overrides: PreviewOverrides | undefined): TextStyle {
   const fontSize = resolveSizeOverride(overrides?.contentFontSize);
   if (fontSize === undefined) return {};
-  return inlineUnistylesStyle({ fontSize, lineHeight: Math.round(fontSize * 1.4) });
+  return inlineUnistylesStyle({
+    fontSize,
+    lineHeight: Math.round((fontSize * (overrides?.textLineHeightPercent ?? 140)) / 100),
+  });
 }
 
 interface KeyedToken {
@@ -193,10 +197,10 @@ const styles = StyleSheet.create((theme) => ({
     borderWidth: theme.borderWidth[1],
     borderColor: theme.colors.border,
     overflow: "hidden",
-    paddingVertical: theme.spacing[2],
+    paddingVertical: Math.max(8, theme.spacing[2]),
   },
   row: {
-    paddingHorizontal: theme.spacing[3],
+    paddingHorizontal: Math.max(8, theme.spacing[3]),
   },
   addRow: {
     backgroundColor: ADDED_TINT,
@@ -214,9 +218,9 @@ const styles = StyleSheet.create((theme) => ({
   contentSample: {
     color: theme.colors.foreground,
     fontSize: theme.fontSize.content,
-    lineHeight: Math.round(theme.fontSize.content * 1.4),
-    paddingHorizontal: theme.spacing[3],
-    paddingBottom: theme.spacing[2],
+    lineHeight: Math.round(theme.fontSize.content * theme.textLineHeight),
+    paddingHorizontal: Math.max(8, theme.spacing[3]),
+    paddingBottom: Math.max(8, theme.spacing[2]),
   },
   markerContext: {
     color: theme.colors.foregroundMuted,

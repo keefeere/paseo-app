@@ -2506,6 +2506,12 @@ export const ja: TranslationResources = {
         description: "プロンプト間を移動するためのアウトラインを表示します",
       },
       sidebar: {
+        projects: {
+          title: "プロジェクト",
+          flattenSingleWorkspace: "ワークスペースが1つのプロジェクトを展開しない",
+          description: "プロジェクト行から唯一のワークスペースを直接開く",
+          saveFailed: "サイドバー設定を保存できませんでした",
+        },
         header: {
           title: "ヘッダー",
           description: "サイドバー上部に表示する項目とその順序を選択します",
@@ -2538,6 +2544,18 @@ export const ja: TranslationResources = {
         codeSize: "コードサイズ",
         codeSizeHint: "コード、差分、ターミナル出力に使用されます",
         codeSizeAccessibility: "コードフォントサイズ",
+      },
+      spacing: {
+        title: "余白",
+        uiSpacingPercent: "インターフェースの余白",
+        uiSpacingPercentHint: "文字サイズと独立した間隔とパディング",
+        textSpacingPercent: "テキストの間隔",
+        textSpacingPercentHint: "メッセージとMarkdownの行間・段落間隔",
+        textLineHeightPercent: "行の高さ",
+        textLineHeightPercentHint: "段落間の余白とは独立した行の高さ",
+        sidebarSpacingPercent: "サイドバーの行間隔",
+        sidebarSpacingPercentHint: "プロジェクトとワークスペース一覧の上下余白",
+        info: "余白の既定値は100%、行の高さは140%です。このデバイスにのみ保存されます。",
       },
       layout: {
         title: "レイアウト",

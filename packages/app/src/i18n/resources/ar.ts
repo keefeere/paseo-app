@@ -2522,6 +2522,12 @@ export const ar: TranslationResources = {
         description: "عرض مخطط للتنقل بين المطالبات",
       },
       sidebar: {
+        projects: {
+          title: "المشاريع",
+          flattenSingleWorkspace: "عدم توسيع المشاريع ذات مساحة العمل الواحدة",
+          description: "فتح مساحة العمل الوحيدة مباشرة من صف المشروع",
+          saveFailed: "تعذر حفظ إعدادات الشريط الجانبي",
+        },
         header: {
           title: "الرأس",
           description: "اختر العناصر التي تظهر أعلى الشريط الجانبي وترتيبها",
@@ -2553,6 +2559,18 @@ export const ar: TranslationResources = {
         codeSize: "حجم الكود",
         codeSizeHint: "يُستخدم للكود والفروقات ومخرجات الطرفية",
         codeSizeAccessibility: "حجم خط الكود",
+      },
+      spacing: {
+        title: "التباعد",
+        uiSpacingPercent: "تباعد الواجهة",
+        uiSpacingPercentHint: "المسافات والهوامش مستقلة عن حجم الخط",
+        textSpacingPercent: "تباعد النص",
+        textSpacingPercentHint: "تباعد الأسطر والفقرات في الرسائل وMarkdown",
+        textLineHeightPercent: "ارتفاع السطر",
+        textLineHeightPercentHint: "ارتفاع كل سطر بشكل مستقل عن المسافات بين الفقرات",
+        sidebarSpacingPercent: "تباعد صفوف الشريط الجانبي",
+        sidebarSpacingPercentHint: "الحشو العمودي في قوائم المشاريع ومساحات العمل",
+        info: "التباعد الافتراضي 100% وارتفاع السطر 140%. يُحفظ على هذا الجهاز فقط.",
       },
       layout: {
         title: "التخطيط",

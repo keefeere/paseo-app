@@ -2523,6 +2523,12 @@ export const ptBR: TranslationResources = {
         description: "Mostrar uma estrutura para navegar entre prompts",
       },
       sidebar: {
+        projects: {
+          title: "Projetos",
+          flattenSingleWorkspace: "Não expandir projetos com um único espaço de trabalho",
+          description: "Abrir o único espaço de trabalho diretamente pela linha do projeto",
+          saveFailed: "Não foi possível salvar as configurações da barra lateral",
+        },
         header: {
           title: "Cabeçalho",
           description: "Escolha quais itens aparecem no topo da barra lateral e em que ordem",
@@ -2554,6 +2560,18 @@ export const ptBR: TranslationResources = {
         codeSize: "Tamanho do código",
         codeSizeHint: "Usado em código, diffs e saída do terminal",
         codeSizeAccessibility: "Tamanho da fonte de código",
+      },
+      spacing: {
+        title: "Espaçamento",
+        uiSpacingPercent: "Espaçamento da interface",
+        uiSpacingPercentHint: "Espaços e margens independentes do tamanho da fonte",
+        textSpacingPercent: "Espaçamento do texto",
+        textSpacingPercentHint: "Espaço entre linhas e parágrafos nas mensagens e no Markdown",
+        textLineHeightPercent: "Altura da linha",
+        textLineHeightPercentHint: "Altura das linhas independente do espaço entre parágrafos",
+        sidebarSpacingPercent: "Espaçamento das linhas laterais",
+        sidebarSpacingPercentHint: "Margens verticais nas listas de projetos e espaços de trabalho",
+        info: "Espaçamento padrão: 100%; altura da linha: 140%. Salvo apenas neste dispositivo.",
       },
       layout: {
         title: "Layout",

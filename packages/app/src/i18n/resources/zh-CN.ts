@@ -2460,6 +2460,12 @@ export const zhCN: TranslationResources = {
         description: "显示用于在提示词之间跳转的大纲",
       },
       sidebar: {
+        projects: {
+          title: "项目",
+          flattenSingleWorkspace: "不展开只有一个工作区的项目",
+          description: "从项目行直接打开唯一的工作区",
+          saveFailed: "无法保存侧边栏设置",
+        },
         header: {
           title: "顶部",
           description: "选择侧边栏顶部显示的项目及其顺序",
@@ -2489,6 +2495,18 @@ export const zhCN: TranslationResources = {
         codeSize: "代码字号",
         codeSizeHint: "用于代码、差异和终端输出",
         codeSizeAccessibility: "代码字号",
+      },
+      spacing: {
+        title: "间距",
+        uiSpacingPercent: "界面间距",
+        uiSpacingPercentHint: "独立于字号的间隔和内边距",
+        textSpacingPercent: "文本间距",
+        textSpacingPercentHint: "消息和 Markdown 中的行间距和段落间距",
+        textLineHeightPercent: "行高",
+        textLineHeightPercentHint: "独立于段落间距的文本行高度",
+        sidebarSpacingPercent: "侧边栏行间距",
+        sidebarSpacingPercentHint: "项目和工作区列表的垂直内边距",
+        info: "默认间距为100%，行高为140%。仅保存在此设备上。",
       },
       layout: {
         title: "布局",

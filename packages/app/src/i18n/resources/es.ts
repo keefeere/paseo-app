@@ -2540,6 +2540,12 @@ export const es: TranslationResources = {
         description: "Muestra un esquema para saltar entre instrucciones",
       },
       sidebar: {
+        projects: {
+          title: "Proyectos",
+          flattenSingleWorkspace: "No expandir proyectos con un solo espacio de trabajo",
+          description: "Abrir el único espacio de trabajo desde la fila del proyecto",
+          saveFailed: "No se pudo guardar la configuración de la barra lateral",
+        },
         header: {
           title: "Encabezado",
           description:
@@ -2573,6 +2579,19 @@ export const es: TranslationResources = {
         codeSize: "Tamaño del código",
         codeSizeHint: "Se usa en código, diferencias y la salida del terminal",
         codeSizeAccessibility: "Tamaño de fuente del código",
+      },
+      spacing: {
+        title: "Espaciado",
+        uiSpacingPercent: "Espaciado de la interfaz",
+        uiSpacingPercentHint: "Separación y relleno independientes del tamaño de letra",
+        textSpacingPercent: "Espaciado del texto",
+        textSpacingPercentHint: "Espacio entre líneas y párrafos en mensajes y Markdown",
+        textLineHeightPercent: "Interlineado",
+        textLineHeightPercentHint: "Altura de línea independiente del espacio entre párrafos",
+        sidebarSpacingPercent: "Espaciado de filas laterales",
+        sidebarSpacingPercentHint:
+          "Márgenes verticales en las listas de proyectos y espacios de trabajo",
+        info: "Espaciado predeterminado: 100%; altura de línea: 140%. Guardado solo en este dispositivo.",
       },
       layout: {
         title: "Diseño",

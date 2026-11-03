@@ -8,7 +8,7 @@ import {
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { matchCommandLink, useAgentCommandHints, type CommandHints } from "@/agent-commands";
 import { AttachmentLightbox, type ImageLightboxSource } from "@/components/attachment-lightbox";
-import type { Theme } from "@/styles/theme";
+import { SPACING, type Theme } from "@/styles/theme";
 import { isWeb } from "@/constants/platform";
 import { density, resolveDensity } from "@/styles/density";
 import { MarkdownBlockStack } from "./block-stack";
@@ -30,7 +30,8 @@ const markdownStyle =
     createMarkdownStyles(theme, {
       compact,
       muted,
-      blockGap: resolveDensity(rt, density.blockGap),
+      // The text spacing preference scales block gaps; theme.textSpacing is already curved.
+      blockGap: (resolveDensity(rt, density.blockGap) * theme.textSpacing[4]) / SPACING[4],
     });
 const regularStyle = markdownStyle(false);
 const compactStyle = markdownStyle(true);

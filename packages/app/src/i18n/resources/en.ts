@@ -2611,6 +2611,12 @@ export const en = {
         description: "Show an outline for jumping between prompts",
       },
       sidebar: {
+        projects: {
+          title: "Projects",
+          flattenSingleWorkspace: "Don't expand projects with a single workspace",
+          description: "Open the only workspace directly from the project row",
+          saveFailed: "Failed to save sidebar settings",
+        },
         header: {
           title: "Header",
           description: "Choose which items appear at the top of the sidebar and in what order",
@@ -2642,6 +2648,19 @@ export const en = {
         codeSize: "Code size",
         codeSizeHint: "Used for code, diffs, and terminal output",
         codeSizeAccessibility: "Code font size",
+      },
+      spacing: {
+        title: "Spacing",
+        uiSpacingPercent: "Interface spacing",
+        uiSpacingPercentHint: "Gaps and padding, independent of font size",
+        textSpacingPercent: "Paragraph and block spacing",
+        textSpacingPercentHint: "Gaps between paragraphs, blocks, and conversation items",
+        textLineHeightPercent: "Line height",
+        textLineHeightPercentHint:
+          "Line height relative to font size (independent of paragraph spacing)",
+        sidebarSpacingPercent: "Sidebar row spacing",
+        sidebarSpacingPercentHint: "Vertical padding in project and workspace lists",
+        info: "Block and interface spacing default to 100%; line height to 140%. Saved only on this device.",
       },
       layout: {
         title: "Layout",

@@ -1,5 +1,5 @@
 import type { MarkdownStyle } from "react-native-enriched-markdown";
-import type { Theme } from "@/styles/theme";
+import { SPACING, type Theme } from "@/styles/theme";
 import { isWeb } from "@/constants/platform";
 
 // iOS Safari needs the prefix to override the gesture host's selection suppression.
@@ -19,14 +19,15 @@ export function createMarkdownStyles(
   const paragraph = {
     fontSize,
     fontFamily: theme.fontFamily.ui,
-    lineHeight: Math.round(fontSize * 1.4),
+    lineHeight: Math.round(fontSize * theme.textLineHeight),
     color: muted ? theme.colors.foregroundMuted : theme.colors.foreground,
     ...block,
   };
   const heading = (scale: number) => ({
     ...paragraph,
     fontSize: Math.round(fontSize * scale),
-    lineHeight: Math.round(fontSize * scale * 1.3),
+    // Headings keep their tighter 1.3:1.4 ratio to the prose line height.
+    lineHeight: Math.round((fontSize * scale * theme.textLineHeight * 13) / 14),
     fontWeight: "bold",
   });
   return {
@@ -45,7 +46,7 @@ export function createMarkdownStyles(
         bulletColor: theme.colors.foregroundMuted,
         markerColor: theme.colors.foregroundMuted,
         gapWidth: 7,
-        itemSpacing: 4,
+        itemSpacing: (4 * theme.textSpacing[4]) / SPACING[4],
         marginLeft: 20,
       },
       blockquote: {

@@ -2,6 +2,8 @@
 
 Tokens — every color, font size, weight, spacing step, radius, icon size — live in `packages/app/src/styles/theme.ts`.
 
+Appearance spacing separates interface padding, prose block gaps, prose line height, and sidebar list density. Sidebar density scales vertical list padding without changing navigation or horizontal alignment. Block spacing can reach zero; line height remains independent. Keep input and code insets readable at the compact end, and keep the composer line box independent of prose density. Do not shrink overlay clearance with text spacing: the stream tail uses it to keep the final row reachable.
+
 ---
 
 ## 1. Character
@@ -124,7 +126,7 @@ A section or group explains itself through the `info` prop on `<SettingsSection>
 
 Cards inside a section sit closer than sections. Rows inside a card touch — only the divider separates them. The rhythm is page → spacious; section → spacious; card → tight.
 
-Rows have generous vertical padding: roughly 16px of content plus 16px of vertical padding for settings rows, 8–12px for sidebar list items where many rows must fit. Compressing rows below the established density to fit more on the screen is wrong. Too many rows means more cards or more sections, not smaller rows.
+Rows have generous vertical padding: roughly 16px of content plus 16px of vertical padding for settings rows, 8–12px for sidebar list items where many rows must fit. Keep authored rows at this density. Appearance spacing is a user preference: interface gaps and padding scale independently of font size, while message and Markdown line and paragraph spacing have a separate control. Both default to 100% and stay local to each client. Fixed control heights preserve touch targets.
 
 Rows revealed under a `<SettingsCollapsibleRow>` are nested rows, one step smaller than card rows: 8px of vertical padding, `fontSize.sm` text, `xs` controls, and one fixed height so rows with and without a trailing button line up. The collapsible row sets this for everything under it (`packages/app/src/components/settings/row-density.tsx`). Never pass a density to a row, and never pad or resize a nested row by hand.
 

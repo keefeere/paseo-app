@@ -306,17 +306,17 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
     marginBottom: theme.spacing[1],
   },
   containerFirstInGroup: {
-    marginTop: theme.spacing[4],
+    marginTop: theme.textSpacing[4],
   },
   containerLastInGroup: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   bubble: {
     backgroundColor: theme.colors.surface3,
     borderRadius: theme.borderRadius["2xl"],
     borderTopRightRadius: theme.borderRadius.sm,
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[4],
+    paddingHorizontal: Math.max(12, theme.spacing[4]),
+    paddingVertical: Math.max(10, theme.spacing[4]),
     minWidth: 0,
     flexShrink: 1,
   },
@@ -325,7 +325,7 @@ const userMessageStylesheet = StyleSheet.create((theme) => ({
     fontSize: theme.fontSize.content,
     ...(isWeb
       ? {
-          lineHeight: Math.round(theme.fontSize.content * 1.4),
+          lineHeight: Math.round(theme.fontSize.content * theme.textLineHeight),
           overflowWrap: "anywhere" as const,
         }
       : {}),
@@ -732,7 +732,7 @@ interface AssistantMessageProps {
 
 export const assistantMessageStylesheet = StyleSheet.create((theme) => ({
   container: {
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
     ...(isWeb ? { userSelect: "text" as const } : {}),
   },
   containerCompactTop: {
@@ -879,10 +879,10 @@ const expandableBadgeStylesheet = StyleSheet.create((theme) => ({
     marginHorizontal: -13,
   },
   containerSpacing: {
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.textSpacing[1],
   },
   containerLastInSequence: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   pressable: {
     borderRadius: theme.borderRadius.lg,
@@ -1225,10 +1225,10 @@ interface SpeakMessageProps {
 
 const speakMessageStylesheet = StyleSheet.create((theme) => ({
   container: {
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
   },
   containerSpacing: {
-    marginBottom: theme.spacing[4],
+    marginBottom: theme.textSpacing[4],
   },
   header: {
     flexDirection: "row",
@@ -1245,7 +1245,7 @@ const speakMessageStylesheet = StyleSheet.create((theme) => ({
   text: {
     fontFamily: theme.fontFamily.ui,
     fontSize: theme.fontSize.content,
-    lineHeight: Math.round(theme.fontSize.content * 1.4),
+    lineHeight: Math.round(theme.fontSize.content * theme.textLineHeight),
     color: theme.colors.foreground,
   },
 }));
@@ -1387,7 +1387,7 @@ const compactionStylesheet = StyleSheet.create((theme) => ({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: theme.spacing[3],
+    paddingVertical: theme.textSpacing[3],
     paddingHorizontal: theme.spacing[4],
     gap: theme.spacing[2],
   },

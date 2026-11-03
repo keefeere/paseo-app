@@ -2499,6 +2499,12 @@ export const ko: TranslationResources = {
         description: "프롬프트 사이를 이동하기 위한 개요 표시",
       },
       sidebar: {
+        projects: {
+          title: "프로젝트",
+          flattenSingleWorkspace: "워크스페이스가 하나인 프로젝트 펼치지 않기",
+          description: "프로젝트 행에서 유일한 워크스페이스 바로 열기",
+          saveFailed: "사이드바 설정을 저장하지 못했습니다",
+        },
         header: {
           title: "헤더",
           description: "사이드바 상단에 표시할 항목과 순서를 선택하세요",
@@ -2530,6 +2536,18 @@ export const ko: TranslationResources = {
         codeSize: "코드 크기",
         codeSizeHint: "코드, diff 및 터미널 출력에 사용됩니다",
         codeSizeAccessibility: "코드 글꼴 크기",
+      },
+      spacing: {
+        title: "간격",
+        uiSpacingPercent: "인터페이스 간격",
+        uiSpacingPercentHint: "글꼴 크기와 독립적인 간격 및 여백",
+        textSpacingPercent: "텍스트 간격",
+        textSpacingPercentHint: "메시지와 Markdown의 줄 및 문단 간격",
+        textLineHeightPercent: "줄 높이",
+        textLineHeightPercentHint: "문단 간격과 독립적인 줄 높이",
+        sidebarSpacingPercent: "사이드바 행 간격",
+        sidebarSpacingPercentHint: "프로젝트 및 작업 공간 목록의 세로 여백",
+        info: "기본 간격은 100%, 줄 높이는 140%입니다. 이 기기에만 저장됩니다.",
       },
       layout: {
         title: "레이아웃",

@@ -4,10 +4,12 @@ import {
   DEFAULT_UI_FONT_STACK,
   DEFAULT_MONO_FONT_STACK,
   FONT_SIZE,
+  SPACING,
   REGISTERED_THEMES,
   type Theme,
 } from "@/styles/theme";
 import { applyRootUiFont } from "./apply-root-font";
+import { textSpacingScale } from "./spacing";
 
 const ALL_THEME_KEYS = Object.keys(REGISTERED_THEMES) as (keyof typeof REGISTERED_THEMES)[];
 
@@ -16,6 +18,10 @@ export interface AppearanceInput {
   monoFontFamily: string; // "" -> default stack
   uiBaseFontSize: number; // already clamped
   contentFontSize: number; // already clamped
+  uiSpacingPercent: number;
+  textSpacingPercent: number;
+  textLineHeightPercent: number;
+  sidebarSpacingPercent: number;
   codeFontSize: number; // already clamped
   contentMaxWidth: number; // already clamped, default resolved
   syntaxTheme: SyntaxThemeId;
@@ -64,6 +70,15 @@ export function applyAppearance(input: AppearanceInput): void {
   const ui = input.uiFontFamily.trim() || DEFAULT_UI_FONT_STACK;
   const mono = input.monoFontFamily.trim() || DEFAULT_MONO_FONT_STACK;
   const diffLineHeight = Math.round(input.codeFontSize * 1.5); // couple to code size
+  // Always scale the authored spacing so repeated updates never compound.
+  const scaleSpacing = (percent: number): Theme["spacing"] =>
+    Object.fromEntries(
+      Object.entries(SPACING).map(([key, value]) => [key, (value * percent) / 100]),
+    ) as Theme["spacing"];
+  const spacing = scaleSpacing(input.uiSpacingPercent);
+  const textSpacing = scaleSpacing(textSpacingScale(input.textSpacingPercent) * 100);
+  const textLineHeight = input.textLineHeightPercent / 100;
+  const sidebarSpacing = scaleSpacing((input.uiSpacingPercent * input.sidebarSpacingPercent) / 100);
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -81,9 +96,30 @@ export function applyAppearance(input: AppearanceInput): void {
         input.codeFontSize,
       );
       const lineHeight = { ...t.lineHeight, diff: diffLineHeight };
+      // At zero, remove the old 24px control floor as well as the padding.
+      // Keep the normal end unchanged and leave large glyphs a readable line box.
+      const sidebarRatio = Math.min(1, input.sidebarSpacingPercent / 100);
+      const controlHeight = 18 + 6 * sidebarRatio;
+      const sidebarLineHeight = Math.max(fontSize.base * 1.2, 18 + 2 * sidebarRatio);
+      const sidebarRow = {
+        controlHeight,
+        lineHeight: sidebarLineHeight,
+        minHeight:
+          Math.max(
+            fontSize.base * 1.4 * (0.75 + 0.25 * sidebarRatio),
+            controlHeight,
+            sidebarLineHeight,
+          ) + sidebarSpacing[3],
+      };
+
       if (t.colorScheme === "light") {
         return {
           ...t,
+          spacing,
+          textSpacing,
+          sidebarSpacing,
+          sidebarRow,
+          textLineHeight,
           fontFamily,
           fontSize,
           lineHeight,
@@ -93,6 +129,11 @@ export function applyAppearance(input: AppearanceInput): void {
       }
       return {
         ...t,
+        spacing,
+        textSpacing,
+        sidebarSpacing,
+        sidebarRow,
+        textLineHeight,
         fontFamily,
         fontSize,
         lineHeight,

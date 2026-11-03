@@ -2614,13 +2614,13 @@ const styles = StyleSheet.create((theme) => ({
     // Optical inset: aligns the visible Pinned/Workspaces glyph edge with the
     // Schedules icon across the divider; their layout boxes have different insets.
     paddingTop: 2,
-    paddingBottom: theme.spacing[4],
+    paddingBottom: theme.sidebarSpacing[4],
   },
   projectListContainer: {
     width: "100%",
   },
   pinnedSection: {
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.sidebarSpacing[1],
   },
   // Three times the gap a row keeps from its neighbour, so the break between two groups reads as
   // a break rather than as one more row of pitch. Kept equal to `statusGroupBlockExpanded` — the
@@ -2630,7 +2630,7 @@ const styles = StyleSheet.create((theme) => ({
   // the rows underneath the header, so a collapsed project gives it back and a column of collapsed
   // headers closes up to the pitch of a list instead of staying spaced for content that is gone.
   projectBlockExpanded: {
-    paddingBottom: theme.spacing[3],
+    paddingBottom: theme.sidebarSpacing[3],
   },
   workspaceListContainer: {},
   // Kept in step with `workspaceRow` above. It stands in a project's list where a workspace row
@@ -2640,9 +2640,9 @@ const styles = StyleSheet.create((theme) => ({
   // the step in reads as belonging to that project. Padding rather than margin, so the hover and
   // pressed fills stay the same box as every other row in the sidebar.
   newWorkspaceGhostRow: {
-    minHeight: density.rowHeight,
-    marginBottom: theme.spacing[0.5],
-    paddingVertical: theme.spacing[2],
+    minHeight: { xs: density.rowHeight.xs, md: theme.sidebarRow.minHeight },
+    marginBottom: theme.sidebarSpacing[0.5],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[4],
     paddingRight: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
@@ -2680,11 +2680,11 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectRow: {
     position: "relative",
-    minHeight: density.rowHeight,
-    paddingVertical: theme.spacing[2],
+    minHeight: { xs: density.rowHeight.xs, md: theme.sidebarRow.minHeight },
+    paddingVertical: theme.sidebarSpacing[2],
     paddingHorizontal: theme.spacing[2],
     borderRadius: theme.borderRadius.lg,
-    marginBottom: theme.spacing[1],
+    marginBottom: theme.sidebarSpacing[1],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -2731,7 +2731,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: theme.spacing[1],
     paddingHorizontal: theme.spacing[2],
-    paddingVertical: theme.spacing[1],
+    paddingVertical: theme.sidebarSpacing[1],
     borderRadius: theme.borderRadius.md,
     flexShrink: 0,
   },
@@ -2744,7 +2744,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectIconActionButton: {
     width: 24,
-    height: 24,
+    height: theme.sidebarRow.controlHeight,
     borderRadius: theme.borderRadius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -2761,7 +2761,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: 2,
     flexShrink: 0,
-    // MoreVertical paints only around the center of its 14px SVG. Keep the 24px controls,
+    // MoreVertical paints only around the center of its 14px SVG. Keep the control widths,
     // but pull their painted edge through the unused view-box space onto the row rail.
     marginRight: -6,
   },
@@ -2769,7 +2769,7 @@ const styles = StyleSheet.create((theme) => ({
     // Larger on compact so the kebab is an easy tap target. The negative margins keep its
     // dots on the same rail as the 24px desktop box and the row at its 44px height.
     width: { xs: 32, md: 24 },
-    height: { xs: 32, md: 24 },
+    height: { xs: 32, md: theme.sidebarRow.controlHeight },
     marginRight: { xs: -4, md: 0 },
     marginVertical: { xs: -4, md: 0 },
     borderRadius: theme.borderRadius.md,
@@ -2785,7 +2785,7 @@ const styles = StyleSheet.create((theme) => ({
   },
   projectTrailingControlSlot: {
     width: 24,
-    height: 24,
+    height: theme.sidebarRow.controlHeight,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -2806,16 +2806,16 @@ const styles = StyleSheet.create((theme) => ({
     right: theme.spacing[2],
   },
   workspaceRow: {
-    minHeight: density.rowHeight,
-    marginBottom: theme.spacing[0.5],
-    paddingVertical: theme.spacing[2],
+    minHeight: { xs: density.rowHeight.xs, md: theme.sidebarRow.minHeight },
+    marginBottom: theme.sidebarSpacing[0.5],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,
     flexDirection: "column",
     alignItems: "stretch",
     justifyContent: "center",
-    gap: theme.spacing[1],
+    gap: theme.sidebarSpacing[1],
     userSelect: "none",
   },
   workspaceRowMain: {
@@ -2886,7 +2886,7 @@ const styles = StyleSheet.create((theme) => ({
     color: theme.colors.foreground,
     fontSize: theme.fontSize.base,
     fontWeight: "400",
-    lineHeight: 20,
+    lineHeight: theme.sidebarRow.lineHeight,
     opacity: 0.76,
     flex: 1,
     minWidth: 0,

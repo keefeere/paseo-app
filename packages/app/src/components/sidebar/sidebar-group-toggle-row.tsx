@@ -72,9 +72,9 @@ export function SidebarGroupToggleRow({
 const styles = StyleSheet.create((theme) => ({
   // Kept in step with `workspaceRow` in sidebar-workspace-list.tsx and sidebar-status-list.tsx.
   row: {
-    minHeight: density.rowHeight,
-    marginBottom: theme.spacing[0.5],
-    paddingVertical: theme.spacing[2],
+    minHeight: { xs: density.rowHeight.xs, md: theme.sidebarRow.minHeight },
+    marginBottom: theme.sidebarSpacing[0.5],
+    paddingVertical: theme.sidebarSpacing[2],
     paddingLeft: theme.spacing[2],
     paddingRight: theme.spacing[3],
     borderRadius: theme.borderRadius.lg,

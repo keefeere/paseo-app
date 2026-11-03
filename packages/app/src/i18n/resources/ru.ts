@@ -2528,6 +2528,12 @@ export const ru: TranslationResources = {
         description: "Показывать оглавление для перехода между запросами",
       },
       sidebar: {
+        projects: {
+          title: "Проекты",
+          flattenSingleWorkspace: "Не разворачивать проекты с одним воркспейсом",
+          description: "Открывать единственный воркспейс нажатием на строку проекта",
+          saveFailed: "Не удалось сохранить настройки боковой панели",
+        },
         header: {
           title: "Верх",
           description:
@@ -2561,6 +2567,18 @@ export const ru: TranslationResources = {
         codeSize: "Размер кода",
         codeSizeHint: "Используется для кода, диффов и вывода терминала",
         codeSizeAccessibility: "Размер шрифта кода",
+      },
+      spacing: {
+        title: "Воздух",
+        uiSpacingPercent: "Отступы интерфейса",
+        uiSpacingPercentHint: "Промежутки и поля независимо от размера шрифта",
+        textSpacingPercent: "Интервалы текста",
+        textSpacingPercentHint: "Межстрочные и межабзацные интервалы в сообщениях и Markdown",
+        textLineHeightPercent: "Межстрочный интервал",
+        textLineHeightPercentHint: "Высота строки независимо от промежутков между абзацами",
+        sidebarSpacingPercent: "Интервалы строк боковой панели",
+        sidebarSpacingPercentHint: "Вертикальные отступы в списках проектов и рабочих пространств",
+        info: "Отступы по умолчанию — 100%, высота строки — 140%. Сохранено только на этом устройстве.",
       },
       layout: {
         title: "Макет",
