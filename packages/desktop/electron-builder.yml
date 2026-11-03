@@ -35,10 +35,13 @@ extraResources:
     to: app-dist
   - from: assets/editor-targets
     to: editor-target-icons
+# Fork: the auto-updater reads this feed. Upstream releases would replace the
+# fork build with vanilla Paseo, so fork builds update only from the fork.
+# See docs/fork-builds.md.
 publish:
   provider: github
-  owner: getpaseo
-  repo: paseo
+  owner: keefeere
+  repo: paseo-app
 mac:
   artifactName: "Paseo-${version}-${arch}.${ext}"
   minimumSystemVersion: "13.0.0"
