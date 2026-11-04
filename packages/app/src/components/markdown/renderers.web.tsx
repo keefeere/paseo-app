@@ -9,6 +9,7 @@ import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import { useFileLink } from "@/assistant-file-links";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { HighlightedCodeBlock } from "@/components/highlighted-code-block";
+import { PluginCodeBlockActions } from "@/plugins/code-block-actions";
 import type { Theme } from "@/styles/theme";
 import { MermaidFence } from "./fence/mermaid";
 import { markdownLinkSource } from "./source";
@@ -23,8 +24,20 @@ const codeStyle = (theme: Theme) => ({
   textStyle: { backgroundColor: theme.colors.surface2, padding: 12, borderRadius: 8 },
 });
 function WebCodeBlock({ code, language }: CodeBlockRendererProps) {
-  if (language?.toLowerCase() === "mermaid") return <MermaidFence code={code} />;
-  return <ThemedCodeBlock code={code} language={language} uniProps={codeStyle} />;
+  if (language?.toLowerCase() === "mermaid") {
+    return (
+      <>
+        <MermaidFence code={code} />
+        <PluginCodeBlockActions code={code} info={language} spaced />
+      </>
+    );
+  }
+  return (
+    <>
+      <ThemedCodeBlock code={code} language={language} uniProps={codeStyle} />
+      <PluginCodeBlockActions code={code} info={language} spaced />
+    </>
+  );
 }
 
 // The library styles links inline, so a stylesheet :hover rule cannot underline them.

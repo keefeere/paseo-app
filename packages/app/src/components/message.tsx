@@ -9,6 +9,7 @@ import {
   AttachmentThumbnail,
 } from "@/components/attachment-pill";
 import { MarkdownRenderer } from "@/components/markdown/renderer";
+import { CodeBlockActionsProvider } from "@/plugins/code-block-actions";
 import { useRetainedPanelActive } from "@/components/retained-panel";
 import { RewindMenu, type RewindMode } from "@/components/rewind/rewind-menu";
 import { useRewindAgentMutation } from "@/components/rewind/use-rewind-agent-mutation";
@@ -813,6 +814,10 @@ export const LiveElapsed = memo(function LiveElapsed({
 });
 
 interface AssistantMessageProps {
+  agentId?: string;
+  messageId?: string;
+  fenceOffset?: number;
+  codeActionsPhase?: MarkdownPhase;
   renderFullContent?: boolean;
   occurrenceKey: string;
   message: string;
@@ -1236,6 +1241,10 @@ function NativeShimmerPeakSvg({ gradientId }: { gradientId: string }) {
 }
 
 export const AssistantMessage = memo(function AssistantMessage({
+  agentId,
+  messageId,
+  fenceOffset: sourceFenceOffset = 0,
+  codeActionsPhase,
   renderFullContent = false,
   occurrenceKey,
   message,
@@ -1254,6 +1263,10 @@ export const AssistantMessage = memo(function AssistantMessage({
   );
   const revealedText = useRevealedText(renderedMessage.text, phase);
   const revealedMessage = renderFullContent ? renderedMessage.text : revealedText;
+  const actionsPhase: MarkdownPhase =
+    (codeActionsPhase ?? phase) === "complete" && revealedMessage === renderedMessage.text
+      ? "complete"
+      : "streaming";
   const fullMessageByteLength = useMemo(
     () => (renderedMessage.capped && phase === "complete" ? getUtf8ByteLength(message) : null),
     [message, phase, renderedMessage.capped],
@@ -1291,14 +1304,24 @@ export const AssistantMessage = memo(function AssistantMessage({
       style={assistantContainerStyle}
       onLayout={measureMessage}
     >
-      <MarkdownRenderer
-        text={revealedMessage}
-        agentCommands
-        streaming={phase !== "complete" || revealedMessage.length < renderedMessage.text.length}
-        client={client}
-        workspaceRoot={workspaceRoot}
+      <CodeBlockActionsProvider
         serverId={serverId}
-      />
+        agentId={agentId}
+        messageId={messageId}
+        markdown={revealedMessage}
+        capped={renderedMessage.capped}
+        fenceOffset={sourceFenceOffset}
+        phase={actionsPhase}
+      >
+        <MarkdownRenderer
+          text={revealedMessage}
+          agentCommands
+          streaming={phase !== "complete" || revealedMessage.length < renderedMessage.text.length}
+          client={client}
+          workspaceRoot={workspaceRoot}
+          serverId={serverId}
+        />
+      </CodeBlockActionsProvider>
       {fullMessageByteLength !== null ? (
         <Text
           testID="assistant-message-capped-notice"

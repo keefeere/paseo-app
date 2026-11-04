@@ -8,6 +8,7 @@ import type {
   PluginThemeContribution as SDKPluginThemeContribution,
 } from "@getpaseo/plugin";
 import type {
+  PluginCodeBlockActionsContribution,
   PluginFilePanelContribution as SDKPluginFilePanelContribution,
   PluginCommandCenterItemContribution as SDKPluginCommandCenterItemContribution,
   PluginClientSlashCommandContribution as SDKPluginClientSlashCommandContribution,
@@ -60,6 +61,7 @@ export interface EvaluatedPlugin {
   themes: PluginThemeContribution[];
   timelineTransformers: PluginTimelineTransformerContribution[];
   timelineRenderers: PluginTimelineRendererContribution[];
+  codeBlockActions: PluginCodeBlockActionsContribution[];
 }
 
 export interface InstalledPlugin extends EvaluatedPlugin {

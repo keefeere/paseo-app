@@ -19,6 +19,7 @@ import { splitStreamingMarkdown } from "./streaming";
 import { useMarkdownSource, type MarkdownImageContext } from "./images";
 
 import { MermaidFence, MermaidStreamingContext, splitMermaidFences } from "./fence/mermaid";
+import { PluginCodeBlockActions, useCodeBlockActionLanguages } from "@/plugins/code-block-actions";
 
 const ThemedMarkdown = withUnistyles(EnrichedMarkdownText);
 const MD4C_FLAGS = { latexMath: false, hardSoftBreaks: true, admonitions: true };
@@ -120,18 +121,32 @@ const MarkdownPart = memo(function MarkdownPart({
     if (url !== PENDING_MARKDOWN_IMAGE) setImage({ type: "uri", uri: url });
   });
   const closeImage = useStableEvent(() => setImage(null));
+  const actionableLanguages = useCodeBlockActionLanguages();
   const segments = useMemo(
     () =>
-      isWeb ? [{ kind: "markdown", id: "0", source: markdown }] : splitMermaidFences(markdown),
-    [markdown],
+      isWeb
+        ? [{ kind: "markdown" as const, id: "0", source: markdown }]
+        : splitMermaidFences(markdown, actionableLanguages),
+    [actionableLanguages, markdown],
   );
   return (
     <MermaidStreamingContext.Provider value={streaming}>
       <MarkdownBlockStack imageSources={imageSources}>
-        {segments.map((segment) =>
-          segment.kind === "mermaid" ? (
-            <MermaidFence key={`${segment.kind}:${segment.id}`} code={segment.source} />
-          ) : (
+        {segments.map((segment) => {
+          if (segment.kind === "mermaid") {
+            return <MermaidFence key={`${segment.kind}:${segment.id}`} code={segment.source} />;
+          }
+          if (segment.kind === "code-actions") {
+            return (
+              <PluginCodeBlockActions
+                key={`${segment.kind}:${segment.id}`}
+                code={segment.source}
+                info={segment.info}
+                localIndex={segment.localIndex}
+              />
+            );
+          }
+          return (
             <ThemedMarkdown
               key={`${segment.kind}:${segment.id}`}
               markdown={segment.source}
@@ -149,8 +164,8 @@ const MarkdownPart = memo(function MarkdownPart({
               onImagePress={pressImage}
               renderers={isWeb ? WEB_RENDERERS : undefined}
             />
-          ),
-        )}
+          );
+        })}
       </MarkdownBlockStack>
       {image ? <AttachmentLightbox source={image} onClose={closeImage} /> : null}
     </MermaidStreamingContext.Provider>

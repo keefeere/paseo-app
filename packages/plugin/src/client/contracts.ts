@@ -183,6 +183,7 @@ export interface PluginClientContext extends PluginCommandCapabilities, PluginCl
   readonly i18n: import("./translations.js").PluginI18n;
   /** Play a base64-encoded audio file on this client; resolves when playback ends. */
   playAudio(source: { base64: string; mimeType: string }): Promise<void>;
+  addCodeBlockActions(contribution: PluginCodeBlockActionsContribution): PluginCleanup;
   addSettingsScreen(contribution: PluginSettingsScreenContribution<PluginText>): PluginCleanup;
   addScreen(contribution: PluginScreenContribution<PluginText>): PluginCleanup;
   addSidebarHeaderItem(contribution: PluginSidebarItemContribution<PluginText>): PluginCleanup;
@@ -376,3 +377,21 @@ export type SettingsState<Schema extends ZodType> = (
   reset(): Promise<boolean>;
   reload(): Promise<void>;
 };
+
+/** Actions below an assistant fenced block; code remains owned by the Markdown renderer. */
+export interface PluginCodeBlockActionsProps extends PluginNavigableHostProps {
+  agentId: string;
+  messageId: string;
+  /** Zero-based index among all fences in this message, including unsupported languages. */
+  blockIndex: number;
+  code: string;
+  language: string;
+  /** Streaming includes text still being revealed. Never execute a streaming block. */
+  phase: "streaming" | "complete";
+}
+
+export interface PluginCodeBlockActionsContribution {
+  id: string;
+  languages: readonly string[];
+  Component: ComponentType<PluginCodeBlockActionsProps>;
+}
