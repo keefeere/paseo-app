@@ -1,4 +1,8 @@
-import type { AgentTimelineItem, ToolCallTimelineItem } from "@getpaseo/protocol/agent-types";
+import type {
+  AgentTimelineImage,
+  AgentTimelineItem,
+  ToolCallTimelineItem,
+} from "@getpaseo/protocol/agent-types";
 import type { AgentToolCallData, PluginTimelineStreamItem, StreamItem } from "@/types/stream";
 import type { TimelineItemTransform } from "./model";
 
@@ -48,6 +52,16 @@ function sourceTimelineItem(item: StreamItem): AgentTimelineItem | null {
         text: item.text,
         ...(item.messageId ? { messageId: item.messageId } : {}),
         ...(item.clientMessageId ? { clientMessageId: item.clientMessageId } : {}),
+        // This mapping is the only view plugins get of a user message. Dropping `images` here hid
+        // attachments from timeline transformers, so a plugin could not tell that the client is
+        // already drawing the picture inline.
+        ...(item.images
+          ? {
+              images: item.images.filter(
+                (image): image is AgentTimelineImage => "mediaType" in image,
+              ),
+            }
+          : {}),
       };
     case "assistant_message":
       return {
