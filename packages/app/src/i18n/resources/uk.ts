@@ -1600,6 +1600,9 @@ export const uk = {
       cli: {
         statusFailed: "Не вдалося перевірити, чи встановлено CLI.",
         installFailed: "Не вдалося встановити Paseo CLI.",
+        keptForeign:
+          "Залишено команду paseo, яку встановив не Paseo. Щоб вилучити її, видаліть вручну.",
+        uninstallFailed: "Не вдалося видалити Paseo CLI.",
       },
     },
   },
@@ -1705,6 +1708,67 @@ export const uk = {
     subtitle: "Під'єднайте свій комп'ютер, щоб почати",
     actions: {
       settings: "Налаштування",
+    },
+    setup: {
+      continue: "Далі",
+      finish: "Готово",
+      skip: "Пропустити налаштування",
+      stepCounter: "Крок {{current}} з {{total}}",
+      steps: {
+        appearance: {
+          description: "Почнемо з вибору оформлення",
+          label: "Оформлення",
+          title: "Вітаємо в Paseo",
+        },
+        orchestration: {
+          description:
+            "Дозвольте агентам створювати робочі простори й спілкуватися з іншими агентами",
+          label: "Оркестрація",
+          title: "Дозвольте агентам користуватися Paseo",
+        },
+        phone: {
+          appStore: "App Store",
+          connectDocs: "Документація",
+          connectTitle: "Виберіть спосіб під’єднання",
+          description:
+            "Повноцінний нативний мобільний застосунок дає змогу керувати будь-яким комп’ютером із Paseo з телефона",
+          googlePlay: "Google Play",
+          label: "Мобільний",
+          openConnectDocs: "Відкрити документацію про під’єднання",
+          recommended: "Рекомендовано",
+          relay: {
+            hint: "Наскрізне шифрування, скануйте QR-код",
+            title: "Ретранслятор",
+          },
+          tailscale: {
+            hint: "Потрібне невелике налаштування",
+            title: "Tailscale",
+          },
+          title: "Візьміть агентів із собою",
+        },
+        projects: {
+          addProject: "Додати проєкт",
+          added: "Додано",
+          description: "Де ви хочете, щоб працювали ваші агенти",
+          label: "Проєкти",
+          suggestions: {
+            addFailed: "Не вдалося додати цю теку",
+            addSelected_one: "Додати {{count}} проєкт",
+            addSelected_other: "Додати проєкти: {{count}}",
+            adding: "Додаємо…",
+            empty: "Недавніх проєктів не знайдено",
+            lastUsed: "Востаннє використано {{time}}",
+            loading: "Шукаємо теки, у яких ви працювали",
+          },
+          title: "Додайте свої проєкти",
+        },
+        providers: {
+          description: "Paseo запускає CLI агентів, уже встановлені на цьому комп’ютері",
+          label: "Провайдери",
+          title: "Ваші агенти",
+        },
+      },
+      title: "Paseo",
     },
   },
   modelSelector: {
@@ -1930,6 +1994,8 @@ export const uk = {
       retry: "Повторити",
       copy: "Копіювати",
       copied: "Скопійовано",
+      tailscaleDocs: "Налаштувати Tailscale",
+      tailscaleDocsAccessibility: "Дізнатися, як під’єднатися через Tailscale",
     },
   },
   realtimeVoice: {
@@ -2603,6 +2669,11 @@ export const uk = {
           external: "Зовнішній браузер",
         },
       },
+      setup: {
+        action: "Показати налаштування ще раз",
+        description: "Ще раз пройти оформлення, провайдерів, проєкти й сполучення телефона",
+        label: "Початкове налаштування",
+      },
     },
     diagnostics: {
       title: "Діагностика",
@@ -2832,11 +2903,7 @@ export const uk = {
       commandLine: {
         title: "Командний рядок",
         description: "Керуйте агентами й автоматизуйте їх зі свого терміналу",
-      },
-      actions: {
-        install: "Встановити",
-        installing: "Встановлення...",
-        installed: "Встановлено",
+        accessibilityLabel: "Встановити Paseo CLI",
       },
     },
     permissions: {
@@ -2935,7 +3002,6 @@ export const uk = {
         saveSelectionFailed: "Не вдалося зберегти вибір навичок оркестрації.",
         updateAvailable: "Доступне оновлення",
         updateTitle: "Оновити навички Paseo?",
-        updateFallback: "Синхронізувати вбудовані навички з цим хостом.",
         uninstallTitle: "Видалити навички Paseo?",
         uninstallMessage:
           "Видаляє всі навички оркестрації Paseo з ~/.agents, ~/.claude, ~/.codex на цьому хості.",
@@ -2950,9 +3016,6 @@ export const uk = {
           "{{skills}} буде видалено з ~/.agents, ~/.claude і ~/.codex на цьому хості. Усе, що ви додали в папки цих навичок, теж буде видалено.",
         saveFailed: "Не вдалося зберегти вибір навичок.",
         actions: {
-          install: "Встановити",
-          installing: "Встановлення...",
-          installed: "Встановлено",
           update: "Оновити",
           working: "Виконання...",
           remove: "Видалити",
@@ -2974,6 +3037,7 @@ export const uk = {
           title: "Увімкнути інструменти Paseo",
           hint: "Агенти зможуть керувати worktree, агентами й розкладами",
           accessibilityLabel: "Додавати інструменти Paseo",
+          updateFailed: "Не вдалося оновити інструменти Paseo.",
         },
         systemPrompt: {
           title: "Системний промпт",
