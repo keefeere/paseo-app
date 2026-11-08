@@ -937,6 +937,21 @@ client.addWorkspacePanel({ id: "review", title: "Review", icon: { svg: reviewIco
 
 未知的名称或违反规则的 SVG 不会渲染任何内容。
 
+## 操作助手代码块 {#assistant-code-block-actions}
+
+通过 `client.addCodeBlockActions({ id, languages, Component })` 注册助手消息里围栏代码下方的控件。解析、高亮、复制和代码显示仍由 Paseo 负责。注册返回幂等的清理函数。
+
+`Component` 接收 `PluginCodeBlockActionsProps`：`agentId`、`messageId`、`blockIndex`、`code`、`language`、`phase`，以及标准的 `host`、`theme`、`layout`、`navigation`。它渲染在安装提供的 RPC、查询缓存和客户端状态 provider 之下，所以 `useRpc`、`useSettings`、`usePaseo` 与其他插件界面用法一致。语言名会规范化为小写。
+
+用 host + agent + 消息 ID + 块索引作为状态键。索引按消息顺序统计**所有**围栏，包括不支持的语言和列表、引用中的围栏。组件可能在滚动时卸载、在加载历史时重新挂载。运行状态要放在组件之外；不要仅仅因为组件挂载就执行命令或跳转。
+
+消息完成并完全显示之前，`phase` 一直是 `streaming`。在 `complete` 之前禁用执行，此时显示的文本仍可能不完整。不需要服务端事件、历史扫描或追加时间线条目。宿主只为所属消息的宿主挂载匹配的贡献。
+
+`navigation.openTerminal({ workspaceId, terminalId, serverId? })` 会切到已有终端。默认宿主是该贡献所属宿主。新标签遵循**布局 → 打开位置 → 终端**；已打开的标签保持原位。这个方法不创建终端，也不运行命令。跳转意图写在点击处理器里，不要放在轮询或渲染副作用中。
+
+这些 API 需要包含代码块操作扩展的客户端构建。在 setup 时检查 `client.addCodeBlockActions`；旧客户端保留原有贡献路径即可。
+
+
 ## 时间线条目 {#timeline-items}
 
 插件可以用自己的数据和 React Native 渲染器替换 Agent 时间线中的条目。两项注册都是客户端贡献。Paseo 在构建渲染模型时应用转换器，包括每一次实时的流式更新。
