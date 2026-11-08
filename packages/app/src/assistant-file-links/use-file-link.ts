@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import type { OpenFileDisposition } from "@/workspace/file-open";
 import { openExternalUrl, openSystemUrl } from "@/utils/open-external-url";
-import { loadAppSettingsFromStorage } from "@/hooks/use-settings";
 import { parseExternalUrl } from "@getpaseo/protocol/external-url";
 import { formatFileLinkTooltipPath } from "./tooltip-path";
 import type { InlinePathTarget } from "./parse";
@@ -339,6 +338,9 @@ async function dispatchExternalUrl(input: {
     return;
   }
   if (!isHttpUrl(input.url)) {
+    // Dynamic: the settings barrel re-exports the desktop settings chain, which would drag
+    // toast-host (and react-native's ToastAndroid) into every chat module graph.
+    const { loadAppSettingsFromStorage } = await import("@/hooks/use-settings");
     const settings = await loadAppSettingsFromStorage();
     if (settings.systemLinkBehavior === "open" && parseExternalUrl(input.url) !== null) {
       try {

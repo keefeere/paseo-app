@@ -4,15 +4,9 @@ import {
 } from "@/components/floating-header";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import {
-  Platform,
-  Pressable,
-  StyleSheet as NativeStyleSheet,
-  Text,
-  ToastAndroid,
-  View,
-} from "react-native";
+import { Platform, Pressable, StyleSheet as NativeStyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { ToastAndroid } from "./toast-android";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import type { Theme } from "@/styles/theme";
