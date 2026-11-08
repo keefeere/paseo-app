@@ -156,7 +156,7 @@ function BlockedSetupNotice({
         testID="workspace-setup-blocked"
       >
         {supportsSetupRun ? (
-          <Button accessibilityRole="button" onPress={runSetup} loading={isRunningSetup} size="sm">
+          <Button accessibilityRole="button" onPress={runSetup} loading={isRunningSetup}>
             {t("workspace.setup.blocked.run")}
           </Button>
         ) : null}
