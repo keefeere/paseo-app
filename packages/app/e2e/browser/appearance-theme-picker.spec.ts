@@ -97,9 +97,25 @@ test("applies the interface font size to settings text", async ({ page }) => {
   await expect(sectionTitle).toHaveCSS("font-size", "10px");
 });
 
-test("adjusts and persists interface and text spacing independently", async ({
+// The fork's spacing controls are track sliders (`components/ui/slider`), not the upstream
+// percentage menus: clicking a position on the track sets the value, and the keyboard does not
+// drive them. Values measured in this harness: interface padding scales linearly with
+// `uiSpacingPercent` (16px at 100%), the preview line box follows `textLineHeightPercent`
+// (15px at 110%, 20px at 140%, 25px at 180% over the 14px preview glyph), and block spacing moves
+// neither. Prose block gaps live in the agent stream, so they are not observable on this screen.
+test("adjusts and persists interface spacing and text line height independently", async ({
   page,
 }, testInfo) => {
+  const setSlider = async (label: string, end: "min" | "max") => {
+    const input = page.getByLabel(label, { exact: true });
+    const box = await input.boundingBox();
+    if (!box) throw new Error(`Missing spacing slider: ${label}`);
+    await input.click({
+      force: true,
+      position: { x: end === "min" ? 1 : box.width - 1, y: box.height / 2 },
+    });
+  };
+
   await page.goto("/settings");
   await expect(page.getByTestId("settings-sidebar")).toBeVisible();
   await openSettingsSection(page, "appearance");
@@ -107,23 +123,35 @@ test("adjusts and persists interface and text spacing independently", async ({
   const sample = page.getByText("Readable content and code preview", { exact: true });
   const interfaceRow = page.getByText("Interface spacing", { exact: true }).locator("../..");
   await expect(interfaceRow).toHaveCSS("padding-top", "16px");
-  await expect(sample).toHaveCSS("font-size", "15px");
-  await expect(sample).toHaveCSS("line-height", "21px");
+  await expect(sample).toHaveCSS("font-size", "14px");
+  await expect(sample).toHaveCSS("line-height", "20px");
 
-  await page.getByLabel("Interface spacing: 100%", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "50%", exact: true }).click();
+  await setSlider("Interface spacing", "min");
   await expect(interfaceRow).toHaveCSS("padding-top", "8px");
-  await expect(sample).toHaveCSS("line-height", "21px");
+  await expect(sample).toHaveCSS("line-height", "20px");
 
-  await page.getByLabel("Text spacing: 100%", { exact: true }).click();
-  await page.getByRole("menuitem", { name: "50%", exact: true }).click();
-  await expect(sample).toHaveCSS("line-height", "18px");
-  await expect(sample).toHaveCSS("font-size", "15px");
-  await expect(interfaceRow).toHaveCSS("padding-top", "8px");
+  await setSlider("Interface spacing", "max");
+  await expect(interfaceRow).toHaveCSS("padding-top", "20px");
+
+  await setSlider("Line height", "min");
+  await expect(sample).toHaveCSS("line-height", "15px");
+  await expect(interfaceRow).toHaveCSS("padding-top", "20px");
+
+  await setSlider("Line height", "max");
+  await expect(sample).toHaveCSS("line-height", "25px");
+
+  await setSlider("Paragraph and block spacing", "min");
+  await expect(sample).toHaveCSS("line-height", "25px");
+  await expect(sample).toHaveCSS("font-size", "14px");
+  await expect(interfaceRow).toHaveCSS("padding-top", "20px");
 
   await page.reload();
-  await expect(page.getByLabel("Interface spacing: 50%", { exact: true })).toBeVisible();
-  await expect(page.getByLabel("Text spacing: 50%", { exact: true })).toBeVisible();
-  await expect(sample).toHaveCSS("line-height", "18px");
+  await expect(page.getByTestId("settings-sidebar")).toBeVisible();
+  await openSettingsSection(page, "appearance");
+  await expect(page.getByLabel("Interface spacing", { exact: true })).toHaveValue("125");
+  await expect(page.getByLabel("Line height", { exact: true })).toHaveValue("180");
+  await expect(page.getByLabel("Paragraph and block spacing", { exact: true })).toHaveValue("0");
+  await expect(interfaceRow).toHaveCSS("padding-top", "20px");
+  await expect(sample).toHaveCSS("line-height", "25px");
   await page.screenshot({ path: testInfo.outputPath("appearance-spacing.png"), fullPage: true });
 });

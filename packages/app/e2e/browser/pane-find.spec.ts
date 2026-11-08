@@ -66,11 +66,15 @@ async function findBoxes(page: Page) {
     .getByTestId("workspace-file-pane")
     .filter({ visible: true })
     .boundingBox())!;
+  const editor = (await page
+    .getByTestId("file-source-editor")
+    .filter({ visible: true })
+    .boundingBox())!;
   const widget = (await page
     .getByLabel("Find", { exact: true })
     .filter({ visible: true })
     .boundingBox())!;
-  return { pane, widget };
+  return { pane, editor, widget };
 }
 
 async function expectFindInsidePane(page: Page) {
@@ -81,10 +85,13 @@ async function expectFindInsidePane(page: Page) {
   expect(widget.y + widget.height).toBeLessThanOrEqual(pane.y + pane.height + 1);
 }
 
+// The fork's file pane stacks a tab strip and a file toolbar above the code, so the widget lands
+// below both. Anchoring on the editor top keeps the "hugs the top of the code" intent without
+// hard-coding how tall that chrome is.
 async function expectFindAtTopRight(page: Page) {
   await expectFindInsidePane(page);
-  const { pane, widget } = await findBoxes(page);
-  expect(widget.y).toBeLessThan(pane.y + 70);
+  const { editor, widget } = await findBoxes(page);
+  expect(widget.y).toBeLessThan(editor.y + 70);
 }
 
 test("finds literal text at the top of editable source and returns focus at the inspected match", async ({
