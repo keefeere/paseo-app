@@ -951,7 +951,6 @@ client.addWorkspacePanel({ id: "review", title: "Review", icon: { svg: reviewIco
 
 这些 API 需要包含代码块操作扩展的客户端构建。在 setup 时检查 `client.addCodeBlockActions`；旧客户端保留原有贡献路径即可。
 
-
 ## 时间线条目 {#timeline-items}
 
 插件可以用自己的数据和 React Native 渲染器替换 Agent 时间线中的条目。两项注册都是客户端贡献。Paseo 在构建渲染模型时应用转换器，包括每一次实时的流式更新。
