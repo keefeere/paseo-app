@@ -11,7 +11,7 @@ describe("getTurnDurationLabel", () => {
   it("reads in the active app language", async () => {
     await i18n.changeLanguage("fr");
     try {
-      expect(getTurnDurationLabel(14_000, i18n.t)).toBe("A travaillé pendant 14s");
+      expect(getTurnDurationLabel(14_000, i18n.t)).toBe("A travaillé pendant 14 s");
     } finally {
       await i18n.changeLanguage("en");
     }
