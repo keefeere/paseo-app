@@ -24,9 +24,10 @@ import { ignoreClosedOutput } from "./features/closed-output.js";
 
 // The import has to sit above this call: CommonJS output does not hoist requires.
 ignoreClosedOutput(process.stdout, process.stderr);
-// Packaged relaunches can inherit a pipe whose reader exits with the old process.
-// Keep routine diagnostics in the log file unless console debugging is requested.
-log.transports.console.level = app.isPackaged && process.env.PASEO_DEBUG !== "1" ? false : "info";
+// Packaged relaunches can inherit a pipe whose reader exits with the old process; that is
+// why ignoreClosedOutput above drops EPIPE instead of crashing. Keep the console transport on
+// so the packaged process still reports startup on stdout (the packaged smoke asserts it).
+log.transports.console.level = "info";
 log.initialize({ spyRendererConsole: true });
 
 import { inheritLoginShellEnv } from "./login-shell-env.js";
