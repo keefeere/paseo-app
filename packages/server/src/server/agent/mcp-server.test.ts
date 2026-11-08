@@ -269,6 +269,7 @@ function buildAgentManagerSpies() {
     resumeAgentFromPersistence: vi.fn(),
     hydrateTimelineFromProvider: vi.fn().mockResolvedValue(undefined),
     appendTimelineItem: vi.fn().mockResolvedValue(undefined),
+    persistSubmittedPromptImages: vi.fn().mockResolvedValue(undefined),
     emitLiveTimelineItem: vi.fn().mockResolvedValue(undefined),
     getPluginTools: () => [],
     reloadStalePluginSession: async () => {},
