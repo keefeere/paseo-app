@@ -24,6 +24,7 @@ import { buildToolCallPresentation } from "@/tool-calls/presentation";
 import type { TaskActivity, TodoEntry, UserMessageImage } from "@/types/stream";
 import type { AttachmentMetadata } from "@/attachments/types";
 import { persistAttachmentFromBytes } from "@/attachments/service";
+import { useRetainedAttachment } from "@/attachments/use-retained-attachment";
 import { createAssistantImageFileAcquisition } from "@/assistant-image/file-acquisition";
 import { resolveAssistantImageSource } from "@/utils/assistant-image-source";
 import { useFetchQuery } from "@/data/query";
@@ -454,6 +455,9 @@ function RemoteUserMessageImagePill({
     retry: false,
   });
   const metadata = query.data ?? null;
+  // The pill holds the file for as long as the row is on screen; GC deletes `preview_*` ids that no
+  // stream row references, which is what makes a history thumbnail stop resolving.
+  useRetainedAttachment(metadata);
   const handlePress = useCallback(() => {
     if (metadata) onOpen(metadata);
   }, [onOpen, metadata]);
