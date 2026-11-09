@@ -9,7 +9,19 @@ import {
   type PiExtensionEventOutput,
   type PiExtensionHost,
 } from "./extensions/index.js";
-import type { PiAgentMessage, PiImageContent, PiTextContent } from "./rpc-types.js";
+import type {
+  PiAgentMessage,
+  PiCompactionSessionEntry,
+  PiContextEditSessionEntry,
+  PiImageContent,
+  PiSessionEntry,
+  PiTextContent,
+} from "./rpc-types.js";
+import {
+  isPiCompactionSessionEntry,
+  isPiContextEditSessionEntry,
+  isPiMessageSessionEntry,
+} from "./rpc-types.js";
 import {
   extractTextFromToolResult,
   mapToolDetail,
@@ -62,6 +74,72 @@ export function getUserMessageText(content: string | (PiTextContent | PiImageCon
   return textParts.join("\n\n");
 }
 
+export function isPiSessionEntry(item: PiAgentMessage | PiSessionEntry): item is PiSessionEntry {
+  return typeof item === "object" && item !== null && "type" in item && !("role" in item);
+}
+
+function applyPathContextEdit(
+  entry: PiSessionEntry,
+  edit: PiContextEditSessionEntry | undefined,
+): PiSessionEntry | null {
+  if (!edit) return entry;
+  if (edit.replacement === null) return null;
+  if (!isPiMessageSessionEntry(entry)) return entry;
+  const replacement = edit.replacement as { content?: unknown } | null;
+  if (replacement && typeof replacement === "object" && replacement.content !== undefined) {
+    return {
+      ...entry,
+      message: {
+        ...entry.message,
+        content:
+          typeof replacement.content === "string"
+            ? replacement.content
+            : (replacement.content as (PiTextContent | PiImageContent)[]),
+      },
+    };
+  }
+  return entry;
+}
+
+export function buildPiSessionPath(
+  entries: readonly PiSessionEntry[],
+  leafId: string | null,
+): PiSessionEntry[] {
+  if (entries.length === 0) return [];
+  const byId = new Map<string, PiSessionEntry>();
+  for (const entry of entries) {
+    if (entry.id) byId.set(entry.id, entry);
+  }
+  const leaf = (leafId ? byId.get(leafId) : undefined) ?? entries[entries.length - 1];
+  if (!leaf) return [];
+
+  const rawPath: PiSessionEntry[] = [];
+  const visited = new Set<string>();
+  let current: PiSessionEntry | undefined = leaf;
+  while (current?.id && !visited.has(current.id)) {
+    visited.add(current.id);
+    rawPath.push(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  rawPath.reverse();
+
+  const edits = new Map<string, PiContextEditSessionEntry>();
+  for (const entry of rawPath) {
+    if (isPiContextEditSessionEntry(entry)) {
+      edits.set(entry.targetId, entry);
+    }
+  }
+
+  const finalPath: PiSessionEntry[] = [];
+  for (const entry of rawPath) {
+    if (isPiContextEditSessionEntry(entry)) continue;
+    const resolved = applyPathContextEdit(entry, entry.id ? edits.get(entry.id) : undefined);
+    if (resolved) finalPath.push(resolved);
+  }
+
+  return finalPath;
+}
+
 export class PiHistoryMapper {
   private readonly pendingToolCalls = new Map<string, PiTrackedToolCall>();
   private readonly hydrations: Promise<AgentStreamEvent[]>[] = [];
@@ -76,27 +154,20 @@ export class PiHistoryMapper {
     private readonly extensionHost: PiExtensionHost = createPiExtensionHost(),
   ) {}
 
-  async mapMessages(messages: readonly PiAgentMessage[]): Promise<AgentStreamEvent[]> {
+  async mapMessages(
+    items: readonly (PiAgentMessage | PiSessionEntry)[],
+  ): Promise<AgentStreamEvent[]> {
     const events: AgentStreamEvent[] = [];
 
-    for (const message of messages) {
-      switch (message.role) {
-        case "user":
-          events.push(...this.mapUserMessage(message));
-          break;
-        case "custom":
-          events.push(...this.mapCustomMessage(message));
-          break;
-        case "assistant":
-          events.push(...this.mapAssistantMessage(message));
-          break;
-        case "toolResult": {
-          events.push(...(await this.mapToolResultMessage(message)));
-          break;
+    for (const item of items) {
+      if (isPiSessionEntry(item)) {
+        if (isPiCompactionSessionEntry(item)) {
+          events.push(...this.mapCompactionEntry(item));
+        } else if (isPiMessageSessionEntry(item)) {
+          events.push(...(await this.mapSingleMessage(item.message, item.id, item.timestamp)));
         }
-        case "bashExecution":
-          events.push(this.mapBashExecutionMessage(message));
-          break;
+      } else {
+        events.push(...(await this.mapSingleMessage(item)));
       }
     }
 
@@ -107,21 +178,67 @@ export class PiHistoryMapper {
     return (await Promise.all(this.hydrations)).flat();
   }
 
-  private mapUserMessage(message: Extract<PiAgentMessage, { role: "user" }>): AgentStreamEvent[] {
+  private async mapSingleMessage(
+    message: PiAgentMessage,
+    explicitId?: string,
+    timestamp?: string,
+  ): Promise<AgentStreamEvent[]> {
+    switch (message.role) {
+      case "user":
+        return this.mapUserMessage(message, explicitId, timestamp);
+      case "custom":
+        return this.mapCustomMessage(message, explicitId, timestamp);
+      case "assistant":
+        return this.mapAssistantMessage(message, explicitId, timestamp);
+      case "toolResult":
+        return await this.mapToolResultMessage(message, explicitId, timestamp);
+      case "bashExecution":
+        return [this.mapBashExecutionMessage(message, explicitId, timestamp)];
+      default:
+        // Session-wide entries outside the model context, e.g. pi's system prompts.
+        return [];
+    }
+  }
+
+  private mapCompactionEntry(entry: PiCompactionSessionEntry): AgentStreamEvent[] {
+    return [
+      {
+        type: "timeline",
+        provider: this.provider,
+        ...(entry.timestamp ? { timestamp: entry.timestamp } : {}),
+        // Pi session entries record no auto/manual reason, so report only the size
+        // the compaction replaced. The summary text stays out of the wire item:
+        // CompactionTimelineItem has no summary field in the protocol.
+        item: {
+          type: "compaction",
+          status: "completed",
+          preTokens: typeof entry.tokensBefore === "number" ? entry.tokensBefore : undefined,
+        },
+      },
+    ];
+  }
+
+  private mapUserMessage(
+    message: Extract<PiAgentMessage, { role: "user" }>,
+    explicitId?: string,
+    timestamp?: string,
+  ): AgentStreamEvent[] {
     const text = getUserMessageText(message.content);
     this.userIndex += 1;
     if (!text) {
       return [];
     }
     const userEntry = this.userEntries[this.userIndex - 1];
+    const messageId = explicitId ?? userEntry?.id;
     return [
       {
         type: "timeline",
         provider: this.provider,
+        ...(timestamp ? { timestamp } : {}),
         item: {
           type: "user_message",
           text,
-          ...(userEntry ? { messageId: userEntry.id } : {}),
+          ...(messageId ? { messageId } : {}),
         },
       },
     ];
@@ -129,6 +246,8 @@ export class PiHistoryMapper {
 
   private mapCustomMessage(
     message: Extract<PiAgentMessage, { role: "custom" }>,
+    explicitId?: string,
+    timestamp?: string,
   ): AgentStreamEvent[] {
     const extensionMapping = this.extensionHost.mapCustomMessage(message);
     const extensionEvents = this.extensionEvents(extensionMapping);
@@ -145,10 +264,11 @@ export class PiHistoryMapper {
             {
               type: "timeline",
               provider: this.provider,
+              ...(timestamp ? { timestamp } : {}),
               item: mapCustomMessageToToolCall(
                 message,
                 text,
-                `${this.provider}-custom-${++this.customIndex}`,
+                explicitId ?? `${this.provider}-custom-${++this.customIndex}`,
               ),
             } as AgentStreamEvent,
           ]
@@ -158,16 +278,21 @@ export class PiHistoryMapper {
 
   private mapAssistantMessage(
     message: Extract<PiAgentMessage, { role: "assistant" }>,
+    explicitId?: string,
+    timestamp?: string,
   ): AgentStreamEvent[] {
     const events: AgentStreamEvent[] = [];
     this.assistantIndex += 1;
     const messageId =
-      message.responseId || `${this.provider}-history-assistant-${this.assistantIndex}`;
+      message.responseId ||
+      explicitId ||
+      `${this.provider}-history-assistant-${this.assistantIndex}`;
     for (const content of message.content) {
       if (content.type === "text" && content.text) {
         events.push({
           type: "timeline",
           provider: this.provider,
+          ...(timestamp ? { timestamp } : {}),
           item: { type: "assistant_message", text: content.text, messageId },
         });
         continue;
@@ -176,6 +301,7 @@ export class PiHistoryMapper {
         events.push({
           type: "timeline",
           provider: this.provider,
+          ...(timestamp ? { timestamp } : {}),
           item: { type: "reasoning", text: content.thinking },
         });
         continue;
@@ -197,6 +323,7 @@ export class PiHistoryMapper {
         events.push({
           type: "timeline",
           provider: this.provider,
+          ...(timestamp ? { timestamp } : {}),
           item: {
             type: "tool_call",
             callId: this.resolveToolCallId(content.id, tracked),
@@ -214,6 +341,8 @@ export class PiHistoryMapper {
 
   private async mapToolResultMessage(
     message: Extract<PiAgentMessage, { role: "toolResult" }>,
+    _explicitId?: string,
+    timestamp?: string,
   ): Promise<AgentStreamEvent[]> {
     const tracked =
       this.pendingToolCalls.get(message.toolCallId) ?? parseToolArgs(message.toolName, null);
@@ -239,12 +368,19 @@ export class PiHistoryMapper {
       const item = await renderProviderImageOutputAsAssistantMarkdown(image, {
         materialize: materializeProviderImage,
       });
-      if (item) imageEvents.push({ type: "timeline", provider: this.provider, item });
+      if (item)
+        imageEvents.push({
+          type: "timeline",
+          provider: this.provider,
+          ...(timestamp ? { timestamp } : {}),
+          item,
+        });
     }
     return [
       {
         type: "timeline",
         provider: this.provider,
+        ...(timestamp ? { timestamp } : {}),
         item: toToolResultTimelineItem({
           callId: this.resolveToolCallId(message.toolCallId, tracked),
           name: mapping?.name ?? tracked.toolName,
@@ -266,6 +402,8 @@ export class PiHistoryMapper {
 
   private mapBashExecutionMessage(
     message: Extract<PiAgentMessage, { role: "bashExecution" }>,
+    explicitId?: string,
+    timestamp?: string,
   ): AgentStreamEvent {
     const detail: ToolCallDetail = {
       type: "shell",
@@ -276,9 +414,10 @@ export class PiHistoryMapper {
     return {
       type: "timeline",
       provider: this.provider,
+      ...(timestamp ? { timestamp } : {}),
       item: {
         type: "tool_call",
-        callId: `pi-bash-${message.timestamp}`,
+        callId: explicitId ?? `pi-bash-${message.timestamp}`,
         name: "bash",
         status: message.cancelled ? "canceled" : "completed",
         detail,
@@ -306,7 +445,7 @@ export class PiHistoryMapper {
 
 export async function* streamPiHistory(
   provider: string,
-  messages: PiAgentMessage[],
+  messages: readonly (PiAgentMessage | PiSessionEntry)[],
   userEntries: readonly PiCapturedUserMessageEntry[] = [],
   hooks: PiHistoryMapperHooks = {},
   // At most eight 2 MiB child files per replay; remaining cards keep their summaries.

@@ -6,13 +6,18 @@ import type {
 } from "../runtime.js";
 import type {
   PiAgentMessage,
+  PiMessageSessionEntry,
   PiModel,
   PiPromptAck,
   PiRpcSlashCommand,
   PiRuntimeEvent,
+  PiSessionEntriesResult,
+  PiSessionEntry,
   PiSessionState,
   PiSessionStats,
 } from "../rpc-types.js";
+import { isPiMessageSessionEntry } from "../rpc-types.js";
+import { getUserMessageText } from "../history-mapper.js";
 import { buildPiLaunch } from "../runtime.js";
 
 type FakePiSubagentSubscriptionLevel = "off" | "progress" | "events";
@@ -132,6 +137,8 @@ export class FakePiSession implements PiRuntimeSession {
   setModelResult: PiModel | null = null;
   models: PiModel[] = [];
   messages: PiAgentMessage[] = [];
+  entries: PiSessionEntry[] = [];
+  leafId: string | null = null;
   stats: PiSessionStats = {
     tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
     cost: 0,
@@ -275,6 +282,13 @@ export class FakePiSession implements PiRuntimeSession {
 
   async getMessages(): Promise<PiAgentMessage[]> {
     return this.messages;
+  }
+
+  async getEntries(): Promise<PiSessionEntriesResult> {
+    return {
+      entries: this.entries,
+      leafId: this.leafId,
+    };
   }
 
   async getAvailableModels(_timeoutMs?: number | null): Promise<PiModel[]> {
@@ -471,6 +485,21 @@ export class FakePiSession implements PiRuntimeSession {
   }
 
   emitEntryCapture(requestId?: string, reason = "test"): void {
+    const treeEntries = this.treeUserEntries.length
+      ? this.treeUserEntries
+      : this.entries
+          .filter(
+            (
+              e,
+            ): e is PiMessageSessionEntry & {
+              message: Extract<PiAgentMessage, { role: "user" }>;
+            } => isPiMessageSessionEntry(e) && e.message?.role === "user" && Boolean(e.id),
+          )
+          .map((e) => ({
+            id: e.id,
+            parentId: e.parentId ?? null,
+            text: getUserMessageText(e.message.content),
+          }));
     this.emit({
       type: "extension_ui_request",
       id: `capture-${requestId ?? reason}`,
@@ -478,7 +507,7 @@ export class FakePiSession implements PiRuntimeSession {
       message: `PASEO_ENTRY_CAPTURE ${JSON.stringify({
         reason,
         requestId,
-        treeEntries: this.treeUserEntries,
+        treeEntries,
         contextEntries: this.contextUserEntries,
       })}`,
     });

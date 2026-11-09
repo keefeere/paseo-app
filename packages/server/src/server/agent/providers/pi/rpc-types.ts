@@ -139,6 +139,7 @@ export type PiRpcCommand =
   | { id?: string; type: "abort" }
   | { id?: string; type: "get_state" }
   | { id?: string; type: "get_messages" }
+  | { id?: string; type: "get_entries"; since?: string }
   | { id?: string; type: "get_available_models" }
   | { id?: string; type: "set_model"; provider: string; modelId: string }
   | { id?: string; type: "set_thinking_level"; level: PiThinkingLevel }
@@ -225,3 +226,78 @@ export type PiRuntimeEvent =
       type: string;
       [key: string]: unknown;
     };
+
+export interface PiMessageSessionEntry {
+  type: "message";
+  id: string;
+  parentId?: string | null;
+  timestamp?: string;
+  message: PiAgentMessage;
+}
+
+export interface PiCompactionSessionEntry {
+  type: "compaction";
+  id: string;
+  parentId?: string | null;
+  timestamp?: string;
+  summary?: string;
+  firstKeptEntryId?: string;
+  tokensBefore?: number;
+  fromHook?: boolean;
+}
+
+export interface PiCustomSessionEntry {
+  type: "custom";
+  id: string;
+  parentId?: string | null;
+  timestamp?: string;
+  customType?: string;
+  data?: unknown;
+}
+
+export interface PiContextEditSessionEntry {
+  type: "context_edit";
+  id: string;
+  parentId?: string | null;
+  timestamp?: string;
+  targetId: string;
+  replacement: unknown;
+}
+
+export interface PiGenericSessionEntry {
+  type: string;
+  id?: string;
+  parentId?: string | null;
+  timestamp?: string;
+  [key: string]: unknown;
+}
+
+export type PiSessionEntry =
+  | PiMessageSessionEntry
+  | PiCompactionSessionEntry
+  | PiCustomSessionEntry
+  | PiContextEditSessionEntry
+  | PiGenericSessionEntry;
+
+export function isPiMessageSessionEntry(entry: PiSessionEntry): entry is PiMessageSessionEntry {
+  return entry.type === "message" && "message" in entry && Boolean(entry.message);
+}
+
+export function isPiCompactionSessionEntry(
+  entry: PiSessionEntry,
+): entry is PiCompactionSessionEntry {
+  return entry.type === "compaction";
+}
+
+export function isPiContextEditSessionEntry(
+  entry: PiSessionEntry,
+): entry is PiContextEditSessionEntry {
+  return (
+    entry.type === "context_edit" && typeof (entry as Record<string, unknown>).targetId === "string"
+  );
+}
+
+export interface PiSessionEntriesResult {
+  entries: PiSessionEntry[];
+  leafId: string | null;
+}

@@ -3293,6 +3293,111 @@ describe("PiRpcAgentClient", () => {
     expect(fakeSession.treeNavigationRequests).toEqual(["entry-1"]);
   });
 
+  test("streamHistory preserves full branch history across compactions and emits compaction item", async () => {
+    const { pi, session } = await createSession();
+    const fakeSession = pi.latestSession();
+    fakeSession.entries = [
+      {
+        type: "message",
+        id: "msg-user-1",
+        parentId: null,
+        message: { role: "user", content: "first question" },
+      },
+      {
+        type: "message",
+        id: "msg-assistant-1",
+        parentId: "msg-user-1",
+        message: { role: "assistant", content: [{ type: "text", text: "first answer" }] },
+      },
+      {
+        type: "compaction",
+        id: "comp-1",
+        parentId: "msg-assistant-1",
+        summary: "Context summary",
+        tokensBefore: 45000,
+      },
+      {
+        type: "message",
+        id: "msg-user-2",
+        parentId: "comp-1",
+        message: { role: "user", content: "second question after compaction" },
+      },
+      {
+        type: "message",
+        id: "msg-assistant-2",
+        parentId: "msg-user-2",
+        message: { role: "assistant", content: [{ type: "text", text: "second answer" }] },
+      },
+    ];
+    fakeSession.leafId = "msg-assistant-2";
+
+    const events: AgentStreamEvent[] = [];
+    for await (const event of session.streamHistory()) {
+      events.push(event);
+    }
+
+    expect(events.map((e) => e.item)).toEqual([
+      {
+        type: "user_message",
+        text: "first question",
+        messageId: "msg-user-1",
+      },
+      {
+        type: "assistant_message",
+        text: "first answer",
+        messageId: "msg-assistant-1",
+      },
+      {
+        type: "compaction",
+        status: "completed",
+        preTokens: 45000,
+      },
+      {
+        type: "user_message",
+        text: "second question after compaction",
+        messageId: "msg-user-2",
+      },
+      {
+        type: "assistant_message",
+        text: "second answer",
+        messageId: "msg-assistant-2",
+      },
+    ]);
+
+    // Rewind target for the pre-compaction message was registered
+    await session.revertConversation?.({ messageId: "msg-user-1" });
+    expect(fakeSession.treeNavigationRequests).toEqual(["msg-user-1"]);
+  });
+
+  test("streamHistory falls back to getMessages when getEntries fails", async () => {
+    const { pi, session } = await createSession();
+    const fakeSession = pi.latestSession();
+    fakeSession.getEntries = async () => {
+      throw new Error("RPC error: unknown command get_entries");
+    };
+    fakeSession.messages = [
+      { role: "user", content: "fallback user" },
+      { role: "assistant", content: [{ type: "text", text: "fallback reply" }] },
+    ];
+
+    const events: AgentStreamEvent[] = [];
+    for await (const event of session.streamHistory()) {
+      events.push(event);
+    }
+
+    expect(events.map((e) => e.item)).toEqual([
+      {
+        type: "user_message",
+        text: "fallback user",
+      },
+      {
+        type: "assistant_message",
+        text: "fallback reply",
+        messageId: "pi-history-assistant-1",
+      },
+    ]);
+  });
+
   test("injects MCP servers without replacing the Pi global MCP config", async () => {
     const agentDir = mkdtempSync(path.join(tmpdir(), "paseo-pi-agent-"));
     onTestFinished(() => rmSync(agentDir, { recursive: true, force: true }));

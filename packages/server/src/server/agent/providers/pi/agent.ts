@@ -60,6 +60,7 @@ import {
   toDiagnosticErrorMessage,
 } from "../diagnostic-utils.js";
 import {
+  buildPiSessionPath,
   getUserMessageText,
   streamPiHistory,
   type PiCapturedUserMessageEntry,
@@ -85,9 +86,11 @@ import type {
   PiModel,
   PiRpcSlashCommand,
   PiRuntimeEvent,
+  PiSessionEntry,
   PiSessionState,
   PiThinkingLevel,
 } from "./rpc-types.js";
+import { isPiMessageSessionEntry } from "./rpc-types.js";
 import { PiUsagePoller, type PiUsagePollScheduler } from "./usage-poller.js";
 import {
   mapToolDetail,
@@ -1432,15 +1435,47 @@ export class PiRpcAgentSession implements AgentSession {
 
   async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
     await this.requestEntryCapture("history");
+    const historyItems = await this.getHistoryEntries();
     yield* streamPiHistory(
       this.provider,
-      await this.runtimeSession.getMessages(),
+      historyItems,
       this.contextUserEntries,
       {},
       // At most eight 2 MiB child files per replay; later cards retain their summaries.
       createPiExtensionHost(this.logger, undefined, 16 * 1024 * 1024),
       this.closeController.signal,
     );
+  }
+
+  private async getHistoryEntries(): Promise<Array<PiAgentMessage | PiSessionEntry>> {
+    try {
+      const result = await this.runtimeSession.getEntries();
+      if (result.entries.length > 0) {
+        this.indexTreeUserEntries(result.entries);
+        const path = buildPiSessionPath(result.entries, result.leafId);
+        if (path.length > 0) {
+          return path;
+        }
+      }
+    } catch (error) {
+      this.logger.debug({ err: error }, "pi get_entries RPC failed, falling back to getMessages");
+    }
+    // COMPAT(pi-get-entries): Pi forks without the get_entries RPC (added in pi 0.80.3)
+    // replay the compaction-aware context window instead of the full branch. Remove after 2027-01-31.
+    return await this.runtimeSession.getMessages();
+  }
+
+  private indexTreeUserEntries(entries: readonly PiSessionEntry[] | undefined): void {
+    if (!entries) return;
+    for (const entry of entries) {
+      if (isPiMessageSessionEntry(entry) && entry.message.role === "user" && entry.id) {
+        this.treeUserEntriesById.set(entry.id, {
+          id: entry.id,
+          parentId: entry.parentId ?? null,
+          text: getUserMessageText(entry.message.content),
+        });
+      }
+    }
   }
 
   async getRuntimeInfo(): Promise<AgentRuntimeInfo> {
@@ -1579,7 +1614,16 @@ export class PiRpcAgentSession implements AgentSession {
     }
     await this.refreshState().catch(() => undefined);
     await this.requestEntryCapture("rewind");
-    const targetEntry = this.treeUserEntriesById.get(input.messageId);
+    let targetEntry = this.treeUserEntriesById.get(input.messageId);
+    if (!targetEntry) {
+      try {
+        const result = await this.runtimeSession.getEntries();
+        this.indexTreeUserEntries(result.entries);
+        targetEntry = this.treeUserEntriesById.get(input.messageId);
+      } catch {
+        // Older Pi builds have no get_entries RPC; the captured marker remains the source.
+      }
+    }
     if (!targetEntry) {
       throw new Error(`Pi rewind target ${input.messageId} was not found in captured tree entries`);
     }

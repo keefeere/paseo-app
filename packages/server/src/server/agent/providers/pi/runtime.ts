@@ -4,6 +4,7 @@ import type {
   PiPromptAck,
   PiRpcSlashCommand,
   PiRuntimeEvent,
+  PiSessionEntriesResult,
   PiSessionState,
   PiSessionStats,
 } from "./rpc-types.js";
@@ -56,6 +57,7 @@ export interface PiRuntimeSession {
   abort(): Promise<void>;
   getState(): Promise<PiSessionState>;
   getMessages(): Promise<PiAgentMessage[]>;
+  getEntries(): Promise<PiSessionEntriesResult>;
   getAvailableModels(timeoutMs?: number | null): Promise<PiModel[]>;
   setModel(provider: string, modelId: string): Promise<PiModel>;
   setThinkingLevel(level: string): Promise<void>;
