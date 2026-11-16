@@ -351,6 +351,7 @@ function SpacingRow({ setting }: { setting: SpacingSetting }) {
         styles.spacingRow,
         setting !== "uiSpacingPercent" && settingsStyles.rowBorder,
       ]}
+      testID={`settings-spacing-row-${setting}`}
     >
       <View style={settingsStyles.rowContent}>
         <Text style={settingsStyles.rowTitle}>{label}</Text>

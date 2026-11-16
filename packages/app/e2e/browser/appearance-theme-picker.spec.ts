@@ -99,10 +99,12 @@ test("applies the interface font size to settings text", async ({ page }) => {
 
 // The fork's spacing controls are track sliders (`components/ui/slider`), not the upstream
 // percentage menus: clicking a position on the track sets the value, and the keyboard does not
-// drive them. Values measured in this harness: interface padding scales linearly with
-// `uiSpacingPercent` (16px at 100%), the preview line box follows `textLineHeightPercent`
-// (15px at 110%, 20px at 140%, 25px at 180% over the 14px preview glyph), and block spacing moves
-// neither. Prose block gaps live in the agent stream, so they are not observable on this screen.
+// drive them. The row is read through its testID, not a parent-chain selector, because the
+// settings row kit nests the label. Values measured in this harness: interface padding scales
+// linearly with `uiSpacingPercent` (16px at 100%), the preview line box follows
+// `textLineHeightPercent` (15px at 110%, 20px at 140%, 25px at 180% over the 14px preview glyph),
+// and block spacing moves neither. Prose block gaps live in the agent stream, so they are not
+// observable on this screen.
 test("adjusts and persists interface spacing and text line height independently", async ({
   page,
 }, testInfo) => {
@@ -121,7 +123,7 @@ test("adjusts and persists interface spacing and text line height independently"
   await openSettingsSection(page, "appearance");
 
   const sample = page.getByText("Readable content and code preview", { exact: true });
-  const interfaceRow = page.getByText("Interface spacing", { exact: true }).locator("../..");
+  const interfaceRow = page.getByTestId("settings-spacing-row-uiSpacingPercent");
   await expect(interfaceRow).toHaveCSS("padding-top", "16px");
   await expect(sample).toHaveCSS("font-size", "14px");
   await expect(sample).toHaveCSS("line-height", "20px");
