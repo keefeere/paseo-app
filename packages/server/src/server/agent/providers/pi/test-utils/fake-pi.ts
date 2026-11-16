@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from "node:fs";
+
 import type {
   PiRuntime,
   PiRuntimeLaunch,
@@ -6,18 +8,13 @@ import type {
 } from "../runtime.js";
 import type {
   PiAgentMessage,
-  PiMessageSessionEntry,
   PiModel,
   PiPromptAck,
   PiRpcSlashCommand,
   PiRuntimeEvent,
-  PiSessionEntriesResult,
-  PiSessionEntry,
   PiSessionState,
   PiSessionStats,
 } from "../rpc-types.js";
-import { isPiMessageSessionEntry } from "../rpc-types.js";
-import { getUserMessageText } from "../history-mapper.js";
 import { buildPiLaunch } from "../runtime.js";
 
 type FakePiSubagentSubscriptionLevel = "off" | "progress" | "events";
@@ -80,6 +77,12 @@ export class FakePi implements PiRuntime {
     const session = new FakePiSession(launch, this.removedModels);
     session.commands = this.queuedCommands.shift() ?? [];
     this.queuedSessionSetups.shift()?.(session);
+    const missingSessionCwd = launch.noSession ? null : readMissingSessionCwd(launch.session);
+    if (missingSessionCwd !== null) {
+      session.getStateError = new Error(
+        `Pi RPC process exited with code 1 and signal null\nStored session working directory does not exist: ${missingSessionCwd}\nSession file: ${launch.session}\nCurrent working directory: ${launch.cwd}`,
+      );
+    }
     this.sessions.push(session);
     return session;
   }
@@ -106,6 +109,27 @@ export class FakePi implements PiRuntime {
   }
 }
 
+function readMissingSessionCwd(sessionFile: string | undefined): string | null {
+  if (!sessionFile || !existsSync(sessionFile)) {
+    return null;
+  }
+  const [headerLine = ""] = readFileSync(sessionFile, "utf8").split("\n", 1);
+  let header: unknown;
+  try {
+    header = JSON.parse(headerLine);
+  } catch {
+    return null;
+  }
+  if (typeof header !== "object" || header === null || !("cwd" in header)) {
+    return null;
+  }
+  const { type, cwd } = header as { type?: unknown; cwd?: unknown };
+  if (type !== "session" || typeof cwd !== "string" || !cwd || existsSync(cwd)) {
+    return null;
+  }
+  return cwd;
+}
+
 export class FakePiSession implements PiRuntimeSession {
   readonly environment: Record<string, string>;
   readonly prompts: Array<{ message: string; imageCount: number }> = [];
@@ -126,9 +150,10 @@ export class FakePiSession implements PiRuntimeSession {
   readonly rawFrames: Array<object & { type: string }> = [];
   // Every user entry in the session file, including rewound and compacted ones.
   treeUserEntries: FakePiUserEntry[] = [];
-  // The user entries on the current branch that getMessages() replays.
-  contextUserEntries: FakePiUserEntry[] = [];
+  // Native user entries paired with the complete active-branch history.
+  historyUserEntries: FakePiUserEntry[] = [];
   abortRequested = false;
+  closeCalls = 0;
   readonly canceledExtensionUiRequests: string[] = [];
   readonly extensionUiResponses: Array<{
     id: string;
@@ -137,8 +162,7 @@ export class FakePiSession implements PiRuntimeSession {
   setModelResult: PiModel | null = null;
   models: PiModel[] = [];
   messages: PiAgentMessage[] = [];
-  entries: PiSessionEntry[] = [];
-  leafId: string | null = null;
+  getHistoryError: Error | null = null;
   stats: PiSessionStats = {
     tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
     cost: 0,
@@ -280,15 +304,9 @@ export class FakePiSession implements PiRuntimeSession {
     return this.state;
   }
 
-  async getMessages(): Promise<PiAgentMessage[]> {
-    return this.messages;
-  }
-
-  async getEntries(): Promise<PiSessionEntriesResult> {
-    return {
-      entries: this.entries,
-      leafId: this.leafId,
-    };
+  async getHistory() {
+    if (this.getHistoryError) throw this.getHistoryError;
+    return { messages: this.messages, userEntries: this.historyUserEntries };
   }
 
   async getAvailableModels(_timeoutMs?: number | null): Promise<PiModel[]> {
@@ -407,7 +425,9 @@ export class FakePiSession implements PiRuntimeSession {
     this.respondToExtensionUiRequest(id, { cancelled: true });
   }
 
-  async close(): Promise<void> {}
+  async close(): Promise<void> {
+    this.closeCalls += 1;
+  }
 
   emit(event: PiRuntimeEvent): void {
     for (const subscriber of this.subscribers) {
@@ -485,21 +505,6 @@ export class FakePiSession implements PiRuntimeSession {
   }
 
   emitEntryCapture(requestId?: string, reason = "test"): void {
-    const treeEntries = this.treeUserEntries.length
-      ? this.treeUserEntries
-      : this.entries
-          .filter(
-            (
-              e,
-            ): e is PiMessageSessionEntry & {
-              message: Extract<PiAgentMessage, { role: "user" }>;
-            } => isPiMessageSessionEntry(e) && e.message?.role === "user" && Boolean(e.id),
-          )
-          .map((e) => ({
-            id: e.id,
-            parentId: e.parentId ?? null,
-            text: getUserMessageText(e.message.content),
-          }));
     this.emit({
       type: "extension_ui_request",
       id: `capture-${requestId ?? reason}`,
@@ -507,8 +512,7 @@ export class FakePiSession implements PiRuntimeSession {
       message: `PASEO_ENTRY_CAPTURE ${JSON.stringify({
         reason,
         requestId,
-        treeEntries,
-        contextEntries: this.contextUserEntries,
+        treeEntries: this.treeUserEntries,
       })}`,
     });
   }

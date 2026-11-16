@@ -68,9 +68,10 @@ function findEagerModuleStyleReads(filePath: string): string[] {
 }
 
 describe("Unistyles module scope", () => {
-  it("does not materialize style proxies before the persisted theme loads", () => {
+  // Parsing every source file with the TS compiler is slow on low-power machines.
+  it("does not materialize style proxies before the persisted theme loads", async () => {
     const violations = listSourceFiles(SOURCE_ROOT).flatMap(findEagerModuleStyleReads);
 
     expect(violations).toEqual([]);
-  });
+  }, 20_000);
 });

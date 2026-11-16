@@ -1,3 +1,4 @@
+import { SidebarViewPicker } from "@/plugins/sidebar-view";
 import { useCallback, useMemo, useState, type ComponentType, type ReactElement } from "react";
 import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -224,6 +225,8 @@ export function SidebarNavSection(): ReactElement {
           </View>
         </View>
       </SettingsSection>
+
+      <SidebarViewPicker />
       <SidebarItemsCard section="header" />
       <SidebarItemsCard section="footer" />
     </>

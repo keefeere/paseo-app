@@ -9,6 +9,7 @@ import type {
 import { timelineItemIdentity } from "@getpaseo/protocol/timeline-identity";
 import type { AgentAttachment, AgentStreamEventPayload } from "@getpaseo/protocol/messages";
 import type { AttachmentMetadata } from "@/attachments/types";
+import type { OverviewSummary } from "@/tool-calls/detail-level/overview/model";
 import { extractTaskEntriesFromToolCall } from "../utils/tool-call-parsers";
 
 /**
@@ -87,9 +88,11 @@ export type StreamItem =
   | TodoListItem
   | NotificationItem
   | CompactionItem
-  | PluginTimelineStreamItem;
+  | PluginTimelineStreamItem
+  | TurnSummaryItem;
 
 export type UserMessageImageAttachment = AttachmentMetadata;
+/** A submitted attachment, or a durable server-side image the daemon stored for the message. */
 export type UserMessageImage = UserMessageImageAttachment | AgentTimelineImage;
 
 export interface UserMessageItem {
@@ -814,6 +817,8 @@ export interface PluginTimelineStreamItem {
   id: string;
   /** The id of the stream item a timeline transformer replaced; set only by projection. */
   sourceId?: string;
+  /** The original row kind, retained by projection for turn folding. */
+  sourceKind?: StreamItem["kind"];
   timelineCursor?: TimelinePosition;
   turnId?: string;
   timestamp: Date;
@@ -822,6 +827,25 @@ export interface PluginTimelineStreamItem {
   itemKind: string;
   version: number;
   data: JsonValue;
+}
+
+/**
+ * The row a folded turn leaves between its host and its reply, standing in for the work it
+ * hides. Turn collapse produces it from the loaded rows; it is never stored.
+ */
+export interface TurnSummaryItem {
+  kind: "turn_summary";
+  id: string;
+  timelineCursor?: TimelinePosition;
+  turnId?: string;
+  timestamp: Date;
+  /**
+   * The prompt the turn folds under, or its first loaded tool call when the prompt is above the
+   * loaded history. Keys the reader's expanded turns.
+   */
+  hostId: string;
+  expanded: boolean;
+  tools: OverviewSummary;
 }
 
 export interface TodoEntry {
@@ -902,14 +926,13 @@ function appendUserMessage(
   clientMessageId?: string,
   timelineCursor?: TimelinePosition,
   turnId?: string,
-  images?: AgentTimelineImage[],
 ): StreamItem[] {
   const { chunk, hasContent } = normalizeChunk(text);
-  if (!hasContent && !images?.length) {
+  if (!hasContent) {
     return state;
   }
 
-  const chunkSeed = chunk.trim() || images?.map((image) => image.id).join(":") || chunk;
+  const chunkSeed = chunk.trim() || chunk;
   const nextItem = createUserMessage({
     id: messageId ?? createUniqueTimelineId(state, "user", chunkSeed, timestamp),
     clientMessageId,
@@ -918,7 +941,6 @@ function appendUserMessage(
     turnId,
     text: chunk,
     timestamp,
-    images,
   });
   return upsertUserMessage(state, nextItem);
 }
@@ -1527,7 +1549,6 @@ function reduceTimelineEvent(
         item.clientMessageId,
         timelineCursor,
         event.turnId,
-        item.images,
       );
     case "assistant_message":
       return appendAssistantMessage(
@@ -1869,10 +1890,6 @@ export interface ApplyStreamEventResult {
   acknowledgedClientMessageIds?: string[];
 }
 
-function hasUserMessagePresentation(hasText: boolean, images?: readonly unknown[]): boolean {
-  return hasText || Boolean(images?.length);
-}
-
 function applyCanonicalUserMessageEvent(params: {
   tail: StreamItem[];
   head: StreamItem[];
@@ -1884,7 +1901,6 @@ function applyCanonicalUserMessageEvent(params: {
   const { tail, head, event, timestamp, timelineCursor, unmatchedInsert = "tail" } = params;
   if (event.type !== "timeline" || event.item.type !== "user_message") return null;
   const normalized = normalizeChunk(event.item.text);
-  const hasPresentation = hasUserMessagePresentation(normalized.hasContent, event.item.images);
 
   const flushedTail = head.length > 0 ? flushHeadToTail(tail, head) : tail;
   const flushedHead = head.length > 0 ? [] : head;
@@ -1898,14 +1914,13 @@ function applyCanonicalUserMessageEvent(params: {
     timelineCursor,
     text: normalized.chunk,
     timestamp,
-    images: event.item.images,
   });
   if (unmatchedInsert === "head") {
     const reconciled = upsertUserMessageAcrossStream({
       tail,
       head,
       message: canonical,
-      insert: hasPresentation ? "head" : "none",
+      insert: normalized.hasContent ? "head" : "none",
       presentation: "existing",
     });
     const reconciledTail = canonical.clientMessageId
@@ -1933,7 +1948,7 @@ function applyCanonicalUserMessageEvent(params: {
           : [],
     };
   }
-  const reconciled = placeCanonicalUserMessageAtTail(flushedTail, canonical, hasPresentation);
+  const reconciled = placeCanonicalUserMessageAtTail(flushedTail, canonical, normalized.hasContent);
   const reconciledTail = canonical.clientMessageId
     ? reconcileCanonicalUserTurnMembership(
         reconciled.items,

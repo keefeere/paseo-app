@@ -1,4 +1,9 @@
 export const uk = {
+  pluginCombobox: {
+    searching: "Пошук…",
+    empty: "Немає результатів",
+    failed: "Пошук не вдався: {{message}}",
+  },
   paneFind: {
     connectionFailure:
       "Не вдалося виконати пошук у цьому чаті. Перевірте з'єднання з хостом і повторіть спробу.",
@@ -107,13 +112,22 @@ export const uk = {
     },
     commandCenter: {
       placeholder: "Пошук команд, файлів, робочих просторів і агентів...",
+      placeholderWithoutFiles: "Шукати воркспейси й дії...",
       filePlaceholder: "Пошук файлів...",
+      workspacePlaceholder: "Шукати воркспейси...",
+      actionPlaceholder: "Шукати дії...",
       searchingFiles: "Пошук файлів...",
       noMatches: "Немає збігів",
       actions: "Дії",
       files: "Файли",
       workspaces: "Робочі простори",
-      agents: "Агенти",
+      recentWorkspaces: "Нещодавні воркспейси",
+      tabs: {
+        all: "Усі",
+        workspaces: "Воркспейси",
+        files: "Файли",
+        actions: "Дії",
+      },
       newAgent: "Новий агент",
       open: "Відкрити {{name}}",
       openInSidePane: "Відкрити {{name}} в суміжній панелі",
@@ -402,6 +416,24 @@ export const uk = {
       next: "Далі",
       answerPlaceholder: "Введіть відповідь...",
       otherPlaceholder: "Інше...",
+    },
+    backgroundWork: {
+      pillOne: "1 фонове завдання",
+      pillMany: "{{count}} фонових завдань",
+      notRunning: "Більше не виконується",
+      dismiss: "Приховати",
+      stop: "Зупинити",
+      stopping: "Зупинення…",
+      stopError: "Не вдалося підтвердити зупинення.",
+      label: "Фонові",
+      title: "Фонові роботи",
+      waiting: "Очікування деталей фонових робіт",
+      error: "Не вдалося завантажити фонові роботи",
+      retry: "Повторити",
+      running: "Фонові роботи виконуються",
+      shell: "Shell",
+      monitor: "Монітор",
+      other: "Інші роботи",
     },
     todo: {
       title: "Завдання",
@@ -963,6 +995,9 @@ export const uk = {
         },
       },
       diff: {
+        baseBranch: {
+          title: "Змінити базу",
+        },
         openChangesTab: "Відкрити вкладку «Зміни»",
         openDiffTab: "Відкрити вкладку diff",
         closeChangesTab: "Закрити вкладку «Зміни»",
@@ -1187,6 +1222,8 @@ export const uk = {
     title: "Що нового",
     installed: "Встановлено",
     showMore: "Показати більше",
+    showAllChanges: "Показати всі зміни",
+    hideAllChanges: "Сховати всі зміни",
     openWebsite: "Повний список змін",
     error: {
       title: "Не вдалося завантажити список змін",
@@ -1194,6 +1231,14 @@ export const uk = {
     },
   },
   sidebar: {
+    view: {
+      failed: "Не вдалося завантажити вигляд панелі.",
+      useDefault: "Використати типовий вигляд",
+      readFailed: "Не вдалося прочитати ваше налаштування вигляду панелі.",
+      agentUnavailable: "Агент більше недоступний",
+      terminalUnavailable: "Термінал більше недоступний",
+      projectUnavailable: "Проєкт більше недоступний",
+    },
     statusGroupAccessibility: "Група «{{label}}»",
     statusBucket: {
       needsInput: "Потрібна відповідь",
@@ -1269,6 +1314,7 @@ export const uk = {
       hosts: "Хости",
       settings: "Налаштування",
       closeSidebar: "Закрити бічну панель",
+      moreActions: "Більше дій",
     },
     footer: {
       usage: "Використання",
@@ -1375,6 +1421,9 @@ export const uk = {
         hostDisconnected: "Хост не під'єднано",
         hideFailed: "Не вдалося приховати робочий простір",
         archiveFailed: "Не вдалося архівувати робочий простір",
+        archived: "Воркспейс архівовано",
+        undoArchive: "Скасувати",
+        undoArchiveFailed: "Не вдалося скасувати архівування",
       },
     },
   },
@@ -1600,9 +1649,9 @@ export const uk = {
       cli: {
         statusFailed: "Не вдалося перевірити, чи встановлено CLI.",
         installFailed: "Не вдалося встановити Paseo CLI.",
+        uninstallFailed: "Не вдалося видалити Paseo CLI.",
         keptForeign:
           "Залишено команду paseo, яку встановив не Paseo. Щоб вилучити її, видаліть вручну.",
-        uninstallFailed: "Не вдалося видалити Paseo CLI.",
       },
     },
   },
@@ -1659,6 +1708,7 @@ export const uk = {
     placeholder: "Перемкнути гілку...",
     searchPlaceholder: "Фільтр гілок...",
     empty: "Гілок не знайдено.",
+    failedToLoad: "Не вдалося завантажити гілки. Відкрийте вибір повторно, щоб спробувати ще.",
     title: "Перемкнути гілку",
     uncommittedTitle: "Незакомічені зміни",
     uncommittedMessage: "У вас є незакомічені зміни. Сховати їх у stash перед перемиканням гілки?",
@@ -1677,7 +1727,11 @@ export const uk = {
     loadingCommands: "Завантаження команд...",
     noFiles: "Файлів або каталогів не знайдено",
     noCommands: "Команд не знайдено",
-    failedToLoad: "Не вдалося завантажити",
+    loadingProviderCommands: "Завантаження команд {{provider}}...",
+    commandsFailed: "Не вдалося завантажити команди",
+    providerCommandsFailed: "Не вдалося завантажити команди {{provider}}",
+    filesFailed: "Не вдалося знайти файли",
+    skillTag: "Skill",
     chooseProjectForCommands: "Виберіть проєкт, щоб побачити команди",
     chooseModelForCommands: "Виберіть модель, щоб побачити команди",
   },
@@ -1704,71 +1758,71 @@ export const uk = {
     },
   },
   onboarding: {
+    setup: {
+      title: "Paseo",
+      stepCounter: "Крок {{current}} з {{total}}",
+      skip: "Пропустити налаштування",
+      continue: "Далі",
+      finish: "Готово",
+      steps: {
+        appearance: {
+          label: "Оформлення",
+          title: "Вітаємо в Paseo",
+          description: "Почнемо з вибору оформлення",
+        },
+        providers: {
+          label: "Провайдери",
+          title: "Ваші агенти",
+          description: "Paseo запускає CLI агентів, уже встановлені на цьому комп’ютері",
+        },
+        projects: {
+          label: "Проєкти",
+          title: "Додайте свої проєкти",
+          description: "Де ви хочете, щоб працювали ваші агенти",
+          addProject: "Додати проєкт",
+          added: "Додано",
+          suggestions: {
+            loading: "Шукаємо теки, у яких ви працювали",
+            empty: "Недавніх проєктів не знайдено",
+            lastUsed: "Востаннє використано {{time}}",
+            addSelected_one: "Додати {{count}} проєкт",
+            addSelected_other: "Додати проєкти: {{count}}",
+            adding: "Додаємо…",
+            addFailed: "Не вдалося додати цю теку",
+          },
+        },
+        orchestration: {
+          label: "Оркестрація",
+          title: "Дозвольте агентам користуватися Paseo",
+          description:
+            "Дозвольте агентам створювати робочі простори й спілкуватися з іншими агентами",
+        },
+        phone: {
+          label: "Мобільний",
+          title: "Візьміть агентів із собою",
+          description:
+            "Повноцінний нативний мобільний застосунок дає змогу керувати будь-яким комп’ютером із Paseo з телефона",
+          appStore: "App Store",
+          googlePlay: "Google Play",
+          connectTitle: "Виберіть спосіб під’єднання",
+          connectDocs: "Документація",
+          openConnectDocs: "Відкрити документацію про під’єднання",
+          recommended: "Рекомендовано",
+          relay: {
+            title: "Ретранслятор",
+            hint: "Наскрізне шифрування, скануйте QR-код",
+          },
+          tailscale: {
+            title: "Tailscale",
+            hint: "Потрібне невелике налаштування",
+          },
+        },
+      },
+    },
     title: "Вітаємо в Paseo",
     subtitle: "Під'єднайте свій комп'ютер, щоб почати",
     actions: {
       settings: "Налаштування",
-    },
-    setup: {
-      continue: "Далі",
-      finish: "Готово",
-      skip: "Пропустити налаштування",
-      stepCounter: "Крок {{current}} з {{total}}",
-      steps: {
-        appearance: {
-          description: "Почнемо з вибору оформлення",
-          label: "Оформлення",
-          title: "Вітаємо в Paseo",
-        },
-        orchestration: {
-          description:
-            "Дозвольте агентам створювати робочі простори й спілкуватися з іншими агентами",
-          label: "Оркестрація",
-          title: "Дозвольте агентам користуватися Paseo",
-        },
-        phone: {
-          appStore: "App Store",
-          connectDocs: "Документація",
-          connectTitle: "Виберіть спосіб під’єднання",
-          description:
-            "Повноцінний нативний мобільний застосунок дає змогу керувати будь-яким комп’ютером із Paseo з телефона",
-          googlePlay: "Google Play",
-          label: "Мобільний",
-          openConnectDocs: "Відкрити документацію про під’єднання",
-          recommended: "Рекомендовано",
-          relay: {
-            hint: "Наскрізне шифрування, скануйте QR-код",
-            title: "Ретранслятор",
-          },
-          tailscale: {
-            hint: "Потрібне невелике налаштування",
-            title: "Tailscale",
-          },
-          title: "Візьміть агентів із собою",
-        },
-        projects: {
-          addProject: "Додати проєкт",
-          added: "Додано",
-          description: "Де ви хочете, щоб працювали ваші агенти",
-          label: "Проєкти",
-          suggestions: {
-            addFailed: "Не вдалося додати цю теку",
-            addSelected_one: "Додати {{count}} проєкт",
-            addSelected_other: "Додати проєкти: {{count}}",
-            adding: "Додаємо…",
-            empty: "Недавніх проєктів не знайдено",
-            lastUsed: "Востаннє використано {{time}}",
-            loading: "Шукаємо теки, у яких ви працювали",
-          },
-          title: "Додайте свої проєкти",
-        },
-        providers: {
-          description: "Paseo запускає CLI агентів, уже встановлені на цьому комп’ютері",
-          label: "Провайдери",
-          title: "Ваші агенти",
-        },
-      },
-      title: "Paseo",
     },
   },
   modelSelector: {
@@ -1984,6 +2038,8 @@ export const uk = {
       notNow: "Не зараз",
       directConnectionHint:
         "Без ретранслятора під'єднуйтеся напряму через TCP, Tailscale або інший VPN. QR-код не створюється.",
+      tailscaleDocs: "Налаштувати Tailscale",
+      tailscaleDocsAccessibility: "Дізнатися, як під’єднатися через Tailscale",
       updateRequired: "Оновіть хост, щоб увімкнути ретранслятор із Paseo Desktop.",
       unavailable: "Пропозиція сполучення недоступна.",
       hint: "Відскануйте цей QR-код у Paseo на телефоні або скопіюйте посилання нижче.",
@@ -1994,8 +2050,6 @@ export const uk = {
       retry: "Повторити",
       copy: "Копіювати",
       copied: "Скопійовано",
-      tailscaleDocs: "Налаштувати Tailscale",
-      tailscaleDocsAccessibility: "Дізнатися, як під’єднатися через Tailscale",
     },
   },
   realtimeVoice: {
@@ -2229,6 +2283,7 @@ export const uk = {
     off: "Перевірку використання вимкнено на {{host}}.",
     turnOn: "Увімкнути",
     options: "Налаштування",
+    host: "Хост",
     refreshFailed: "Не вдалося оновити використання",
     noHosts: "Немає підключених хостів",
     agentError: "Не вдалося завантажити використання: {{reason}}",
@@ -2245,6 +2300,8 @@ export const uk = {
     loginExpired: "Термін дії входу минув {{relativeTime}}. {{remedy}}",
     title: "Використання провайдера",
     refresh: "Оновити",
+    reorderCard: "Переставити {{source}}",
+    showCard: "Показати {{source}}",
     refreshAll: "Оновити все",
     refreshing: "Оновлення...",
     loading: "Завантаження даних про використання…",
@@ -2422,6 +2479,84 @@ export const uk = {
       host: "Огляд",
     },
     plugins: {
+      gallery: {
+        tabs: {
+          installed: "Встановлені",
+          installedCount: "Встановлені · {{count}}",
+          browse: "Каталог",
+        },
+        search: {
+          installed: "Шукати встановлені",
+          browse: "Шукати плагіни",
+          clear: "Очистити пошук",
+        },
+        filters: {
+          category: "Категорія",
+          allCategories: "Усі категорії",
+          sort: "Сортування",
+          popular: "Найбільше встановлень",
+          recent: "Нещодавно оновлені",
+          name: "Назва",
+        },
+        sections: {
+          updates: "Оновлення",
+          installed: "Встановлені",
+          featured: "Рекомендовані",
+          all: "Усі плагіни",
+          overview: "Огляд",
+          details: "Деталі",
+        },
+        installs: "{{installs}} встановлень",
+        installs_one: "{{installs}} встановлення",
+        menu: "Більше дій для плагіна",
+        actions: {
+          install: "Встановити",
+          installing: "Встановлення…",
+          installed: "Встановлено",
+          retry: "Повторити",
+          update: "Оновити",
+          updating: "Оновлення…",
+          updateAll: "Оновити всі",
+          turnOn: "Увімкнути",
+          turnOnAll: "Увімкнути плагіни",
+          turnOff: "Вимкнути плагіни",
+          installFromSource: "Встановити з джерела",
+          submit: "Надіслати плагін",
+          repository: "Репозиторій",
+          showMore: "Показати більше",
+          browse: "Переглянути плагіни",
+        },
+        off: {
+          title: "Плагіни вимкнено на {{host}}",
+        },
+        empty: {
+          noMatches: "Не знайдено плагінів за цим запитом",
+        },
+        directory: {
+          errorTitle: "Не вдалося завантажити каталог плагінів",
+          update: "Оновіть цей хост, щоб переглядати плагіни",
+        },
+        install: {
+          title: "Встановити {{name}}?",
+          sourceTitle: "Встановити з джерела",
+          author: "Автор",
+          source: "Джерело",
+          version: "Версія",
+          warningTitle: "Працює з вашими доступами на {{host}}",
+          warningDescription: "Плагіни не в пісочниці. Встановлюйте лише код, якому довіряєте.",
+          turnsOn: "Плагіни не в пісочниці. Встановлення також увімкнує плагіни.",
+        },
+        update: {
+          updated: "{{name}} оновлено",
+          updatedMany: "Оновлено {{count}} плагінів",
+        },
+        details: {
+          license: "Ліцензія",
+          updated: "Оновлено",
+          openImage: "Відкрити зображення",
+        },
+        missing: "Цей плагін не встановлено або не в каталозі",
+      },
       title: "Плагіни",
       screens: {
         open: "Відкрити",
@@ -2442,7 +2577,7 @@ export const uk = {
       installing: "Встановлення…",
       logs: {
         action: "Журнали",
-        title: "Журнали: {{id}}",
+        title: "Журнали: {{name}}",
         loading: "Завантаження журналів…",
         refresh: "Оновити",
         refreshing: "Оновлення…",
@@ -2455,7 +2590,8 @@ export const uk = {
         failed: "помилка",
       },
       actions: {
-        menu: "Дії для {{id}}",
+        menu: "Дії для {{name}}",
+        settings: "Налаштування",
         reload: "Перезавантажити",
         reloading: "Перезавантаження…",
         enable: "Увімкнути",
@@ -2466,17 +2602,18 @@ export const uk = {
         removing: "Видалення…",
       },
       feedback: {
-        installed: "{{id}} встановлено",
-        reload: "{{id}} перезавантажено",
-        enable: "{{id}} увімкнено",
-        disable: "{{id}} вимкнено",
-        remove: "{{id}} видалено",
-        kept: "{{id}} збережено",
+        installed: "{{name}} встановлено",
+        reload: "{{name}} перезавантажено",
+        enable: "{{name}} увімкнено",
+        disable: "{{name}} вимкнено",
+        remove: "{{name}} видалено",
+        kept: "{{name}} збережено",
         globalEnabled: "Плагіни увімкнено",
         globalDisabled: "Плагіни вимкнено",
       },
-      removeConfirmTitle: "Видалити {{id}}?",
+      removeConfirmTitle: "Видалити {{name}}?",
       removeConfirmMessage: "Конфігурацію буде видалено. Початковий каталог залишиться на місці.",
+      removeConfirmLocalMessage: "Його налаштування буде видалено. Тека лишиться на диску.",
       states: {
         offlineTitle: "Хост плагінів не в мережі",
         offlineDescription: "Підключіть хост знову, щоб керувати плагінами.",
@@ -2570,6 +2707,11 @@ export const uk = {
     general: {
       title: "Загальні",
       sending: "Надсилання",
+      setup: {
+        label: "Початкове налаштування",
+        description: "Ще раз пройти оформлення, провайдерів, проєкти й сполучення телефона",
+        action: "Показати налаштування ще раз",
+      },
       browserData: {
         title: "Дані браузера",
         siteData: "Файли cookie та дані сайтів",
@@ -2669,11 +2811,6 @@ export const uk = {
           external: "Зовнішній браузер",
         },
       },
-      setup: {
-        action: "Показати налаштування ще раз",
-        description: "Ще раз пройти оформлення, провайдерів, проєкти й сполучення телефона",
-        label: "Початкове налаштування",
-      },
     },
     diagnostics: {
       title: "Діагностика",
@@ -2757,6 +2894,12 @@ export const uk = {
           flattenSingleWorkspace: "Не розгортати проєкти з одним робочим простором",
           description: "Відкривати єдиний робочий простір натисканням на рядок проєкту",
           saveFailed: "Не вдалося зберегти налаштування бічної панелі",
+        },
+        view: {
+          title: "Вигляд панелі",
+          label: "Вигляд",
+          default: "Типовий вигляд",
+          unavailable: "Обраний вигляд недоступний або вимкнений. Показано типовий вигляд.",
         },
         header: {
           title: "Верхня частина",
@@ -3387,4 +3530,4 @@ export const uk = {
     internalTab: "Вбудований браузер — вкладка",
     externalBrowser: "Зовнішній браузер",
   },
-};
+} as const;

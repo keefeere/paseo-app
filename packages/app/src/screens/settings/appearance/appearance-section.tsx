@@ -7,11 +7,12 @@ import {
   MAX_UI_SPACING_PERCENT,
   MAX_TEXT_SPACING_PERCENT,
 } from "@/appearance/spacing";
+import { AppearanceText as Text } from "@/appearance/text";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { Text, View } from "react-native";
-import { StyleSheet } from "react-native-unistyles";
+import { View } from "react-native";
+import { StyleSheet, withUnistyles } from "react-native-unistyles";
 import {
   SYNTAX_THEME_OPTIONS,
   type SyntaxThemeId,
@@ -22,10 +23,7 @@ import { DropdownTrigger } from "@/components/ui/dropdown-trigger";
 import { SettingsSection } from "@/components/settings/headings/settings-section";
 import { ThemePicker } from "@/appearance/theme-picker";
 import { Button } from "@/components/ui/button";
-import {
-  EditingTextInput as TextInput,
-  type EditingTextInputHandle,
-} from "@/components/ui/text-input";
+import { EditingTextInput, type EditingTextInputHandle } from "@/components/ui/text-input";
 import {
   MAX_CODE_FONT_SIZE,
   MAX_CONTENT_FONT_SIZE,
@@ -44,6 +42,12 @@ import { DEFAULT_MONO_FONT_STACK, DEFAULT_UI_FONT_STACK } from "@/styles/theme";
 import { isNative } from "@/constants/platform";
 import { settingsStyles } from "@/styles/settings";
 import { AppearancePreview } from "./appearance-preview";
+
+// Subscribe the input leaf to numeric theme changes without resetting its editing state.
+const TextInput = withUnistyles(EditingTextInput, (theme) => {
+  void theme.fontSize;
+  return {};
+});
 
 // Platform default stacks can be the bare native tokens ("normal"/"monospace");
 // those read as a bug, so show a human label in the placeholder instead.
@@ -133,7 +137,7 @@ interface FontSizeRowProps {
   draft: string;
   withBorder?: boolean;
   onChangeDraft: (value: string) => void;
-  onCommit: () => void;
+  onCommit: () => string;
 }
 
 function FontSizeRow({
@@ -145,6 +149,12 @@ function FontSizeRow({
   onChangeDraft,
   onCommit,
 }: FontSizeRowProps) {
+  const inputRef = useRef<EditingTextInputHandle>(null);
+  const handleCommit = useCallback(() => {
+    const committed = onCommit();
+    inputRef.current?.replaceText(committed);
+  }, [onCommit]);
+
   return (
     <View style={withBorder ? styles.rowWithBorder : settingsStyles.row}>
       <View style={settingsStyles.rowContent}>
@@ -153,10 +163,11 @@ function FontSizeRow({
       </View>
       <View style={styles.sizeField}>
         <TextInput
+          ref={inputRef}
           initialValue={draft}
           onChangeText={onChangeDraft}
-          onBlur={onCommit}
-          onSubmitEditing={onCommit}
+          onBlur={handleCommit}
+          onSubmitEditing={handleCommit}
           keyboardType="number-pad"
           inputMode="numeric"
           selectTextOnFocus
@@ -461,6 +472,7 @@ export function AppearanceSection() {
     if (next !== settings.uiBaseFontSize) {
       void updateSettings({ uiBaseFontSize: next });
     }
+    return String(next);
   }, [settings.uiBaseFontSize, uiBaseSizeDraft, updateSettings]);
 
   const commitCodeSize = useCallback(() => {
@@ -473,6 +485,7 @@ export function AppearanceSection() {
     if (next !== settings.codeFontSize) {
       void updateSettings({ codeFontSize: next });
     }
+    return String(next);
   }, [codeSizeDraft, settings.codeFontSize, updateSettings]);
 
   const commitContentSize = useCallback(() => {
@@ -485,6 +498,7 @@ export function AppearanceSection() {
     if (next !== settings.contentFontSize) {
       void updateSettings({ contentFontSize: next });
     }
+    return String(next);
   }, [contentSizeDraft, settings.contentFontSize, updateSettings]);
 
   // Live-while-typing: the in-progress drafts drive the preview without

@@ -1,15 +1,13 @@
+import { buildAgentForkContextAttachment } from "../../activity-curator.js";
+import { readPiTranscript } from "./transcript.js";
 import { describe, expect, test } from "vitest";
 
 import type { AgentStreamEvent } from "../../agent-sdk-types.js";
-import {
-  buildPiSessionPath,
-  streamPiHistory,
-  type PiCapturedUserMessageEntry,
-} from "./history-mapper.js";
-import type { PiAgentMessage, PiSessionEntry } from "./rpc-types.js";
+import { streamPiHistory, type PiCapturedUserMessageEntry } from "./history-mapper.js";
+import type { PiAgentMessage } from "./rpc-types.js";
 
 async function collectHistory(
-  messages: readonly (PiAgentMessage | PiSessionEntry)[],
+  messages: PiAgentMessage[],
   userEntries: PiCapturedUserMessageEntry[] = [],
 ): Promise<AgentStreamEvent[]> {
   const events: AgentStreamEvent[] = [];
@@ -298,265 +296,234 @@ test("replayed Pi images keep their position before the following reply", async 
   ).toEqual(["tool_call", expect.stringContaining("![Image]("), "Image read complete."]);
 });
 
-describe("buildPiSessionPath", () => {
-  test("reconstructs branch path from root to leaf via parentId", () => {
-    const entries: PiSessionEntry[] = [
-      { type: "session", id: "sess-1", parentId: null },
-      {
-        type: "message",
-        id: "m1",
-        parentId: "sess-1",
-        message: { role: "user", content: "hello" },
-      },
-      {
-        type: "message",
-        id: "m2",
-        parentId: "m1",
-        message: { role: "assistant", content: [{ type: "text", text: "hi" }] },
-      },
-      // Branch off m1 that is not on the active leaf
-      {
-        type: "message",
-        id: "m2-alt",
-        parentId: "m1",
-        message: { role: "assistant", content: [{ type: "text", text: "alt reply" }] },
-      },
-      {
-        type: "compaction",
-        id: "c1",
-        parentId: "m2",
-        summary: "summary",
-        tokensBefore: 50000,
-      },
-      {
-        type: "message",
-        id: "m3",
-        parentId: "c1",
-        message: { role: "user", content: "what next" },
-      },
-    ];
+test("replays both sides of compaction with native IDs and isolates rewound branches", async () => {
+  const records = [
+    { type: "session", version: 3, id: "session" },
+    {
+      type: "message",
+      id: "u1",
+      parentId: null,
+      message: { role: "user", content: "old question" },
+    },
+    {
+      type: "message",
+      id: "a1",
+      parentId: "u1",
+      message: { role: "assistant", content: [{ type: "text", text: "old answer" }] },
+    },
+    { type: "compaction", id: "c1", parentId: "a1", summary: "summary", firstKeptEntryId: "a1" },
+    { type: "message", id: "u2", parentId: "c1", message: { role: "user", content: "follow up" } },
+  ];
+  const decode = (rows: unknown[]) =>
+    readPiTranscript(rows.map((row) => JSON.stringify(row)).join("\n"));
+  const history = decode(records);
+  expect(history.userEntries.map((entry) => entry.id)).toEqual(["u1", "u2"]);
+  expect(history.messages.map((message) => message.role)).toEqual(["user", "assistant", "user"]);
+  expect(await collectHistory(history.messages, history.userEntries)).toHaveLength(3);
+  const rewound = [
+    ...records,
+    { type: "custom", id: "r1", parentId: null, customType: "paseo_rewind" },
+  ];
+  expect(decode(rewound).messages).toEqual([]);
+  const replacement = [
+    ...rewound,
+    {
+      type: "message",
+      id: "u3",
+      parentId: "r1",
+      message: { role: "user", content: "replacement" },
+    },
+  ];
+  expect(decode(replacement).userEntries.map((entry) => entry.id)).toEqual(["u3"]);
+  expect(
+    decode([
+      ...replacement,
+      { type: "custom", id: "r2", parentId: "a1", customType: "paseo_rewind" },
+    ]).userEntries.map((entry) => entry.id),
+  ).toEqual(["u1"]);
+});
 
-    const path = buildPiSessionPath(entries, "m3");
-    expect(path.map((e) => e.id)).toEqual(["sess-1", "m1", "m2", "c1", "m3"]);
+test("preserves native custom entries and legacy linear messages without inventing native IDs", async () => {
+  const custom = {
+    type: "custom_message",
+    id: "custom",
+    parentId: null,
+    customType: "notice",
+    content: "visible notice",
+    display: true,
+    details: { key: 1 },
+  };
+  const history = readPiTranscript(
+    [JSON.stringify({ type: "session", version: 3 }), JSON.stringify(custom)].join("\n"),
+  );
+  expect(history.messages).toEqual([{ ...custom, role: "custom" }]);
+  expect(await collectHistory(history.messages, history.userEntries)).toHaveLength(1);
+  const legacy = readPiTranscript(
+    '{"type":"session","version":1}\n{"type":"message","message":{"role":"user","content":"legacy"}}',
+  );
+  expect(legacy.messages).toEqual([{ role: "user", content: "legacy" }]);
+  expect(legacy.userEntries).toEqual([]);
+});
+
+test.each([
+  [{ type: "message", id: "x", parentId: "x", message: { role: "user", content: "cycle" } }],
+  [{ type: "message", id: "x", parentId: "missing", message: { role: "user", content: "orphan" } }],
+  [
+    { type: "custom", id: "x", parentId: null },
+    { type: "custom", id: "x", parentId: null },
+  ],
+  [{ type: "custom", id: "x" }],
+])("rejects corrupt ancestry rather than replaying a plausible branch: %j", (...entries) => {
+  expect(() =>
+    readPiTranscript(
+      [
+        JSON.stringify({ type: "session", version: 3 }),
+        ...entries.map((entry) => JSON.stringify(entry)),
+      ].join("\n"),
+    ),
+  ).toThrow();
+});
+
+test("Fork chat stops at a restored pre-compaction reply on the active branch", async () => {
+  const entries = [
+    { type: "session", version: 3 },
+    {
+      type: "message",
+      id: "u1",
+      parentId: null,
+      message: { role: "user", content: "retained question" },
+    },
+    {
+      type: "message",
+      id: "a1",
+      parentId: "u1",
+      message: { role: "assistant", content: [{ type: "text", text: "retained answer" }] },
+    },
+    {
+      type: "message",
+      id: "abandoned",
+      parentId: "a1",
+      message: { role: "user", content: "abandoned branch" },
+    },
+    { type: "compaction", id: "c1", parentId: "a1", summary: "summary" },
+    {
+      type: "message",
+      id: "later",
+      parentId: "c1",
+      message: { role: "user", content: "later question" },
+    },
+  ];
+  const transcript = readPiTranscript(entries.map((entry) => JSON.stringify(entry)).join("\n"));
+  const events = await collectHistory(transcript.messages, transcript.userEntries);
+  const rows = events
+    .filter((event) => event.type === "timeline")
+    .map((event, index) => ({
+      seq: index + 1,
+      timestamp: "2026-10-31T00:00:00.000Z",
+      item: event.item,
+    }));
+  const fork = buildAgentForkContextAttachment({
+    rows,
+    cursorBoundary: { cursor: { epoch: "test", seq: 2 }, timelineEpoch: "test" },
   });
+  expect(fork.attachment.text).toContain("retained question");
+  expect(fork.attachment.text).toContain("retained answer");
+  expect(fork.attachment.text).not.toContain("abandoned branch");
+  expect(fork.attachment.text).not.toContain("later question");
+  expect(transcript.userEntries.map((entry) => entry.id)).toEqual(["u1", "later"]);
+});
 
-  test("applies context edits along the path", () => {
-    const entries: PiSessionEntry[] = [
-      {
-        type: "message",
-        id: "m1",
-        parentId: null,
-        message: { role: "user", content: "old text" },
-      },
-      {
-        type: "message",
-        id: "m2",
-        parentId: "m1",
-        message: { role: "assistant", content: [{ type: "text", text: "failed" }] },
-      },
-      {
-        type: "context_edit",
-        id: "e1",
-        parentId: "m2",
-        targetId: "m2",
-        replacement: null, // retracted
-      },
-      {
-        type: "context_edit",
-        id: "e2",
-        parentId: "e1",
-        targetId: "m1",
-        replacement: { content: "edited text" },
-      },
-      {
-        type: "message",
-        id: "m3",
-        parentId: "e2",
-        message: { role: "assistant", content: [{ type: "text", text: "success" }] },
-      },
-    ];
+test("keeps reasoning, image content and tool results across structural entries", async () => {
+  const messages: PiAgentMessage[] = [
+    {
+      role: "user",
+      content: [
+        { type: "image", data: "aGVsbG8=", mimeType: "image/png" },
+        { type: "text", text: "inspect" },
+      ],
+    },
+    {
+      role: "assistant",
+      content: [
+        { type: "thinking", thinking: "consider" },
+        { type: "toolCall", id: "call", name: "read", arguments: { path: "a.txt" } },
+      ],
+    },
+    {
+      role: "toolResult",
+      toolCallId: "call",
+      toolName: "read",
+      content: [{ type: "text", text: "file contents" }],
+    },
+    { role: "assistant", content: [{ type: "text", text: "answer" }] },
+  ];
+  const records = [
+    { type: "session", version: 3 },
+    ...messages.map((message, index) => ({
+      type: "message",
+      id: String(index),
+      parentId: index === 0 ? null : String(index - 1),
+      message,
+    })),
+    { type: "compaction", id: "compact", parentId: "3", summary: "summary" },
+  ];
+  const history = readPiTranscript(records.map((record) => JSON.stringify(record)).join("\n"));
+  expect(history.messages).toEqual(messages);
+  expect(history.userEntries).toEqual([{ id: "0", text: "inspect" }]);
+  expect(await collectHistory(history.messages, history.userEntries)).toEqual(
+    await collectHistory(messages, [{ id: "0", text: "inspect" }]),
+  );
+});
 
-    const path = buildPiSessionPath(entries, "m3");
-    expect(path.map((e) => e.id)).toEqual(["m1", "m3"]);
-    expect(path[0]?.type === "message" && path[0].message.content).toBe("edited text");
+test("traverses native system and summary messages without displaying private context", () => {
+  const roles = [
+    { role: "system", content: "private instructions" },
+    { role: "user", content: "question" },
+    { role: "branchSummary", summary: "branch context" },
+    { role: "compactionSummary", summary: "compacted context" },
+    { role: "system", content: null },
+  ];
+  const rows = [
+    { type: "session", version: 3 },
+    ...roles.map((message, index) => ({
+      type: "message",
+      id: String(index),
+      parentId: index === 0 ? null : String(index - 1),
+      message,
+    })),
+  ];
+  expect(readPiTranscript(rows.map((row) => JSON.stringify(row)).join("\n"))).toEqual({
+    messages: [{ role: "user", content: "question" }],
+    userEntries: [{ id: "1", text: "question" }],
   });
 });
 
-describe("Pi session entries replay with compaction", () => {
-  test("replays pre-compaction and post-compaction messages with compaction timeline item", async () => {
-    const entries: PiSessionEntry[] = [
-      {
-        type: "message",
-        id: "user-entry-1",
-        timestamp: "2026-11-01T10:00:00Z",
-        message: { role: "user", content: "first question" },
-      },
-      {
-        type: "message",
-        id: "assistant-entry-1",
-        timestamp: "2026-11-01T10:00:05Z",
-        message: {
-          role: "assistant",
-          responseId: "resp-1",
-          content: [{ type: "text", text: "first answer" }],
-        },
-      },
-      {
-        type: "compaction",
-        id: "compaction-entry-1",
-        timestamp: "2026-11-02T12:00:00Z",
-        summary: "Summary of discussion",
-        tokensBefore: 120500,
-        fromHook: false,
-      },
-      {
-        type: "message",
-        id: "user-entry-2",
-        timestamp: "2026-11-03T09:00:00Z",
-        message: { role: "user", content: "second question after compaction" },
-      },
-      {
-        type: "message",
-        id: "assistant-entry-2",
-        timestamp: "2026-11-03T09:00:08Z",
-        message: {
-          role: "assistant",
-          responseId: "resp-2",
-          content: [{ type: "text", text: "second answer" }],
-        },
-      },
-    ];
-
-    const events = await collectHistory(entries);
-
-    expect(events).toEqual([
-      {
-        type: "timeline",
-        provider: "pi",
-        timestamp: "2026-11-01T10:00:00Z",
-        item: {
-          type: "user_message",
-          text: "first question",
-          messageId: "user-entry-1",
-        },
-      },
-      {
-        type: "timeline",
-        provider: "pi",
-        timestamp: "2026-11-01T10:00:05Z",
-        item: {
-          type: "assistant_message",
-          text: "first answer",
-          messageId: "resp-1",
-        },
-      },
-      {
-        type: "timeline",
-        provider: "pi",
-        timestamp: "2026-11-02T12:00:00Z",
-        item: {
-          type: "compaction",
-          status: "completed",
-          preTokens: 120500,
-        },
-      },
-      {
-        type: "timeline",
-        provider: "pi",
-        timestamp: "2026-11-03T09:00:00Z",
-        item: {
-          type: "user_message",
-          text: "second question after compaction",
-          messageId: "user-entry-2",
-        },
-      },
-      {
-        type: "timeline",
-        provider: "pi",
-        timestamp: "2026-11-03T09:00:08Z",
-        item: {
-          type: "assistant_message",
-          text: "second answer",
-          messageId: "resp-2",
-        },
-      },
-    ]);
-  });
-
-  test("replays the whole branch when a compaction leaves no user message after it", async () => {
-    // The shape that made the chat look empty: the last compaction kept only
-    // assistant/toolResult rows, so get_messages reported no user message at all.
-    const entries: PiSessionEntry[] = [
-      {
-        type: "message",
-        id: "user-1",
-        timestamp: "2026-11-01T09:00:00Z",
-        message: { role: "user", content: "the only question" },
-      },
-      {
-        type: "message",
-        id: "assistant-1",
-        timestamp: "2026-11-01T09:00:05Z",
-        message: {
-          role: "assistant",
-          responseId: "r1",
-          content: [
-            { type: "text", text: "working" },
-            { type: "toolCall", id: "c1", name: "bash", arguments: { command: "ls" } },
-          ],
-        },
-      },
-      {
-        type: "message",
-        id: "tool-1",
-        timestamp: "2026-11-01T09:00:06Z",
-        message: {
-          role: "toolResult",
-          toolCallId: "c1",
-          toolName: "bash",
-          content: [{ type: "text", text: "a.md" }],
-          details: { command: "ls", output: "a.md", exitCode: 0 },
-        },
-      },
-      {
-        type: "compaction",
-        id: "c-1",
-        timestamp: "2026-11-01T09:30:00Z",
-        summary: "Summary",
-        firstKeptEntryId: "assistant-1",
-        tokensBefore: 90000,
-      },
-    ];
-
-    const events = await collectHistory(entries, []);
-    expect(events.map((event) => event.item.type)).toEqual([
-      "user_message",
-      "assistant_message",
-      "tool_call",
-      "tool_call",
-      "compaction",
-    ]);
-  });
-
-  test("skips session entries the model context does not carry", async () => {
-    const entries: PiSessionEntry[] = [
-      { type: "session", id: "sess-1", timestamp: "2026-11-01T09:00:00Z" },
-      { type: "model_change", id: "mc-1", timestamp: "2026-11-01T09:00:01Z" },
-      {
-        type: "message",
-        id: "sys-1",
-        timestamp: "2026-11-01T09:00:02Z",
-        message: { role: "system", content: [{ type: "text", text: "system prompt" }] },
-      },
-      {
-        type: "message",
-        id: "user-1",
-        timestamp: "2026-11-01T09:00:03Z",
-        message: { role: "user", content: "hello" },
-      },
-    ];
-
-    const events = await collectHistory(entries, []);
-    expect(events.map((event) => event.item.type)).toEqual(["user_message"]);
-  });
+test("restores surrounding chat when native system content uses text blocks", async () => {
+  const records = [
+    { type: "session", version: 3 },
+    { type: "message", id: "u", parentId: null, message: { role: "user", content: "question" } },
+    {
+      type: "message",
+      id: "s",
+      parentId: "u",
+      message: { role: "system", content: [{ type: "text", text: "private instructions" }] },
+    },
+    {
+      type: "message",
+      id: "a",
+      parentId: "s",
+      message: { role: "assistant", content: [{ type: "text", text: "answer" }] },
+    },
+  ];
+  const history = readPiTranscript(records.map((record) => JSON.stringify(record)).join("\n"));
+  expect(history.messages).toEqual([
+    { role: "user", content: "question" },
+    { role: "assistant", content: [{ type: "text", text: "answer" }] },
+  ]);
+  expect(history.userEntries).toEqual([{ id: "u", text: "question" }]);
+  const events = await collectHistory(history.messages, history.userEntries);
+  expect(events.map((event) => event.item)).toEqual([
+    { type: "user_message", text: "question", messageId: "u" },
+    { type: "assistant_message", text: "answer", messageId: "pi-history-assistant-1" },
+  ]);
 });

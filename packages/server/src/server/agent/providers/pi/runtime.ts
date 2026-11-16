@@ -1,10 +1,9 @@
+import type { PiTranscript } from "./transcript.js";
 import type {
-  PiAgentMessage,
   PiModel,
   PiPromptAck,
   PiRpcSlashCommand,
   PiRuntimeEvent,
-  PiSessionEntriesResult,
   PiSessionState,
   PiSessionStats,
 } from "./rpc-types.js";
@@ -56,8 +55,7 @@ export interface PiRuntimeSession {
   setAutoCompaction(enabled: boolean): Promise<void>;
   abort(): Promise<void>;
   getState(): Promise<PiSessionState>;
-  getMessages(): Promise<PiAgentMessage[]>;
-  getEntries(): Promise<PiSessionEntriesResult>;
+  getHistory(): Promise<PiTranscript>;
   getAvailableModels(timeoutMs?: number | null): Promise<PiModel[]>;
   setModel(provider: string, modelId: string): Promise<PiModel>;
   setThinkingLevel(level: string): Promise<void>;
