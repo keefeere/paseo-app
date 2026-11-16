@@ -3,9 +3,12 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/contexts/toast-context";
+import type { AttachmentMetadata } from "@/attachments/types";
 import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
+import type { UserMessageImage } from "@/types/stream";
 import type { RewindMode } from "./use-rewind-capabilities";
 import { useRewindComposerRestore } from "./composer-restore";
+import { collectRewindImageAttachments } from "./rewind-image-attachments";
 import { useSessionStore } from "@/stores/session-store";
 import { shouldRestoreComposerForRewindMode } from "./rewind-mode";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
@@ -15,11 +18,13 @@ interface UseRewindAgentMutationInput {
   agentId?: string;
   messageId?: string;
   client?: DaemonClient | null;
+  workspaceRoot?: string;
 }
 
 interface RewindAgentInput {
   mode: RewindMode;
   rewoundText: string;
+  images?: UserMessageImage[];
 }
 
 export function useRewindAgentMutation(input: UseRewindAgentMutationInput): {
@@ -29,11 +34,24 @@ export function useRewindAgentMutation(input: UseRewindAgentMutationInput): {
   const toast = useToast();
   const { t } = useTranslation();
   const composerRestore = useRewindComposerRestore();
-  const { isPending, mutateAsync } = useMutation({
-    mutationFn: async ({ mode }: RewindAgentInput) => {
+  const { isPending, mutateAsync } = useMutation<AttachmentMetadata[], Error, RewindAgentInput>({
+    mutationFn: async ({ mode, images }) => {
       if (!input.client || !input.agentId || !input.messageId) {
         throw new Error(t("common.errors.daemonClientUnavailable"));
       }
+      // The daemon garbage-collects conversation images that no timeline row references, and the
+      // rewound row is exactly the one that carries them. Copy them locally while it still exists.
+      const imageAttachments =
+        mode === "files"
+          ? []
+          : await collectRewindImageAttachments({
+              images: images ?? [],
+              agentId: input.agentId,
+              messageId: input.messageId,
+              serverId: input.serverId,
+              client: input.client,
+              workspaceRoot: input.workspaceRoot,
+            });
       await input.client.rewindAgent(input.agentId, input.messageId, mode);
       if (mode !== "files") {
         const cursor = input.serverId
@@ -47,12 +65,16 @@ export function useRewindAgentMutation(input: UseRewindAgentMutationInput): {
           ...(cursor ? { cursor: { epoch: cursor.epoch, seq: cursor.endSeq } } : {}),
         });
       }
+      return imageAttachments;
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (imageAttachments, variables) => {
       if (!shouldRestoreComposerForRewindMode(variables.mode)) {
         return;
       }
-      composerRestore?.completeRewind(variables.rewoundText);
+      composerRestore?.completeRewind({
+        text: variables.rewoundText,
+        imageAttachments,
+      });
     },
     onError: (error) => {
       toast.error(error instanceof Error ? error.message : t("rewind.errors.failed"));

@@ -509,16 +509,22 @@ export const UserMessage = memo(function UserMessage({
     () => formatMessageTimestamp(new Date(timestamp)),
     [timestamp],
   );
-  const rewindMutation = useRewindAgentMutation({ serverId, agentId, client, messageId });
+  const rewindMutation = useRewindAgentMutation({
+    serverId,
+    agentId,
+    client,
+    messageId,
+    workspaceRoot,
+  });
 
   const handlePointerEnter = useCallback(() => setIsHovered(true), []);
   const handlePointerLeave = useCallback(() => setIsHovered(false), []);
   const getMessageContent = useCallback(() => message, [message]);
   const handleRewind = useCallback(
     (input: { mode: RewindMode; rewoundText: string }) => {
-      return rewindMutation.rewindAgent(input);
+      return rewindMutation.rewindAgent({ ...input, images });
     },
-    [rewindMutation],
+    [images, rewindMutation],
   );
 
   const containerStyle = useMemo(
