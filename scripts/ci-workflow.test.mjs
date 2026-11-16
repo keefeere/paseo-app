@@ -693,6 +693,39 @@ process.exit(code);
   }
 });
 
+// Actions storage is metered per billing cycle on artifacts, caches and logs.
+// Artifacts stay inside the agreed 3-day QA window, and the fork prunes every
+// buildx cache version set it supersedes instead of letting 7-day entries stack.
+test("workflows keep artifacts inside the 3-day storage window", () => {
+  for (const path of filesUnder(".github/workflows", (candidate) => /\.ya?ml$/.test(candidate))) {
+    const source = readFileSync(new URL(path, repoRoot), "utf8");
+    for (const match of source.matchAll(/^\s+retention-days: (\d+)$/gm)) {
+      assert.ok(Number(match[1]) <= 3, `${path} retention-days: ${match[1]}`);
+    }
+  }
+});
+
+test("docker prunes superseded buildx cache versions on the fork", () => {
+  const source = readFileSync(dockerWorkflowPath, "utf8");
+  const jobs = jobBlocks(source);
+  for (const jobId of ["build", "publish"]) {
+    const job = jobs.get(jobId).join("\n");
+    assert.match(job, /^      - name: Prune superseded buildx cache versions$/m);
+    assert.match(job, /if: always\(\) && github\.repository == 'keefeere\/paseo-app'/);
+    assert.match(job, /^      actions: write$/m);
+    assert.match(job, /actions\/caches\?per_page=100.*--paginate/);
+    assert.match(job, /\[\.created_at, \.ref, \.key, \.version\] \| @tsv/);
+    assert.match(
+      job,
+      /newest\[ref\] = max\(newest\.get\(ref, ""\), max\(row\[0\] for row in rows\)\)/,
+    );
+    assert.match(job, /if max\(row\[0\] for row in rows\) == newest\[ref\]:\n\s+continue/);
+    assert.match(job, /gh api -X DELETE "\$endpoint"/);
+  }
+  // The exported image is a QA tarball; GHCR keeps the published image.
+  assert.match(source, /name: paseo-image\n[\s\S]*?retention-days: 3/);
+});
+
 // GitHub retires macOS 14 on 2026-11-02; brownouts already reject these jobs.
 test("workflows avoid retired macOS 14 runners", () => {
   for (const path of filesUnder(".github/workflows", (candidate) => /\.ya?ml$/.test(candidate))) {

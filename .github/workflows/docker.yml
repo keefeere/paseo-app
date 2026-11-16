@@ -124,6 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write
     steps:
       - uses: actions/checkout@v6
 
@@ -143,6 +144,43 @@ jobs:
           cache-from: type=gha,scope=paseo
           cache-to: type=gha,scope=paseo,mode=max
 
+      # GitHub expires cache entries 7 days after the last access, and every
+      # buildx run opens a new cache `version`, so superseded version sets stack
+      # up inside one billing cycle. The fork keeps only the newest version set
+      # per ref, by `created_at`; access timestamps move in lockstep across a
+      # run's entries and cannot rank the sets. Upstream storage is untouched.
+      - name: Prune superseded buildx cache versions
+        if: always() && github.repository == 'keefeere/paseo-app'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/actions/caches?per_page=100" --paginate \
+            --jq '.actions_caches[] | [.created_at, .ref, .key, .version] | @tsv' \
+            > "$RUNNER_TEMP/actions-caches.tsv"
+          python3 - "$GITHUB_REPOSITORY" "$RUNNER_TEMP/actions-caches.tsv" <<'PY' > "$RUNNER_TEMP/cache-delete-endpoints.txt"
+          import collections, sys, urllib.parse
+
+          repo, path = sys.argv[1], sys.argv[2]
+          groups = collections.defaultdict(list)
+          for line in open(path):
+              created, ref, key, version = line.rstrip("\n").split("\t")
+              groups[(ref, version)].append((created, ref, key, version))
+          newest = {}
+          for (ref, _), rows in groups.items():
+              newest[ref] = max(newest.get(ref, ""), max(row[0] for row in rows))
+          for (ref, version), rows in groups.items():
+              if max(row[0] for row in rows) == newest[ref]:
+                  continue
+              for _, _, key, version in rows:
+                  query = urllib.parse.urlencode({"ref": ref, "key": key, "version": version})
+                  print(f"repos/{repo}/actions/caches?{query}")
+          PY
+          while read -r endpoint; do
+            gh api -X DELETE "$endpoint" > /dev/null
+          done < "$RUNNER_TEMP/cache-delete-endpoints.txt"
+
   publish:
     needs: setup
     if: needs.setup.outputs.publish == 'true' && inputs.export_image != true
@@ -150,6 +188,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      actions: write
     steps:
       - uses: actions/checkout@v6
 
@@ -175,6 +214,39 @@ jobs:
           provenance: false
           cache-from: type=gha,scope=paseo
           cache-to: type=gha,scope=paseo,mode=max
+
+      # Same storage rule as the build job.
+      - name: Prune superseded buildx cache versions
+        if: always() && github.repository == 'keefeere/paseo-app'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${{ github.repository }}/actions/caches?per_page=100" --paginate \
+            --jq '.actions_caches[] | [.created_at, .ref, .key, .version] | @tsv' \
+            > "$RUNNER_TEMP/actions-caches.tsv"
+          python3 - "$GITHUB_REPOSITORY" "$RUNNER_TEMP/actions-caches.tsv" <<'PY' > "$RUNNER_TEMP/cache-delete-endpoints.txt"
+          import collections, sys, urllib.parse
+
+          repo, path = sys.argv[1], sys.argv[2]
+          groups = collections.defaultdict(list)
+          for line in open(path):
+              created, ref, key, version = line.rstrip("\n").split("\t")
+              groups[(ref, version)].append((created, ref, key, version))
+          newest = {}
+          for (ref, _), rows in groups.items():
+              newest[ref] = max(newest.get(ref, ""), max(row[0] for row in rows))
+          for (ref, version), rows in groups.items():
+              if max(row[0] for row in rows) == newest[ref]:
+                  continue
+              for _, _, key, version in rows:
+                  query = urllib.parse.urlencode({"ref": ref, "key": key, "version": version})
+                  print(f"repos/{repo}/actions/caches?{query}")
+          PY
+          while read -r endpoint; do
+            gh api -X DELETE "$endpoint" > /dev/null
+          done < "$RUNNER_TEMP/cache-delete-endpoints.txt"
 
   export-image:
     needs: setup
@@ -218,4 +290,4 @@ jobs:
           name: paseo-image
           path: image-artifact/
           compression-level: 0
-          retention-days: 14
+          retention-days: 3

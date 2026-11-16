@@ -235,7 +235,7 @@ jobs:
           name: desktop-smoke-macos-${{ matrix.electron_arch }}
           path: ${{ runner.temp }}/desktop-smoke
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload desktop artifacts to release
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
@@ -254,7 +254,7 @@ jobs:
         with:
           name: desktop-macos-${{ matrix.electron_arch }}
           path: ${{ env.DESKTOP_PACKAGE_PATH }}/release/*.dmg
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload manifest artifact
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
@@ -336,7 +336,7 @@ jobs:
           name: desktop-smoke-linux-x64
           path: ${{ runner.temp }}/desktop-smoke
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload desktop artifacts to release
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
@@ -355,7 +355,7 @@ jobs:
         with:
           name: desktop-linux
           path: ${{ env.DESKTOP_PACKAGE_PATH }}/release/*
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload manifest artifact
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
@@ -434,7 +434,7 @@ jobs:
           name: desktop-smoke-windows-x64
           path: ${{ runner.temp }}/desktop-smoke
           if-no-files-found: ignore
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload desktop artifacts to release
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
@@ -453,7 +453,7 @@ jobs:
         with:
           name: desktop-windows
           path: ${{ env.DESKTOP_PACKAGE_PATH }}/release/*
-          retention-days: 7
+          retention-days: 3
 
       - name: Upload manifest artifact
         if: env.SHOULD_PUBLISH == 'true' && env.IS_SMOKE_TAG != 'true'
