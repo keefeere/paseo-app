@@ -495,6 +495,10 @@ test("traverses native system and summary messages without displaying private co
   expect(readPiTranscript(rows.map((row) => JSON.stringify(row)).join("\n"))).toEqual({
     messages: [{ role: "user", content: "question" }],
     userEntries: [{ id: "1", text: "question" }],
+    entries: [
+      { type: "message", id: "1", parentId: "0", message: { role: "user", content: "question" } },
+    ],
+    treeEntries: [{ id: "1", parentId: "0", text: "question" }],
   });
 });
 
