@@ -278,11 +278,29 @@ jobs:
           mkdir -p image-artifact
           docker save "paseo-base:$VERSION" "paseo-base:sha-$revision" | gzip -1 > "image-artifact/paseo-base-$VERSION.tar.gz"
           (cd image-artifact && sha256sum *.tar.gz > SHA256SUMS)
+          # COMPAT(fork-nas-updater): the NAS updater verifies the image through
+          # `docker image inspect` after `docker load`, and older Docker assigns the loaded image
+          # the config blob digest. Docker 28 on the runner reports the manifest digest from
+          # `image inspect .Id`, so the archive manifest is the only ID both hosts agree on.
+          config_id="$(gzip -dc "image-artifact/paseo-base-$VERSION.tar.gz" | tar -xOf - manifest.json | node -e '
+            const manifest = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (manifest.length !== 1) {
+              console.error("expected a single image in the docker archive");
+              process.exit(1);
+            }
+            const config = manifest[0].Config;
+            const digest = config.split("/").at(-1);
+            if (!/^[0-9a-f]{64}$/.test(digest)) {
+              console.error(`unexpected config entry: ${config}`);
+              process.exit(1);
+            }
+            process.stdout.write(`sha256:${digest}`);
+          ')"
           {
             echo "version=$VERSION"
             echo "revision=$revision"
             echo "image=paseo-base:sha-$revision"
-            echo "image_id=$(docker image inspect --format '{{.Id}}' "paseo-base:$VERSION")"
+            echo "image_id=$config_id"
             echo "platform=linux/amd64"
           } | tee image-artifact/image-metadata.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
