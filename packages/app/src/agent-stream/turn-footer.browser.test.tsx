@@ -76,11 +76,13 @@ it.each([
     timing: { completedAt: FRIDAY_NIGHT, durationMs: 26_000 },
     duration: "Worked for 26s",
   },
-  // CJK glyphs make the shorter string paint wider in every font.
+  // CJK glyphs make the shorter string paint wider in every font. The fork localizes duration
+  // units and weekday names, so the ja labels are the localized ones.
   {
     language: "ja",
     timing: { completedAt: FRIDAY_NIGHT, durationMs: 59 * 60_000 + 58_000 },
-    duration: "作業時間 59m 58s",
+    duration: "作業時間 59分58秒",
+    timestamp: "金曜日 11:11 PM",
   },
 ])("keeps both timing labels on one line when the chat has room ($language)", async (input) => {
   await i18n.changeLanguage(input.language);
@@ -89,6 +91,6 @@ it.each([
 
   expect(paintedLinesByLabel(host)).toEqual({
     [input.duration]: 1,
-    "Friday 11:11 PM": 1,
+    [input.timestamp ?? "Friday 11:11 PM"]: 1,
   });
 });

@@ -1461,9 +1461,15 @@ export class PiRpcAgentSession implements AgentSession {
     try {
       await this.requestEntryCapture("history");
       const history = await this.runtimeSession.getHistory();
+      // Rewind navigates by entry id, and the capture marker may not have arrived yet; index the
+      // whole tree so a prompt that is off the active branch is still a rewind target.
+      for (const entry of history.treeEntries) {
+        this.treeUserEntriesById.set(entry.id, entry);
+      }
+      // Entries carry the compaction rows; messages alone would replay without them.
       yield* streamPiHistory(
         this.provider,
-        history.messages,
+        history.entries.length > 0 ? history.entries : history.messages,
         history.userEntries,
         {},
         // At most eight 2 MiB child files per replay; later cards retain their summaries.
@@ -2021,7 +2027,7 @@ export class PiRpcAgentSession implements AgentSession {
   }
 
   private recordCapturedUserEntries(entries: PiCapturedEntry[]): void {
-    this.treeUserEntriesById.clear();
+    // Merge, not replace: a capture can report an empty tree while history entries are known.
     for (const entry of entries) {
       this.treeUserEntriesById.set(entry.id, entry);
     }

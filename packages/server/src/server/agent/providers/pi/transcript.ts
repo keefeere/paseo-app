@@ -1,10 +1,20 @@
 import { z } from "zod";
 import { getUserMessageText, type PiCapturedUserMessageEntry } from "./history-mapper.js";
-import type { PiAgentMessage } from "./rpc-types.js";
+import type { PiAgentMessage, PiSessionEntry } from "./rpc-types.js";
 
 export interface PiTranscript {
   messages: PiAgentMessage[];
   userEntries: PiCapturedUserMessageEntry[];
+  /**
+   * The active branch records in chronological order, including compaction entries.
+   * Replay needs them to mark where the context was compacted; `messages` skips them.
+   */
+  entries: PiSessionEntry[];
+  /**
+   * Every user-message entry in the file, including ones off the active branch. Rewind
+   * navigates the tree by entry id, so it needs ids the branch replay never shows.
+   */
+  treeEntries: Array<PiCapturedUserMessageEntry & { parentId: string | null }>;
 }
 
 const text = z.object({ type: z.literal("text"), text: z.string() }).passthrough();
@@ -12,6 +22,7 @@ const image = z
   .object({ type: z.literal("image"), data: z.string(), mimeType: z.string() })
   .passthrough();
 const content = z.union([z.string(), z.array(z.union([text, image]))]);
+const userMessage = z.object({ role: z.literal("user"), content }).passthrough();
 const message = z.discriminatedUnion("role", [
   z
     .object({ role: z.literal("system"), content: z.union([z.string(), z.array(text)]).nullish() })
@@ -87,8 +98,24 @@ export function readPiTranscript(contents: string): PiTranscript {
   if (header?.type !== "session") throw new Error("Pi transcript is missing its session header");
   const legacy = header.version === 1;
   const branch = legacy ? records : activeBranch(records);
-  const result: PiTranscript = { messages: [], userEntries: [] };
+  const result: PiTranscript = { messages: [], userEntries: [], entries: [], treeEntries: [] };
+  for (const entry of records) {
+    if (entry.type !== "message") continue;
+    const parsedUser = userMessage.safeParse(entry.message);
+    if (parsedUser.success && entry.id) {
+      result.treeEntries.push({
+        id: entry.id,
+        parentId: entry.parentId ?? null,
+        text: getUserMessageText(parsedUser.data.content),
+      });
+    }
+  }
   for (const entry of branch) {
+    if (entry.type === "compaction") {
+      // Compaction rows carry no display message, but the replay marks them.
+      result.entries.push(entry as unknown as PiSessionEntry);
+      continue;
+    }
     if (entry.type !== "message" && entry.type !== "custom_message") continue;
     const parsed = message.parse(
       entry.type === "custom_message" ? { ...entry, role: "custom" } : entry.message,
@@ -100,6 +127,7 @@ export function readPiTranscript(contents: string): PiTranscript {
       parsed.role === "compactionSummary"
     )
       continue;
+    result.entries.push(entry as unknown as PiSessionEntry);
     result.messages.push(parsed);
     if (parsed.role === "user" && entry.id)
       result.userEntries.push({

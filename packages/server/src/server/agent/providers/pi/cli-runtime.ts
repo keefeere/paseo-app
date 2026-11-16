@@ -188,7 +188,7 @@ class PiCliRuntimeSession implements PiRuntimeSession {
         "code" in error &&
         error.code === "ENOENT"
       )
-        return { messages: [], userEntries: [] };
+        return { messages: [], userEntries: [], entries: [], treeEntries: [] };
       throw error;
     }
   }

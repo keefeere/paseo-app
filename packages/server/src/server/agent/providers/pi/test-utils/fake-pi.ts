@@ -12,9 +12,12 @@ import type {
   PiPromptAck,
   PiRpcSlashCommand,
   PiRuntimeEvent,
+  PiSessionEntry,
   PiSessionState,
   PiSessionStats,
 } from "../rpc-types.js";
+import { isPiMessageSessionEntry } from "../rpc-types.js";
+import { buildPiSessionPath, getUserMessageText } from "../history-mapper.js";
 import { buildPiLaunch } from "../runtime.js";
 
 type FakePiSubagentSubscriptionLevel = "off" | "progress" | "events";
@@ -304,9 +307,35 @@ export class FakePiSession implements PiRuntimeSession {
     return this.state;
   }
 
+  entries: PiSessionEntry[] = [];
+  leafId: string | null = null;
+
   async getHistory() {
     if (this.getHistoryError) throw this.getHistoryError;
-    return { messages: this.messages, userEntries: this.historyUserEntries };
+    const treeEntries = this.entries.flatMap((entry) =>
+      isPiMessageSessionEntry(entry) && entry.message.role === "user" && entry.id
+        ? [
+            {
+              id: entry.id,
+              parentId: entry.parentId ?? null,
+              text: getUserMessageText(entry.message.content),
+            },
+          ]
+        : [],
+    );
+    if (this.entries.length > 0) {
+      const path = buildPiSessionPath(this.entries, this.leafId);
+      const messages = path.flatMap((entry) =>
+        isPiMessageSessionEntry(entry) ? [entry.message] : [],
+      );
+      return { messages, userEntries: this.historyUserEntries, entries: path, treeEntries };
+    }
+    return {
+      messages: this.messages,
+      userEntries: this.historyUserEntries,
+      entries: [],
+      treeEntries,
+    };
   }
 
   async getAvailableModels(_timeoutMs?: number | null): Promise<PiModel[]> {

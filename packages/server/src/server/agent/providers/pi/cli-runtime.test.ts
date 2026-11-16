@@ -630,7 +630,12 @@ test("permits the unpersisted empty new session but refuses a missing resumed tr
   const runtime = createRuntime(child);
   const fresh = await runtime.startSession({ cwd: root });
   try {
-    expect(await fresh.getHistory()).toEqual({ messages: [], userEntries: [] });
+    expect(await fresh.getHistory()).toEqual({
+      messages: [],
+      userEntries: [],
+      entries: [],
+      treeEntries: [],
+    });
   } finally {
     await fresh.close();
   }
