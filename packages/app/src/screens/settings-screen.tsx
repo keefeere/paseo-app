@@ -1,5 +1,6 @@
 import { useSettingsContentPresented } from "@/navigation/settings-presentation";
 import { AppearanceText as Text } from "@/appearance/text";
+import { AppearanceStyleBoundary } from "@/components/appearance-style-boundary";
 import { useHardwareKeyboardPresent } from "@/keyboard";
 import { useAddHost } from "@/hosts/add-host";
 import { useCallback, useMemo, useRef, useState } from "react";
@@ -1405,7 +1406,7 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
           actions={detailActions}
           width={detailWidth}
         >
-          {content}
+          {isWeb ? <AppearanceStyleBoundary>{content}</AppearanceStyleBoundary> : content}
         </PageLayout>
       </View>
     );
@@ -1418,16 +1419,31 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
     <View style={styles.container} onLayout={onContentLayout}>
       <View style={desktopStyles.row}>
         <WindowChromeRegion corners="top-left">
-          <SettingsSidebar
-            view={view}
-            onSelectSection={handleSelectSection}
-            onSelectHostSection={handleSelectHostSection}
-            onSelectHost={handleSelectHost}
-            onAddHost={handleAddHost}
-            onBackToWorkspace={handleBackToWorkspace}
-            activeHostServerId={activeHostServerId}
-            layout="desktop"
-          />
+          {isWeb ? (
+            <AppearanceStyleBoundary>
+              <SettingsSidebar
+                view={view}
+                onSelectSection={handleSelectSection}
+                onSelectHostSection={handleSelectHostSection}
+                onSelectHost={handleSelectHost}
+                onAddHost={handleAddHost}
+                onBackToWorkspace={handleBackToWorkspace}
+                activeHostServerId={activeHostServerId}
+                layout="desktop"
+              />
+            </AppearanceStyleBoundary>
+          ) : (
+            <SettingsSidebar
+              view={view}
+              onSelectSection={handleSelectSection}
+              onSelectHostSection={handleSelectHostSection}
+              onSelectHost={handleSelectHost}
+              onAddHost={handleAddHost}
+              onBackToWorkspace={handleBackToWorkspace}
+              activeHostServerId={activeHostServerId}
+              layout="desktop"
+            />
+          )}
         </WindowChromeRegion>
         <WindowChromeRegion corners="top-right">
           <View style={desktopStyles.contentPane} testID="settings-detail-pane">
@@ -1438,7 +1454,7 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
               titleTestID="settings-detail-header-title"
               testID="settings-detail-scroll-body"
             >
-              {content}
+              {isWeb ? <AppearanceStyleBoundary>{content}</AppearanceStyleBoundary> : content}
             </PageLayout>
           </View>
         </WindowChromeRegion>
