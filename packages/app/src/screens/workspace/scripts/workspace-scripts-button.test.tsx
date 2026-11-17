@@ -26,6 +26,7 @@ const {
 } = vi.hoisted(() => {
   const hoistedTheme = {
     spacing: { 1: 4, 1.5: 6, 2: 8, 3: 12 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     borderWidth: { 1: 1 },
     borderRadius: { md: 6, lg: 8 },
     fontSize: { xs: 11, sm: 13 },

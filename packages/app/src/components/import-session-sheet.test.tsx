@@ -15,6 +15,7 @@ import { ImportSessionSheet } from "@/components/import-session-sheet";
 const { theme } = vi.hoisted(() => ({
   theme: {
     spacing: { 1: 4, 1.5: 6, 2: 8, 2.5: 10, 3: 12, 4: 16, 6: 24, 8: 32 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     borderWidth: { 1: 1 },
     borderRadius: { md: 6, lg: 8, full: 9999 },
     fontSize: { xs: 11, sm: 13, base: 15 },

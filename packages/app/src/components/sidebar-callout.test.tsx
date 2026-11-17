@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { theme } = vi.hoisted(() => ({
   theme: {
     spacing: { 0: 0, 1: 4, 2: 8, 3: 12, 4: 16 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     iconSize: { sm: 14, md: 18 },
     borderWidth: { 1: 1 },
     borderRadius: { sm: 4, md: 6, lg: 8, xl: 12, "2xl": 16, full: 999 },

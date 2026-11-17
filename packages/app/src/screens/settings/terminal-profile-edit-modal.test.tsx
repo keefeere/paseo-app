@@ -7,6 +7,7 @@ import { TerminalProfileEditModal, type ProfileDraft } from "./terminal-profile-
 const { theme } = vi.hoisted(() => ({
   theme: {
     spacing: { 2: 8, 3: 12, 4: 16, 6: 24 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     fontSize: { sm: 13, base: 15, xs: 11 },
     fontWeight: { medium: 500 },
     borderRadius: { md: 6, lg: 8, xl: 12 },

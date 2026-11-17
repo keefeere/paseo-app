@@ -10,6 +10,7 @@ import { AttachmentLightbox, type ImageLightboxSource } from "./attachment-light
 const { theme, imageMetadata, useAttachmentPreviewUrlMock } = vi.hoisted(() => {
   const hoistedTheme = {
     spacing: { 1: 4, 2: 8, 3: 12, 4: 16 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     iconSize: { sm: 14, md: 18, lg: 22 },
     borderWidth: { 1: 1 },
     opacity: { 50: 0.5 },

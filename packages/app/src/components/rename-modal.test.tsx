@@ -13,6 +13,7 @@ const { theme, adaptiveInputState } = vi.hoisted(() => ({
   },
   theme: {
     spacing: { 2: 8, 3: 12 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     fontSize: { sm: 13, base: 15 },
     borderRadius: { md: 6 },
     colors: {

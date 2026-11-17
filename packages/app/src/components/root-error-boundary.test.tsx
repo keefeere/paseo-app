@@ -8,6 +8,7 @@ const { runtime, theme } = vi.hoisted(() => ({
   runtime: { breakpoint: "xs" },
   theme: {
     spacing: { 2: 8, 3: 12, 4: 16, 6: 24, 8: 32 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     borderWidth: { 1: 1 },
     borderRadius: { md: 6, lg: 8, xl: 12 },
     fontFamily: { ui: "system-ui", mono: "monospace" },
