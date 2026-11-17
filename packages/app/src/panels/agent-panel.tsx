@@ -1,4 +1,5 @@
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
+import { AppearanceStyleBoundary } from "@/components/appearance-style-boundary";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
@@ -1339,7 +1340,13 @@ function ChatSurface({
   return (
     <OverlayDismissalScope>
       <FileDropZone style={styles.container} disabled={disabled}>
-        <ComposerDock fullscreen={fullscreen}>{children}</ComposerDock>
+        {isWeb ? (
+          <AppearanceStyleBoundary>
+            <ComposerDock fullscreen={fullscreen}>{children}</ComposerDock>
+          </AppearanceStyleBoundary>
+        ) : (
+          <ComposerDock fullscreen={fullscreen}>{children}</ComposerDock>
+        )}
       </FileDropZone>
     </OverlayDismissalScope>
   );
