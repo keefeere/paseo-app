@@ -31,7 +31,13 @@ Existing higher legacy versions can make a build under this policy look like a d
 
 ## Build
 
-1. On a branch from `main`, set every workspace package to the build version, then commit `chore(build): stamp v<version> (upstream <base>)`. Edit versions with the closing quote included: an unanchored `sed` also rewrites `@xterm/addon-ligatures` `^0.11.0-beta.213`.
+1. On a branch from `main`, set the build version, then commit `chore(build): stamp v<version> (upstream <base>)`:
+   ```bash
+   node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync("package.json"));p.version="<version>";fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n")'
+   npm run version:sync-internal
+   npm install --workspaces --include-workspace-root
+   ```
+   `version:sync-internal` rewrites every workspace package and every internal `@getpaseo/*` dependency. The install rewrites `package-lock.json`. Commit all of it together: CI uses `npm ci`, which fails when the lock still references the unstamped versions.
 2. Push to `build/v<version>`. Non-`main` pushes start no workflows.
 3. Desktop: `gh workflow run desktop-release.yml -R keefeere/paseo-app --ref build/v<version> -f tag=v<version> -f platform=linux -f checkout_ref=<sha> -f publish=false`. The AppImage is the `desktop-linux` artifact. Download it with `gh run download <run> -n desktop-linux -D ~/Downloads/paseo-<version>`. Without `-D` it extracts 700 MB into the current directory.
 4. Docker: `gh workflow run docker.yml -R keefeere/paseo-app --ref main -f export_image=true -f checkout_ref=<full-sha> -f paseo_version=<version> -f publish=false`. CI exports the standard image from `docker/base/Dockerfile`, without agent CLIs or personal configuration. Download `paseo-image`; verify `SHA256SUMS`, then import the archive with `docker load`. Match its image ID and source commit against `image-metadata.txt`. The metadata ID is the config blob digest from the archive manifest — the ID `docker load` assigns. Docker 28 on the runner reports the manifest digest from `image inspect .Id`, which older daemons never assign, so never verify against a locally inspected ID.
