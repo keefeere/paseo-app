@@ -20,6 +20,7 @@ export function createSettingsPresentation() {
   const enteredRoutes = new Map<string, string>();
   let inSettings = false;
   let sidebarOffset = 0;
+  let sidebarContentHeight = 0;
   let sidebarOwner: object | null = null;
 
   function beginSidebarVisit(workspace: ActiveWorkspaceSelection) {
@@ -44,8 +45,14 @@ export function createSettingsPresentation() {
       get offset() {
         return sidebarOffset;
       },
+      get contentHeight() {
+        return sidebarContentHeight;
+      },
       remember(offset: number) {
         if (sidebarOwner === owner) sidebarOffset = offset;
+      },
+      rememberHeight(height: number) {
+        if (sidebarOwner === owner) sidebarContentHeight = height;
       },
       detach() {
         if (sidebarOwner === owner) sidebarOwner = null;

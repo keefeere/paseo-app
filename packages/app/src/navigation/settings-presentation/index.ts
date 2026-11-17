@@ -73,8 +73,18 @@ export const selectSettingsHost = selection.selectHost;
 export function useSettingsSidebarScroll(enabled: boolean) {
   const ref = useRef<ScrollView>(null);
   const owner = useRef<ReturnType<typeof selection.attachSidebar> | null>(null);
-  const restore = useCallback(() => {
-    if (owner.current) ref.current?.scrollTo({ y: owner.current.offset, animated: false });
+  // An appearance remount reflows rows without replacing the scroll container. Scale the saved
+  // offset by the content height so the rows the reader was looking at stay in view.
+  const restore = useCallback((contentHeight?: number) => {
+    const sidebar = owner.current;
+    if (!sidebar) return;
+    const savedHeight = sidebar.contentHeight;
+    const offset =
+      contentHeight !== undefined && savedHeight > 0
+        ? sidebar.offset * (contentHeight / savedHeight)
+        : sidebar.offset;
+    ref.current?.scrollTo({ y: offset, animated: false });
+    if (contentHeight !== undefined && contentHeight > 0) sidebar.rememberHeight(contentHeight);
   }, []);
   useLayoutEffect(() => {
     if (!enabled) return;
@@ -89,5 +99,11 @@ export function useSettingsSidebarScroll(enabled: boolean) {
   const onScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     owner.current?.remember(event.nativeEvent.contentOffset.y);
   }, []);
-  return { ref, onScroll, onContentSizeChange: restore, scrollEventThrottle: 16 };
+  const onContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      restore(height);
+    },
+    [restore],
+  );
+  return { ref, onScroll, onContentSizeChange, scrollEventThrottle: 16 };
 }
