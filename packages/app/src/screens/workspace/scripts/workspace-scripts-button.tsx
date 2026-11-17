@@ -557,7 +557,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     gap: theme.spacing[2],
     paddingHorizontal: theme.spacing[3],
-    minHeight: MENU_ITEM_HEIGHT,
+    minHeight: { xs: MENU_ITEM_HEIGHT.xs, md: theme.uiRow.tightHeight },
   },
   scriptName: {
     fontSize: theme.fontSize.base,

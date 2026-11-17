@@ -441,7 +441,7 @@ const styles = StyleSheet.create((theme) => ({
   item: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: MENU_ITEM_HEIGHT,
+    minHeight: { xs: MENU_ITEM_HEIGHT.xs, md: theme.uiRow.tightHeight },
     gap: theme.spacing[2],
     marginHorizontal: theme.spacing[1],
     paddingHorizontal: theme.spacing[2],
@@ -457,7 +457,7 @@ const styles = StyleSheet.create((theme) => ({
   field: {
     flexDirection: "row",
     alignItems: "center",
-    minHeight: MENU_ITEM_HEIGHT,
+    minHeight: { xs: MENU_ITEM_HEIGHT.xs, md: theme.uiRow.tightHeight },
     marginHorizontal: theme.spacing[1],
     paddingHorizontal: theme.spacing[2],
     paddingVertical: theme.spacing[1],

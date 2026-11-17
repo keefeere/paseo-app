@@ -81,6 +81,14 @@ export function applyAppearance(input: AppearanceInput): void {
   // The sidebar has its own spacing axis: `uiSpacingPercent` must not tighten it, and
   // `sidebarSpacingPercent` must not tighten the rest of the interface.
   const sidebarSpacing = scaleSpacing(input.sidebarSpacingPercent);
+  // Interface airiness also tightens controls and tight rows (menus, dropdown pills). Floors keep
+  // 13px labels and 16px icons readable; touch layouts keep their constants.
+  const uiRatio = Math.min(1, input.uiSpacingPercent / 100);
+  const uiRow = {
+    tightHeight: Math.max(16, 28 * uiRatio),
+    controlSm: Math.max(22, 28 * uiRatio),
+    controlMd: Math.max(24, 32 * uiRatio),
+  };
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -124,6 +132,7 @@ export function applyAppearance(input: AppearanceInput): void {
           textSpacing,
           sidebarSpacing,
           sidebarRow,
+          uiRow,
           textLineHeight,
           fontFamily,
           fontSize,
@@ -138,6 +147,7 @@ export function applyAppearance(input: AppearanceInput): void {
         textSpacing,
         sidebarSpacing,
         sidebarRow,
+        uiRow,
         textLineHeight,
         fontFamily,
         fontSize,

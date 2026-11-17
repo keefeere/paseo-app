@@ -367,18 +367,21 @@ export function createControlGeometry(theme: Theme) {
   const controlBorderWidth = theme.borderWidth[1];
   const fieldTextSmLineHeight = fieldLineHeight(theme.fontSize.sm);
   const fieldTextMdLineHeight = fieldLineHeight(theme.fontSize.base);
+  // Touch layouts keep their target sizes; pointer controls follow interface airiness.
+  const controlSmHeight: LayoutValue = { xs: CONTROL_SIZES.sm.touch, md: theme.uiRow.controlSm };
+  const controlMdHeight: LayoutValue = { xs: CONTROL_SIZES.md.touch, md: theme.uiRow.controlMd };
   const fieldControlSm = {
-    minHeight: CONTROL_HEIGHTS.sm,
+    minHeight: controlSmHeight,
     paddingHorizontal: theme.spacing[2],
-    paddingVertical: mapLayout(CONTROL_HEIGHTS.sm, (height) =>
+    paddingVertical: mapLayout(controlSmHeight, (height) =>
       fieldVerticalPadding(height, fieldTextSmLineHeight, controlBorderWidth),
     ),
     borderRadius: theme.borderRadius.md,
   };
   const fieldControlMd = {
-    minHeight: CONTROL_HEIGHTS.md,
+    minHeight: controlMdHeight,
     paddingHorizontal: theme.spacing[3],
-    paddingVertical: mapLayout(CONTROL_HEIGHTS.md, (height) =>
+    paddingVertical: mapLayout(controlMdHeight, (height) =>
       fieldVerticalPadding(height, fieldTextMdLineHeight, controlBorderWidth),
     ),
     borderRadius: theme.borderRadius.lg,
@@ -395,18 +398,18 @@ export function createControlGeometry(theme: Theme) {
 
   return {
     buttonSm: {
-      minHeight: CONTROL_HEIGHTS.sm,
+      minHeight: controlSmHeight,
       paddingHorizontal: theme.spacing[3],
       borderRadius: theme.borderRadius.full,
     },
     buttonMd: {
-      minHeight: CONTROL_HEIGHTS.md,
+      minHeight: controlMdHeight,
       paddingHorizontal: bySizing({ touch: theme.spacing[6], pointer: theme.spacing[4] }),
       borderRadius: theme.borderRadius.full,
     },
     // A button with only an icon is a circle of its size's height.
-    buttonIconOnlySm: { width: CONTROL_HEIGHTS.sm, paddingHorizontal: 0 },
-    buttonIconOnlyMd: { width: CONTROL_HEIGHTS.md, paddingHorizontal: 0 },
+    buttonIconOnlySm: { width: controlSmHeight, paddingHorizontal: 0 },
+    buttonIconOnlyMd: { width: controlMdHeight, paddingHorizontal: 0 },
     buttonTextSm: {
       fontSize: theme.fontSize.sm,
     },

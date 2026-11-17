@@ -65,6 +65,11 @@ const theme = {
     7: 28,
     8: 32,
   },
+  uiRow: {
+    tightHeight: 28,
+    controlSm: 28,
+    controlMd: 32,
+  },
 } as unknown as Theme;
 
 describe("control sizing gate", () => {

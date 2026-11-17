@@ -70,7 +70,10 @@ const styles = StyleSheet.create((theme) => ({
   // trailing button line up.
   nestedRow: {
     paddingVertical: theme.spacing[2],
-    minHeight: mapLayout(CONTROL_HEIGHTS.sm, (height) => height + theme.spacing[2] * 2),
+    minHeight: mapLayout(
+      { xs: CONTROL_HEIGHTS.sm.xs, md: theme.uiRow.controlSm },
+      (height) => height + theme.spacing[2] * 2,
+    ),
   },
   nestedText: {
     fontSize: theme.fontSize.sm,

@@ -41,7 +41,8 @@ interface FakeTheme {
   textSpacing: Record<keyof typeof SPACING, number>;
   textLineHeight: number;
   sidebarSpacing: Record<keyof typeof SPACING, number>;
-  sidebarRow: { minHeight: number; controlHeight: number; lineHeight: number };
+  sidebarRow: { minHeight: number; controlHeight: number; lineHeight: number; tightHeight: number };
+  uiRow: { tightHeight: number; controlSm: number; controlMd: number };
   contentMaxWidth: number;
   colors: { foreground: string; syntax: Record<string, string> };
 }
@@ -66,7 +67,8 @@ function makeFakeTheme(): FakeTheme {
     textSpacing: { ...SPACING },
     textLineHeight: 1.4,
     sidebarSpacing: { ...SPACING },
-    sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20 },
+    sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20, tightHeight: 28 },
+    uiRow: { tightHeight: 28, controlSm: 28, controlMd: 32 },
     contentMaxWidth: 820,
     colors: { foreground: "#fff", syntax: {} },
   };
@@ -187,6 +189,17 @@ describe("applyAppearance", () => {
     expect(result.spacing[4]).toBe(SPACING[4] * 0.5);
     expect(result.sidebarSpacing[4]).toBe(SPACING[4]);
     expect(result.sidebarRow.minHeight).toBe(24 + SPACING[3]);
+  });
+
+  it("tightens controls and tight rows with interface airiness down to readable floors", () => {
+    applyAppearance(makeInput({ uiSpacingPercent: 100 }));
+    expect(runCapturedUpdater().uiRow).toEqual({ tightHeight: 28, controlSm: 28, controlMd: 32 });
+    updateTheme.mockClear();
+    applyAppearance(makeInput({ uiSpacingPercent: 50 }));
+    expect(runCapturedUpdater().uiRow).toEqual({ tightHeight: 16, controlSm: 22, controlMd: 24 });
+    updateTheme.mockClear();
+    applyAppearance(makeInput({ uiSpacingPercent: 0 }));
+    expect(runCapturedUpdater().uiRow).toEqual({ tightHeight: 16, controlSm: 22, controlMd: 24 });
   });
 
   it("keeps large fonts readable at minimum sidebar density in every theme", () => {
