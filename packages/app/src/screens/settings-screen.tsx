@@ -954,6 +954,16 @@ interface SettingsSidebarProps {
   layout: "desktop" | "mobile";
 }
 
+function WebAppearanceBoundary({ children }: { children: ReactNode }): ReactNode {
+  // On web, numeric theme tokens are baked into generated CSS classes, so content outside a
+  // ThemedStack boundary needs a remount to repaint. Native tracked styles update in place, and
+  // remounting a scroll container would reset its offset, so keep the scroll host outside.
+  if (!isWeb) {
+    return children;
+  }
+  return <AppearanceStyleBoundary>{children}</AppearanceStyleBoundary>;
+}
+
 function SettingsSidebar({
   view,
   onSelectSection,
@@ -1080,12 +1090,14 @@ function SettingsSidebar({
           <View style={sidebarStyles.sidebarDragArea}>
             <TitlebarDragRegion />
             <WindowChromeSafeArea placement="below" />
-            <SidebarHeaderRow
-              icon={ArrowLeft}
-              label={t("settings.backToWorkspace")}
-              onPress={onBackToWorkspace}
-              testID="settings-back-to-workspace"
-            />
+            <WebAppearanceBoundary>
+              <SidebarHeaderRow
+                icon={ArrowLeft}
+                label={t("settings.backToWorkspace")}
+                onPress={onBackToWorkspace}
+                testID="settings-back-to-workspace"
+              />
+            </WebAppearanceBoundary>
           </View>
           <ScrollView
             style={sidebarStyles.scrollBody}
@@ -1093,11 +1105,11 @@ function SettingsSidebar({
             testID="settings-sidebar-scroll-body"
             {...sidebarScroll}
           >
-            {sidebarBody}
+            <WebAppearanceBoundary>{sidebarBody}</WebAppearanceBoundary>
           </ScrollView>
         </View>
       ) : (
-        sidebarBody
+        <WebAppearanceBoundary>{sidebarBody}</WebAppearanceBoundary>
       )}
     </View>
   );
@@ -1406,7 +1418,7 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
           actions={detailActions}
           width={detailWidth}
         >
-          {isWeb ? <AppearanceStyleBoundary>{content}</AppearanceStyleBoundary> : content}
+          <WebAppearanceBoundary>{content}</WebAppearanceBoundary>
         </PageLayout>
       </View>
     );
@@ -1419,31 +1431,16 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
     <View style={styles.container} onLayout={onContentLayout}>
       <View style={desktopStyles.row}>
         <WindowChromeRegion corners="top-left">
-          {isWeb ? (
-            <AppearanceStyleBoundary>
-              <SettingsSidebar
-                view={view}
-                onSelectSection={handleSelectSection}
-                onSelectHostSection={handleSelectHostSection}
-                onSelectHost={handleSelectHost}
-                onAddHost={handleAddHost}
-                onBackToWorkspace={handleBackToWorkspace}
-                activeHostServerId={activeHostServerId}
-                layout="desktop"
-              />
-            </AppearanceStyleBoundary>
-          ) : (
-            <SettingsSidebar
-              view={view}
-              onSelectSection={handleSelectSection}
-              onSelectHostSection={handleSelectHostSection}
-              onSelectHost={handleSelectHost}
-              onAddHost={handleAddHost}
-              onBackToWorkspace={handleBackToWorkspace}
-              activeHostServerId={activeHostServerId}
-              layout="desktop"
-            />
-          )}
+          <SettingsSidebar
+            view={view}
+            onSelectSection={handleSelectSection}
+            onSelectHostSection={handleSelectHostSection}
+            onSelectHost={handleSelectHost}
+            onAddHost={handleAddHost}
+            onBackToWorkspace={handleBackToWorkspace}
+            activeHostServerId={activeHostServerId}
+            layout="desktop"
+          />
         </WindowChromeRegion>
         <WindowChromeRegion corners="top-right">
           <View style={desktopStyles.contentPane} testID="settings-detail-pane">
@@ -1454,7 +1451,7 @@ export default function SettingsScreen({ view }: SettingsScreenProps) {
               titleTestID="settings-detail-header-title"
               testID="settings-detail-scroll-body"
             >
-              {isWeb ? <AppearanceStyleBoundary>{content}</AppearanceStyleBoundary> : content}
+              <WebAppearanceBoundary>{content}</WebAppearanceBoundary>
             </PageLayout>
           </View>
         </WindowChromeRegion>
