@@ -3,6 +3,7 @@ import { useNavigation } from "expo-router/react-navigation";
 import { StyleSheet, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { HostRouteBootstrapBoundary } from "@/components/host-route-bootstrap-boundary";
+import { AppearanceStyleBoundary } from "@/components/appearance-style-boundary";
 import { RetainedPanel } from "@/components/retained-panel";
 import {
   type ActiveWorkspaceSelection,
@@ -253,16 +254,30 @@ function WorkspaceDeckEntry({
     return null;
   }
 
+  // `workspace/[workspaceId]/index` is screen-owned, so ThemedStack never wraps it. Web numeric
+  // tokens (spacing, font sizes) are baked into generated classes, so the workspace needs its own
+  // remount to repaint padding after an appearance change. Native keeps tracked styles in place:
+  // panel gesture hosts must not detach mid-gesture.
   return (
     <RetainedPanel
       active={active}
       testID={`workspace-deck-entry-${selection.serverId}:${selection.workspaceId}`}
     >
-      <WorkspaceScreen
-        serverId={selection.serverId}
-        workspaceId={selection.workspaceId}
-        isRouteFocused={active}
-      />
+      {isWeb ? (
+        <AppearanceStyleBoundary>
+          <WorkspaceScreen
+            serverId={selection.serverId}
+            workspaceId={selection.workspaceId}
+            isRouteFocused={active}
+          />
+        </AppearanceStyleBoundary>
+      ) : (
+        <WorkspaceScreen
+          serverId={selection.serverId}
+          workspaceId={selection.workspaceId}
+          isRouteFocused={active}
+        />
+      )}
     </RetainedPanel>
   );
 }
