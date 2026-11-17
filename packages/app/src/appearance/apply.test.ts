@@ -157,10 +157,15 @@ describe("applyAppearance", () => {
     expect(result.fontSize.content).toBe(15);
   });
 
-  it("makes zero-density rows 25% shorter without shrinking fonts or horizontal spacing", () => {
+  it("makes zero-density rows about half as tall without shrinking fonts or horizontal spacing", () => {
     applyAppearance(makeInput({ sidebarSpacingPercent: 0 }));
     const compact = runCapturedUpdater();
-    expect(compact.sidebarRow).toEqual({ minHeight: 18, controlHeight: 18, lineHeight: 18 });
+    expect(compact.sidebarRow).toEqual({
+      minHeight: 16.8,
+      controlHeight: 16,
+      lineHeight: 16.8,
+      tightHeight: 16,
+    });
     expect(compact.fontSize.base).toBe(14);
     expect(compact.spacing).toEqual(SPACING);
     expect(Object.values(compact.sidebarSpacing).every((value) => value === 0)).toBe(true);
@@ -172,7 +177,16 @@ describe("applyAppearance", () => {
       minHeight: 24 + SPACING[3],
       controlHeight: 24,
       lineHeight: 20,
+      tightHeight: 28,
     });
+  });
+
+  it("keeps the sidebar axis independent of the interface airiness", () => {
+    applyAppearance(makeInput({ uiSpacingPercent: 50, sidebarSpacingPercent: 100 }));
+    const result = runCapturedUpdater();
+    expect(result.spacing[4]).toBe(SPACING[4] * 0.5);
+    expect(result.sidebarSpacing[4]).toBe(SPACING[4]);
+    expect(result.sidebarRow.minHeight).toBe(24 + SPACING[3]);
   });
 
   it("keeps large fonts readable at minimum sidebar density in every theme", () => {

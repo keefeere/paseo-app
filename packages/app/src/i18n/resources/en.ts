@@ -2838,7 +2838,8 @@ export const en = {
         textLineHeightPercentHint:
           "Line height relative to font size (independent of paragraph spacing)",
         sidebarSpacingPercent: "Sidebar row spacing",
-        sidebarSpacingPercentHint: "Vertical padding in project and workspace lists",
+        sidebarSpacingPercentHint:
+          "Row height and vertical padding in the sidebar, independent of interface airiness",
         info: "Block and interface spacing default to 100%; line height to 140%. Saved only on this device.",
       },
       layout: {

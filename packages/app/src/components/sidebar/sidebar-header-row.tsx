@@ -144,7 +144,7 @@ const styles = StyleSheet.create((theme) => ({
     alignItems: "center",
     // Same row geometry as the settings sidebar items. Shorter than the header
     // strip so the hover highlight clears the strip's bottom separator.
-    minHeight: density.tightRowHeight,
+    minHeight: { xs: density.tightRowHeight.xs, md: theme.sidebarRow.tightHeight },
     borderRadius: theme.borderRadius.lg,
   },
   rowHighlighted: {
@@ -160,8 +160,8 @@ const styles = StyleSheet.create((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.spacing[2],
-    minHeight: density.tightRowHeight,
-    paddingVertical: theme.spacing[1],
+    minHeight: { xs: density.tightRowHeight.xs, md: theme.sidebarRow.tightHeight },
+    paddingVertical: theme.sidebarSpacing[1],
     // Match the project rows' inner padding so the icons align on one vertical
     // edge with the list below.
     paddingHorizontal: theme.spacing[2],

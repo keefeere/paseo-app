@@ -78,7 +78,9 @@ export function applyAppearance(input: AppearanceInput): void {
   const spacing = scaleSpacing(input.uiSpacingPercent);
   const textSpacing = scaleSpacing(textSpacingScale(input.textSpacingPercent) * 100);
   const textLineHeight = input.textLineHeightPercent / 100;
-  const sidebarSpacing = scaleSpacing((input.uiSpacingPercent * input.sidebarSpacingPercent) / 100);
+  // The sidebar has its own spacing axis: `uiSpacingPercent` must not tighten it, and
+  // `sidebarSpacingPercent` must not tighten the rest of the interface.
+  const sidebarSpacing = scaleSpacing(input.sidebarSpacingPercent);
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -96,14 +98,17 @@ export function applyAppearance(input: AppearanceInput): void {
         input.codeFontSize,
       );
       const lineHeight = { ...t.lineHeight, diff: diffLineHeight };
-      // At zero, remove the old 24px control floor as well as the padding.
-      // Keep the normal end unchanged and leave large glyphs a readable line box.
+      // At zero, rows still keep 16px controls and a readable line box for the base font.
+      // Compact breakpoints resolve their touch sizes from `density`, so these floors are
+      // pointer-only.
       const sidebarRatio = Math.min(1, input.sidebarSpacingPercent / 100);
-      const controlHeight = 18 + 6 * sidebarRatio;
-      const sidebarLineHeight = Math.max(fontSize.base * 1.2, 18 + 2 * sidebarRatio);
+      const controlHeight = 16 + 8 * sidebarRatio;
+      const sidebarLineHeight = Math.max(fontSize.base * 1.2, 14 + 6 * sidebarRatio);
       const sidebarRow = {
         controlHeight,
         lineHeight: sidebarLineHeight,
+        // Navigation rows: 28px at 100%, one tight row of 16px at 0%.
+        tightHeight: Math.max(16, 28 * sidebarRatio),
         minHeight:
           Math.max(
             fontSize.base * 1.4 * (0.75 + 0.25 * sidebarRatio),

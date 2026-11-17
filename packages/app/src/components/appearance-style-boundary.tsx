@@ -40,6 +40,7 @@ export function appearanceStyleBoundaryKey(theme: Theme): string {
     theme.sidebarRow.minHeight,
     theme.sidebarRow.controlHeight,
     theme.sidebarRow.lineHeight,
+    theme.sidebarRow.tightHeight,
     theme.textLineHeight,
     theme.colors.foreground,
     theme.colors.foregroundMuted,

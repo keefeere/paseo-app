@@ -650,7 +650,7 @@ interface CommonTheme {
   textSpacing: Record<keyof typeof SPACING, number>;
   textLineHeight: number;
   sidebarSpacing: Record<keyof typeof SPACING, number>;
-  sidebarRow: { minHeight: number; controlHeight: number; lineHeight: number };
+  sidebarRow: { minHeight: number; controlHeight: number; lineHeight: number; tightHeight: number };
   fontSize: Record<keyof typeof FONT_SIZE, number>;
   fontFamily: { ui: string; mono: string };
   lineHeight: Record<keyof typeof LINE_HEIGHT, number>;
@@ -667,7 +667,7 @@ const commonTheme: CommonTheme = {
   textSpacing: SPACING,
   textLineHeight: 1.4,
   sidebarSpacing: SPACING,
-  sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20 },
+  sidebarRow: { minHeight: 24, controlHeight: 24, lineHeight: 20, tightHeight: 28 },
   fontSize: FONT_SIZE,
   fontFamily: { ui: DEFAULT_UI_FONT_STACK, mono: DEFAULT_MONO_FONT_STACK },
   lineHeight: LINE_HEIGHT,

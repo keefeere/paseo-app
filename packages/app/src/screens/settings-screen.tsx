@@ -124,7 +124,7 @@ import {
   SETTINGS_DESKTOP_SIDEBAR_WIDTH,
   useIsCompactFormFactor,
 } from "@/constants/layout";
-import { density, densityIconBox, densityIconSize } from "@/styles/density";
+import { densityIconBox, densityIconSize } from "@/styles/density";
 import { useLocalDaemonServerId } from "@/hooks/use-is-local-daemon";
 import {
   type EnableBuiltInDaemonOption,
@@ -1554,10 +1554,10 @@ const sidebarStyles = StyleSheet.create((theme) => ({
     fontWeight: theme.fontWeight.normal,
     color: theme.colors.foregroundExtraMuted,
     paddingHorizontal: { xs: theme.spacing[4], md: theme.spacing[2] },
-    paddingVertical: theme.spacing[1],
+    paddingVertical: theme.sidebarSpacing[1],
   },
   island: {
-    gap: { xs: 2, md: theme.spacing[0.5] },
+    gap: { xs: 2, md: theme.sidebarSpacing[0.5] },
     borderRadius: { xs: theme.borderRadius["2xl"], md: 0 },
     overflow: "hidden",
   },
@@ -1565,8 +1565,8 @@ const sidebarStyles = StyleSheet.create((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: { xs: theme.spacing[3], md: theme.spacing[2] },
-    minHeight: { xs: 52, md: density.tightRowHeight.md },
-    paddingVertical: theme.spacing[1],
+    minHeight: { xs: 52, md: theme.sidebarRow.tightHeight },
+    paddingVertical: theme.sidebarSpacing[1],
     paddingHorizontal: { xs: theme.spacing[4], md: theme.spacing[2] },
     borderRadius: { xs: 0, md: theme.borderRadius.lg },
     backgroundColor: { xs: theme.colors.surface1, md: "transparent" },
@@ -1591,8 +1591,8 @@ const sidebarStyles = StyleSheet.create((theme) => ({
     flexDirection: "row",
     alignItems: "center",
     gap: { xs: theme.spacing[3], md: theme.spacing[2] },
-    minHeight: { xs: 52, md: density.tightRowHeight.md },
-    paddingVertical: theme.spacing[1],
+    minHeight: { xs: 52, md: theme.sidebarRow.tightHeight },
+    paddingVertical: theme.sidebarSpacing[1],
     paddingHorizontal: { xs: theme.spacing[4], md: theme.spacing[2] },
     borderRadius: { xs: 0, md: theme.borderRadius.lg },
     backgroundColor: { xs: theme.colors.surface1, md: "transparent" },
