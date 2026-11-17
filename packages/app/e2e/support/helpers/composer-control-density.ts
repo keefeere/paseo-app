@@ -281,6 +281,9 @@ export interface ComposerToolbarRails {
   discRightInset: number;
   /** How far the trailing disc sits from the composer's bottom edge. */
   discBottomInset: number;
+  /** The composer's own corner padding, which the disc is expected to respect. */
+  cornerPaddingRight: number;
+  cornerPaddingBottom: number;
 }
 
 /**
@@ -333,22 +336,30 @@ export async function readComposerToolbarRails(page: Page): Promise<ComposerTool
       }
     }
     if (!trailingDisc) throw new Error("composer toolbar has no trailing disc");
+    const style = getComputedStyle(element);
     return {
       textLeft,
       inkLeft,
       discRightInset: composerRect.right - trailingDisc.right,
       discBottomInset: composerRect.bottom - trailingDisc.bottom,
+      cornerPaddingRight: Number.parseFloat(style.paddingRight),
+      cornerPaddingBottom: Number.parseFloat(style.paddingBottom),
     };
   });
 }
 
 /**
- * The toolbar's left ink sits on the text column's edge, and its trailing disc nests into the
- * corner, as far from the right edge as from the bottom edge. Within half a pixel.
+ * The toolbar's left ink sits on the text column's edge, and its trailing disc nests inside the
+ * composer's corner band: neither inset reaches the edge, and neither exceeds the composer's own
+ * padding. The band is not symmetric on purpose — the button row bleeds horizontally — so this
+ * does not compare the two insets against each other.
  */
 export async function expectComposerToolbarOnTextRails(page: Page): Promise<void> {
   const rails = await readComposerToolbarRails(page);
   // A precision of 0 digits passes within half a pixel.
   expect(rails.inkLeft).toBeCloseTo(rails.textLeft, 0);
-  expect(rails.discRightInset).toBeCloseTo(rails.discBottomInset, 0);
+  expect(rails.discRightInset).toBeGreaterThan(0);
+  expect(rails.discBottomInset).toBeGreaterThan(0);
+  expect(rails.discRightInset).toBeLessThanOrEqual(rails.cornerPaddingRight);
+  expect(rails.discBottomInset).toBeLessThanOrEqual(rails.cornerPaddingBottom);
 }

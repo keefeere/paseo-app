@@ -49,7 +49,9 @@ export async function downloadFileFromExplorer(page: Page, fileName: string): Pr
 
 export async function downloadFileFromPreview(page: Page): Promise<Download> {
   await expect(page.getByText("Binary preview unavailable", { exact: true })).toBeVisible();
-  const button = page.getByRole("button", { name: "Download", exact: true });
+  // The pane header can also carry a Download action, so the preview's own control is addressed
+  // by its testID rather than by role name.
+  const button = page.getByTestId("resource-download");
   await expect(button).toBeVisible();
   const downloaded = page.waitForEvent("download");
   await button.click();

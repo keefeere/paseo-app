@@ -66,7 +66,7 @@ test.describe("Composer toolbar glyph tone", () => {
   test.describe("on a compact non-touch window", () => {
     test.use({ hasTouch: false, viewport: { width: 590, height: 844 } });
 
-    test("the icon-only thinking glyph stays foreground and the labelled mode glyph matches its label", async ({
+    test("a labelled thinking glyph matches its label and the icon-only attach glyph stays brighter", async ({
       page,
     }) => {
       const agent = await openSeededComposer(page, "composer-tone-compact-");
@@ -75,12 +75,11 @@ test.describe("Composer toolbar glyph tone", () => {
         const mode = await readComposerControlTone(composerControl(page, MODE));
         const attach = await readComposerControlTone(composerControl(page, ATTACH));
 
-        expectIconOnlyGlyph(thinking, "thinking");
+        expectGlyphMatchesLabel(thinking, "thinking");
         expectGlyphMatchesLabel(mode, "mode");
         expectIconOnlyGlyph(attach, "attach");
-        expect(thinking.glyph, "the icon-only glyphs share one tone").toBe(attach.glyph);
-        expect(thinking.glyph, "an icon-only glyph is brighter than a labelled glyph").not.toBe(
-          mode.label,
+        expect(attach.glyph, "the icon-only glyph is brighter than a labelled glyph").not.toBe(
+          thinking.label,
         );
       } finally {
         await agent.cleanup();
