@@ -131,6 +131,8 @@ test("command center tabs rotate with Tab and never move the header", async ({ p
 
     await test.step("Tab walks forward and wraps; Shift+Tab walks back", async () => {
       await page.keyboard.press("Tab");
+      await expectCommandCenterTab(panel, "Messages");
+      await page.keyboard.press("Tab");
       await expectCommandCenterTab(panel, "Workspaces");
       await page.keyboard.press("Tab");
       await expectCommandCenterTab(panel, "Files");
@@ -170,7 +172,7 @@ test("command center tabs rotate with Tab and never move the header", async ({ p
     });
 
     await test.step("in a workspace every tab is offered", async () => {
-      await expectCommandCenterTabs(panel, ["All", "Workspaces", "Files", "Actions"]);
+      await expectCommandCenterTabs(panel, ["All", "Messages", "Workspaces", "Files", "Actions"]);
     });
 
     await test.step("outside a workspace there is no Files tab, and Tab skips it", async () => {
@@ -179,7 +181,9 @@ test("command center tabs rotate with Tab and never move the header", async ({ p
       await openSettings(page);
       await page.keyboard.press("Meta+K");
       await expectCommandCenterTab(panel, "All", outside);
-      await expectCommandCenterTabs(panel, ["All", "Workspaces", "Actions"]);
+      await expectCommandCenterTabs(panel, ["All", "Messages", "Workspaces", "Actions"]);
+      await page.keyboard.press("Tab");
+      await expectCommandCenterTab(panel, "Messages", outside);
       await page.keyboard.press("Tab");
       await expectCommandCenterTab(panel, "Workspaces", outside);
       await page.keyboard.press("Tab");

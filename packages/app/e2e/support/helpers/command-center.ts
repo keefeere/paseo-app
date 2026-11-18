@@ -1,9 +1,10 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-export type CommandCenterTabName = "All" | "Workspaces" | "Files" | "Actions";
+export type CommandCenterTabName = "All" | "Messages" | "Workspaces" | "Files" | "Actions";
 
 const TAB_PLACEHOLDERS: Record<CommandCenterTabName, string> = {
   All: "Search workspaces, files, and actions...",
+  Messages: "Search chats on this host...",
   Workspaces: "Search workspaces...",
   Files: "Search files...",
   Actions: "Search actions...",
