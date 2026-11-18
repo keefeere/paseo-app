@@ -2089,6 +2089,7 @@ export const uk = {
     hostUnavailable: "Хост завантаження недоступний.",
     cancelled: "Завантаження скасовано.",
     failed: "Не вдалося завантажити файл.",
+    httpFailed: "Не вдалося завантажити файл (HTTP {{status}}).",
     shareFile: "Поділитися файлом",
     shareFileNamed: "Поділитися {{fileName}}",
     open: "Відкрити",
