@@ -4,6 +4,7 @@ import {
   LEADING_SECTION_BAND,
   PINNED_SECTION_BAND,
   type CommandCenterFileResult,
+  type CommandCenterMessageResult,
   type CommandCenterResultSection,
   type CommandCenterWorkspaceResult,
 } from "./results";
@@ -20,6 +21,7 @@ export interface CommandCenterSectionTitles {
   recentWorkspaces: string;
   workspaces: string;
   files: string;
+  messages: string;
 }
 
 export interface CommandCenterSectionsInput {
@@ -44,6 +46,8 @@ export interface CommandCenterSectionsInput {
   currentWorkspaceId: string | null;
   contributions: readonly CommandCenterContribution[];
   files: readonly CommandCenterFileResult[];
+  /** Transcript hits from every host that can search message text. */
+  messages: readonly CommandCenterMessageResult[];
   titles: CommandCenterSectionTitles;
 }
 
@@ -82,6 +86,18 @@ function workspacesSection(input: CommandCenterSectionsInput): CommandCenterResu
   };
 }
 
+function messagesSection(input: CommandCenterSectionsInput): CommandCenterResultSection {
+  // The daemon scored these rows and the client cannot rescore them against workspace rows,
+  // so they are pinned like files. Their order is already match quality, then recency.
+  return {
+    id: "messages",
+    band: PINNED_SECTION_BAND,
+    rank: 1,
+    title: input.titles.messages,
+    results: input.messages,
+  };
+}
+
 function filesSection(input: CommandCenterSectionsInput): CommandCenterResultSection {
   // File rows are matched by the daemon, so they carry no client-side score and cannot be
   // relevance-compared against the rows that do. Pinning them keeps the section comparator
@@ -106,8 +122,10 @@ export function buildCommandCenterSections(
     case "all": {
       const actions = buildContributionSections(input.contributions, input.query);
       if (!input.query.trim()) return [recentWorkspacesSection(input), ...actions];
-      return [...actions, workspacesSection(input), filesSection(input)];
+      return [...actions, messagesSection(input), workspacesSection(input), filesSection(input)];
     }
+    case "messages":
+      return [messagesSection(input)];
     case "workspaces":
       return [workspacesSection(input)];
     case "files":

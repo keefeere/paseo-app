@@ -62,6 +62,7 @@ import { useHostRuntimeConnectionStatuses, useHosts } from "@/runtime/host-runti
 import { useHydratedWorkspaceServerIds } from "@/stores/session-store-hooks";
 import { useKeyboardShortcutsStore } from "@/stores/keyboard-shortcuts-store";
 import { useSidebarViewStore } from "@/stores/sidebar-view-store";
+import { useSessionStore } from "@/stores/session-store";
 import {
   navigateToWorkspace,
   useActiveWorkspaceSelection,
@@ -73,6 +74,8 @@ import {
 } from "@/utils/command-center-focus-restore";
 import { focusWithRetries } from "@/utils/web-focus";
 import { navigateToAgent } from "@/utils/navigate-to-agent";
+import { requestChatMessageJump } from "@/stores/chat-message-jump-store";
+import { useMessageSearch } from "./message-search";
 import { projectIconPlaceholderLabelFromDisplayName } from "@/utils/project-display-name";
 import { getProjectSummaryForHostProject } from "@/utils/projects";
 import {
@@ -88,6 +91,7 @@ import {
   projectCommandCenterRows,
   type CommandCenterFileResult,
   type CommandCenterListRow,
+  type CommandCenterMessageResult,
   type CommandCenterResult,
   type CommandCenterWorkspaceAgent,
   type CommandCenterWorkspaceResult,
@@ -349,6 +353,7 @@ interface CommandCenterState {
   inputRef: React.RefObject<EditingTextInputHandle | null>;
   fileSearchLoading: boolean;
   fileSearchError: string | null;
+  messageSearchError: string | null;
   close(): void;
   select(result: CommandCenterResult): void;
   key(event: { key: string; shiftKey?: boolean }): boolean;
@@ -370,7 +375,15 @@ function useCommandCenterState(
   const { query, activeId } = useSyncExternalStore(interaction.subscribe, interaction.getSnapshot);
   const activeWorkspace = useActiveWorkspaceSelection();
   const hasWorkspace = activeWorkspace !== null;
-  const tabs = useMemo(() => availableCommandCenterTabs({ hasWorkspace }), [hasWorkspace]);
+  const hasMessageSearch = useSessionStore((state) =>
+    Object.values(state.sessions).some(
+      (session) => session.serverInfo?.features?.messageSearch === true,
+    ),
+  );
+  const tabs = useMemo(
+    () => availableCommandCenterTabs({ hasWorkspace, hasMessageSearch }),
+    [hasMessageSearch, hasWorkspace],
+  );
   const tab = resolveCommandCenterTab(requestedTab, tabs);
   const showBackground = useSidebarViewStore((state) => state.showBackground);
   const listsWorkspaces = tab === "all" || tab === "workspaces";
@@ -406,6 +419,50 @@ function useCommandCenterState(
       })),
     [fileSearchEntries, openFile],
   );
+  const messageSearch = useMessageSearch({
+    enabled:
+      open &&
+      tabs.includes("messages") &&
+      (tab === "messages" || (tab === "all" && Boolean(query.trim()))),
+    query,
+  });
+  const messages = useMemo(
+    () =>
+      messageSearch.hits.map<CommandCenterMessageResult>((hit) => ({
+        kind: "message",
+        id: `message:${hit.serverId}:${hit.agentId}:${hit.seq}`,
+        serverId: hit.serverId,
+        agentId: hit.agentId,
+        agentTitle: hit.agentTitle,
+        workspaceId: hit.workspaceId,
+        subtitle: joinSubtitleParts([hit.workspaceName ?? hit.cwd, hit.projectName, hit.branch]),
+        cwd: hit.cwd,
+        archived: hit.archived,
+        epoch: hit.epoch,
+        seq: hit.seq,
+        role: hit.role,
+        occurredAt: hit.occurredAt,
+        snippet: hit.snippet,
+        ranges: hit.ranges,
+        score: hit.score,
+        run: () => {
+          // The chat consumes the position once it is open; the store keeps it addressable
+          // across the route change.
+          requestChatMessageJump({
+            serverId: hit.serverId,
+            agentId: hit.agentId,
+            epoch: hit.epoch,
+            seq: hit.seq,
+          });
+          navigateToAgent({
+            serverId: hit.serverId,
+            agentId: hit.agentId,
+            workspaceId: hit.workspaceId,
+          });
+        },
+      })),
+    [messageSearch.hits],
+  );
   const sections = useMemo(
     () =>
       open
@@ -420,10 +477,12 @@ function useCommandCenterState(
             currentWorkspaceId,
             contributions: snapshot.contributions,
             files,
+            messages,
             titles: {
               recentWorkspaces: t("shell.commandCenter.recentWorkspaces"),
               workspaces: t("shell.commandCenter.workspaces"),
               files: t("shell.commandCenter.files"),
+              messages: t("shell.commandCenter.messages"),
             },
           })
         : [],
@@ -431,6 +490,7 @@ function useCommandCenterState(
       archivedSearch.matchedByHost,
       currentWorkspaceId,
       files,
+      messages,
       open,
       query,
       rankWorkspaces,
@@ -446,7 +506,9 @@ function useCommandCenterState(
     [listMetrics, sections],
   );
   const loading =
-    fileSearchLoading || (listsWorkspaces && (archivedSearch.pending || workspaceRows.loading));
+    fileSearchLoading ||
+    messageSearch.loading ||
+    (listsWorkspaces && (archivedSearch.pending || workspaceRows.loading));
   useLayoutEffect(() => {
     interaction.update({ open, tab, query, projection, loading });
   }, [interaction, open, tab, query, projection, loading]);
@@ -539,6 +601,7 @@ function useCommandCenterState(
     inputRef,
     fileSearchLoading,
     fileSearchError,
+    messageSearchError: messageSearch.error,
     close,
     select,
     key,
@@ -735,6 +798,33 @@ function ResultContent({
   query: string;
   backdrop: SurfaceBackdrop;
 }) {
+  if (result.kind === "message") {
+    return (
+      <View
+        style={styles.rowContent}
+        testID={`command-center-message-${result.agentId}-${result.seq}`}
+      >
+        <View style={styles.rowMain}>
+          <View style={styles.textContent}>
+            <HighlightedText
+              text={result.snippet}
+              ranges={result.ranges}
+              style={styles.title}
+              numberOfLines={2}
+              testID="command-center-message-snippet"
+            />
+            <SubtitleWithTimestamp
+              query=""
+              subtitle={result.subtitle}
+              activityAt={result.occurredAt ? new Date(result.occurredAt) : null}
+              testID="command-center-message-subtitle"
+            />
+          </View>
+        </View>
+        {result.archived ? <ArchivedBadge /> : null}
+      </View>
+    );
+  }
   if (result.kind === "file") {
     return (
       <View style={styles.rowContent}>
@@ -885,6 +975,7 @@ function SectionRow({ row }: { row: Extract<CommandCenterListRow, { kind: "secti
 
 const TAB_PLACEHOLDER_KEYS = {
   all: "shell.commandCenter.placeholder",
+  messages: "shell.commandCenter.messagePlaceholder",
   workspaces: "shell.commandCenter.workspacePlaceholder",
   files: "shell.commandCenter.filePlaceholder",
   actions: "shell.commandCenter.actionPlaceholder",
@@ -966,10 +1057,10 @@ export function CommandCenter() {
   const keyExtractor = useCallback((row: CommandCenterListRow) => row.key, []);
   const empty = useMemo(
     () =>
-      state.fileSearchError || state.fileSearchLoading ? null : (
+      state.fileSearchError || state.messageSearchError || state.fileSearchLoading ? null : (
         <Text style={styles.emptyText}>{t("shell.commandCenter.noMatches")}</Text>
       ),
-    [state.fileSearchError, state.fileSearchLoading, t],
+    [state.fileSearchError, state.fileSearchLoading, state.messageSearchError, t],
   );
   const fileSearchError = useMemo(
     () =>
@@ -983,6 +1074,19 @@ export function CommandCenter() {
         </Text>
       ) : null,
     [state.fileSearchError, t],
+  );
+  const messageSearchError = useMemo(
+    () =>
+      state.messageSearchError ? (
+        <Text
+          accessibilityLiveRegion="polite"
+          style={styles.errorText}
+          testID="command-center-message-search-error"
+        >
+          {t("common.errors.error")}: {state.messageSearchError}
+        </Text>
+      ) : null,
+    [state.messageSearchError, t],
   );
   const commonListProps = {
     data: state.rows,
@@ -1087,6 +1191,7 @@ export function CommandCenter() {
           </View>
           <View style={styles.tabBar}>{tabs}</View>
           {fileSearchError}
+          {messageSearchError}
           <BottomSheetFlatList ref={bottomSheetListRef} {...commonListProps} />
         </OverlayLayerProvider>
       </IsolatedBottomSheetModal>
@@ -1120,6 +1225,7 @@ export function CommandCenter() {
             </View>
             <View style={styles.tabBar}>{tabs}</View>
             {fileSearchError}
+            {messageSearchError}
             <FlatList ref={listRef} {...commonListProps} />
           </View>
         </View>

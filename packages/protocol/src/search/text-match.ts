@@ -92,7 +92,8 @@ function scoreSubsequenceMatch(query: string, text: string): MatchScore | null {
  * over budget. Bounding it is what keeps the fuzzy tier affordable to run
  * against every word of every candidate.
  */
-function boundedEditDistance(query: string, word: string, budget: number): number | null {
+/** Exported for `lang-match`, which fuzzes over Unicode words instead of ASCII ones. */
+export function boundedEditDistance(query: string, word: string, budget: number): number | null {
   if (Math.abs(query.length - word.length) > budget) return null;
 
   let twoRowsBack: number[] = [];
@@ -128,7 +129,7 @@ function boundedEditDistance(query: string, word: string, budget: number): numbe
   return distance <= budget ? distance : null;
 }
 
-function transpositionDistance(query: string, word: string): number | null {
+export function transpositionDistance(query: string, word: string): number | null {
   return isAdjacentTransposition(query, word) ? 1 : null;
 }
 

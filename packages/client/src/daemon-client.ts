@@ -761,6 +761,19 @@ export type AgentTimelineSearchPayload = Extract<
   { type: "agent.timeline.search.response" }
 >["payload"];
 
+export interface AgentMessagesSearchOptions {
+  query: string;
+  workspaceId?: string;
+  includeArchived?: boolean;
+  limit?: number;
+  cursor?: number;
+}
+
+export type AgentMessagesSearchPayload = Extract<
+  SessionOutboundMessage,
+  { type: "agent.messages.search.response" }
+>["payload"];
+
 export type AgentTimelinePromptIndexPayload = Extract<
   SessionOutboundMessage,
   { type: "agent.timeline.list_prompts.response" }
@@ -4030,6 +4043,23 @@ export class DaemonClient {
       requestId,
       message: { type: "agent.timeline.search.request", requestId, agentId, query, cursor },
       responseType: "agent.timeline.search.response",
+    });
+    if (payload.error) throw new Error(payload.error);
+    return payload;
+  }
+
+  /**
+   * Search message text across every chat on this host. Requires the host to advertise
+   * `server_info.features.messageSearch`; older hosts get no fallback.
+   */
+  async searchAgentMessages(
+    options: AgentMessagesSearchOptions,
+  ): Promise<AgentMessagesSearchPayload> {
+    const requestId = this.createRequestId();
+    const payload = await this.sendCorrelatedSessionRequest({
+      requestId,
+      message: { type: "agent.messages.search.request", requestId, ...options },
+      responseType: "agent.messages.search.response",
     });
     if (payload.error) throw new Error(payload.error);
     return payload;

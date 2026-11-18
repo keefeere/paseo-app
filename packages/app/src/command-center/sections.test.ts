@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CommandCenterContribution } from "./contributions";
-import type { CommandCenterFileResult, CommandCenterWorkspaceResult } from "./results";
+import type {
+  CommandCenterFileResult,
+  CommandCenterMessageResult,
+  CommandCenterWorkspaceResult,
+} from "./results";
 import { COMMAND_CENTER_LIST_METRICS } from "./list-metrics";
 import { projectCommandCenterRows } from "./results";
 import { buildCommandCenterSections } from "./sections";
@@ -76,10 +80,36 @@ const contributions = [
   action("Group by status", "actions", "query"),
 ];
 
+function message(id: string, score: number): CommandCenterMessageResult {
+  return {
+    kind: "message",
+    id: `message:server:${id}`,
+    serverId: "server",
+    agentId: id,
+    agentTitle: id,
+    workspaceId: "payments",
+    subtitle: "payments · project · main",
+    cwd: "/repo",
+    archived: false,
+    epoch: "epoch",
+    seq: 7,
+    role: "user",
+    occurredAt: "2026-10-30T00:00:00Z",
+    snippet: "А яка максимально бюджетна модель",
+    ranges: [{ start: 2, length: 4 }],
+    score,
+    run: () => undefined,
+  };
+}
+
 function listed(
   tab: CommandCenterTab,
   query: string,
-  options: { archivedMatchedByHost?: boolean; showBackground?: boolean } = {},
+  options: {
+    archivedMatchedByHost?: boolean;
+    showBackground?: boolean;
+    messages?: readonly CommandCenterMessageResult[];
+  } = {},
 ) {
   const sections = buildCommandCenterSections({
     tab,
@@ -92,7 +122,13 @@ function listed(
     currentWorkspaceId: "workspace:server:current",
     contributions,
     files: [file],
-    titles: { recentWorkspaces: "Recent workspaces", workspaces: "Workspaces", files: "Files" },
+    messages: options.messages ?? [],
+    titles: {
+      recentWorkspaces: "Recent workspaces",
+      workspaces: "Workspaces",
+      files: "Files",
+      messages: "Messages",
+    },
   });
   return projectCommandCenterRows(sections, COMMAND_CENTER_LIST_METRICS.desktop).rows.map((row) =>
     row.kind === "section" ? `# ${row.title ?? ""}` : row.key,
@@ -163,6 +199,23 @@ describe("command center tabs", () => {
       "# Workspaces",
       "workspace:server:billing",
     ]);
+  });
+
+  it("Messages leads the pinned sections in All, and lists alone on its tab", () => {
+    const hits = [message("hit-a", 4), message("hit-b", 8)];
+    const all = listed("all", "який", { messages: hits });
+    expect(all.indexOf("# Messages")).toBeGreaterThanOrEqual(0);
+    expect(all.indexOf("# Messages")).toBeLessThan(all.indexOf("# Workspaces"));
+    expect(all.slice(all.indexOf("# Messages") + 1, all.indexOf("# Workspaces"))).toEqual([
+      "message:server:hit-a",
+      "message:server:hit-b",
+    ]);
+    expect(listed("messages", "який", { messages: hits })).toEqual([
+      "# Messages",
+      "message:server:hit-a",
+      "message:server:hit-b",
+    ]);
+    expect(listed("all", "який")).not.toContain("# Messages");
   });
 
   it("Files lists only files", () => {

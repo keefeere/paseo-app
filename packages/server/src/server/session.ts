@@ -11,9 +11,11 @@ import {
 import type { WorkspaceBaseBranchSetRequest } from "@getpaseo/protocol/messages";
 
 import { searchTimeline } from "./agent/chat-search/index.js";
+import { searchAgentMessages } from "./agent/message-search/index.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { BrowserAutomationHostCapabilitySchema } from "@getpaseo/protocol/browser-automation/capabilities";
 import type {
+  AgentMessagesSearchHit,
   SessionEventSubscription,
   UsageReportEntry,
   ProviderUsage,
@@ -3106,6 +3108,8 @@ export class Session {
         return this.handleAgentTimelineAppendRequest(msg);
       case "agent.timeline.search.request":
         return this.handleAgentTimelineSearchRequest(msg, source);
+      case "agent.messages.search.request":
+        return this.handleAgentMessagesSearchRequest(msg, source);
       case "agent.timeline.list_prompts.request":
         return this.handleAgentTimelineListPromptsRequest(msg, source);
       case "agent.provider_subagents.list.request":
@@ -8597,6 +8601,149 @@ export class Session {
         },
         source,
       );
+    }
+  }
+
+  /**
+   * Search message text across this host's chats. `cursor` walks the agent list, most recent
+   * activity first, so one page is one slice of agents and `nextCursor` continues it.
+   *
+   * Loading an agent reads its provider transcript, which is the only place a settled chat's
+   * text lives, so the page is deliberately small and bounded by a time budget. Agents this
+   * search loaded are left loaded: a hit is one tap away, and closing it would force the
+   * transcript read again.
+   */
+  private async handleAgentMessagesSearchRequest(
+    msg: Extract<SessionInboundMessage, { type: "agent.messages.search.request" }>,
+    source?: object,
+  ): Promise<void> {
+    const requestId = msg.requestId;
+    const query = msg.query.trim();
+    const respond = (payload: {
+      hits: AgentMessagesSearchHit[];
+      nextCursor: number | null;
+      scannedAgents: number;
+      partial: boolean;
+      error: string | null;
+    }): void => {
+      this.emitForSource(
+        {
+          type: "agent.messages.search.response",
+          payload: { requestId, query, ...payload },
+        },
+        source,
+      );
+    };
+
+    if (!query) {
+      respond({ hits: [], nextCursor: null, scannedAgents: 0, partial: false, error: null });
+      return;
+    }
+
+    const activityMillis = (record: StoredAgentRecord): number =>
+      Date.parse(record.lastActivityAt ?? record.updatedAt ?? record.createdAt) || 0;
+    const agentPage = 12;
+    const budgetMs = 6000;
+    const totalLimit = msg.limit ?? 60;
+
+    try {
+      const records = await this.agentStorage.listAll();
+      const includeArchived = msg.includeArchived !== false;
+      const candidates = records
+        .filter((record) => !record.internal)
+        .filter((record) => (includeArchived ? true : !record.archivedAt))
+        .filter((record) => this.isProviderVisibleToClient(record.provider))
+        .filter((record) => (msg.workspaceId ? record.workspaceId === msg.workspaceId : true))
+        .sort((left, right) => activityMillis(right) - activityMillis(left));
+
+      const cursor = msg.cursor ?? 0;
+      const page = candidates.slice(cursor, cursor + agentPage);
+      const deadline = performance.now() + budgetMs;
+      const placements = new Map<string, ProjectPlacementPayload | null>();
+      const placementFor = async (
+        workspaceId: string | undefined,
+      ): Promise<ProjectPlacementPayload | null> => {
+        if (!workspaceId) return null;
+        const cached = placements.get(workspaceId);
+        if (cached !== undefined) return cached;
+        const placement = await this.buildProjectPlacementForWorkspaceId(workspaceId);
+        placements.set(workspaceId, placement);
+        return placement;
+      };
+
+      const hits: AgentMessagesSearchHit[] = [];
+      let partial = false;
+      for (const record of page) {
+        try {
+          await ensureAgentLoaded(record.id, {
+            agentManager: this.agentManager,
+            agentStorage: this.agentStorage,
+            logger: this.sessionLogger,
+            purpose: "history",
+          });
+        } catch {
+          // An agent whose provider is gone has no readable transcript; the rest of the
+          // host is still searched.
+          continue;
+        }
+        const rows = await this.agentManager.getTimelineRows(record.id);
+        const epoch = this.agentManager.fetchTimeline(record.id, {
+          direction: "tail",
+          limit: 1,
+        }).epoch;
+        const found = await searchAgentMessages(rows, query, { deadline });
+        if (!found.exhausted) partial = true;
+        if (found.hits.length) {
+          const placement = await placementFor(record.workspaceId);
+          hits.push(
+            ...found.hits.map((hit) => ({
+              agentId: record.id,
+              agentTitle: record.title ?? null,
+              workspaceId: record.workspaceId ?? null,
+              workspaceName: placement?.workspaceName ?? null,
+              projectName: placement?.projectName ?? null,
+              branch: placement?.checkout.currentBranch ?? null,
+              cwd: record.cwd,
+              archived: Boolean(record.archivedAt),
+              epoch,
+              seq: hit.seq,
+              role: hit.role,
+              occurredAt: hit.timestamp,
+              snippet: hit.snippet,
+              ranges: hit.ranges,
+              score: hit.score,
+            })),
+          );
+        }
+        if (performance.now() >= deadline) {
+          partial = true;
+          break;
+        }
+      }
+
+      hits.sort(
+        (left, right) =>
+          left.score - right.score ||
+          Date.parse(right.occurredAt ?? "0") - Date.parse(left.occurredAt ?? "0"),
+      );
+      const capped = hits.slice(0, totalLimit);
+      if (capped.length < hits.length) partial = true;
+      const scanned = page.length;
+      respond({
+        hits: capped,
+        nextCursor: partial || cursor + scanned < candidates.length ? cursor + scanned : null,
+        scannedAgents: scanned,
+        partial,
+        error: null,
+      });
+    } catch (error) {
+      respond({
+        hits: [],
+        nextCursor: null,
+        scannedAgents: 0,
+        partial: false,
+        error: getErrorMessage(error),
+      });
     }
   }
 

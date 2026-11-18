@@ -22,7 +22,9 @@ interface SearchInput {
 // source is never searched whole, because a match the client cannot highlight — across
 // a block boundary, or on syntax the reader never sees — still inflates the total until
 // navigation reaches that message and drops it.
-function searchableBlocks(text: string): string[] {
+// Exported for `message-search`, which scores the same blocks with the language-tolerant
+// matcher instead of a plain phrase regex.
+export function searchableBlocks(text: string): string[] {
   return markdown
     .parse(text, {})
     .map((token) => {

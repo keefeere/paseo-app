@@ -4,6 +4,7 @@ import { isWeb } from "@/constants/platform";
 import { useStableEvent } from "@/hooks/use-stable-event";
 import { getHostRuntimeStore } from "@/runtime/host-runtime";
 import { planTimelinePromptJump } from "@/timeline/timeline-sync-plan";
+import { useChatMessageJumpStore } from "@/stores/chat-message-jump-store";
 import type { StreamItem } from "@/types/stream";
 import type { StreamViewportHandle } from "../strategy";
 import {
@@ -42,6 +43,8 @@ export interface ChatOutline {
   prompts: ChatOutlinePrompt[];
   activePrompt: ActivePromptSource;
   jumpToPrompt: (seq: number) => void;
+  /** Land on any timeline position, including an assistant reply, with the host's own epoch. */
+  jumpToMessage: (seq: number, epoch: string) => void;
   reportReadingPosition: (seq: number | null) => void;
 }
 
@@ -187,7 +190,7 @@ export function useChatOutline({
     viewportRef,
   ]);
 
-  const jumpToPrompt = useStableEvent((seq: number) => {
+  const jumpToSeq = useStableEvent((seq: number, epochHint: string | null) => {
     nextJumpRequestIdRef.current += 1;
     setPendingJump(null);
     const loaded = findLoadedItem(
@@ -204,11 +207,12 @@ export function useChatOutline({
       viewportRef.current?.scrollToMessage?.(loaded.id);
       return;
     }
-    if (!index) return;
+    const epoch = epochHint ?? index?.epoch ?? timelineEpoch;
+    if (!epoch) return;
     const requestId = nextJumpRequestIdRef.current;
     setPendingJump({ requestId, seq, fetchSettled: false, hasScrolled: false });
     void getHostRuntimeStore()
-      .fetchAgentTimeline(serverId, agentId, planTimelinePromptJump({ epoch: index.epoch, seq }))
+      .fetchAgentTimeline(serverId, agentId, planTimelinePromptJump({ epoch, seq }))
       .catch((error: unknown) => {
         console.warn("Failed to load a Chat outline window", error);
         onJumpError();
@@ -221,5 +225,19 @@ export function useChatOutline({
       });
   });
 
-  return { prompts, activePrompt, jumpToPrompt, reportReadingPosition };
+  const jumpToPrompt = useStableEvent((seq: number) =>
+    jumpToSeq(seq, index?.epoch ?? timelineEpoch),
+  );
+  const jumpToMessage = useStableEvent((seq: number, epoch: string) => jumpToSeq(seq, epoch));
+
+  // A message search result from another surface opens this chat and asks for its position.
+  const pendingJumpRequest = useChatMessageJumpStore((state) => state.jump);
+  useEffect(() => {
+    if (!enabled || !pendingJumpRequest) return;
+    if (pendingJumpRequest.serverId !== serverId || pendingJumpRequest.agentId !== agentId) return;
+    jumpToMessage(pendingJumpRequest.seq, pendingJumpRequest.epoch);
+    useChatMessageJumpStore.getState().clearJump(pendingJumpRequest.requestId);
+  }, [agentId, enabled, jumpToMessage, pendingJumpRequest, serverId]);
+
+  return { prompts, activePrompt, jumpToPrompt, jumpToMessage, reportReadingPosition };
 }

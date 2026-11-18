@@ -307,7 +307,8 @@ entry-kind filters, match mode, blank-query behavior, and hidden-directory trave
 request without `cwd` searches the host home for absolute project paths; a request with `cwd`
 searches that workspace and returns relative entries. Clients may prepend their small host-scoped
 recent-project list for bare queries, but must not parse filesystem query syntax or re-filter a
-correlated daemon response. The legacy `directories` response field remains a projection of the
+correlated daemon response. Which surface runs which engine, and what each one can find, is in
+[search](search.md). The legacy `directories` response field remains a projection of the
 typed `entries` list.
 
 **Binary frames (terminal stream protocol):**

@@ -2084,6 +2084,20 @@ export const AgentTimelineListPromptsRequestMessageSchema = z.object({
   requestId: z.string(),
 });
 
+/**
+ * Search message text across every agent on this host, not inside one chat.
+ * `cursor` walks agents, not messages: the page is the next slice of the agent list.
+ */
+export const AgentMessagesSearchRequestMessageSchema = z.object({
+  type: z.literal("agent.messages.search.request"),
+  requestId: z.string(),
+  query: z.string(),
+  workspaceId: z.string().optional(),
+  includeArchived: z.boolean().optional(),
+  limit: z.number().int().positive().optional(),
+  cursor: z.number().int().nonnegative().optional(),
+});
+
 export const ProviderSubagentListRequestMessageSchema = z.object({
   type: z.literal("agent.provider_subagents.list.request"),
   parentAgentId: z.string(),
@@ -3630,6 +3644,7 @@ export const SessionInboundMessageSchema = z.discriminatedUnion("type", [
   DaemonUpdateRequestMessageSchema,
   FetchAgentTimelineRequestMessageSchema,
   AgentTimelineSearchRequestMessageSchema,
+  AgentMessagesSearchRequestMessageSchema,
   AgentTimelineListPromptsRequestMessageSchema,
   ProviderSubagentListRequestMessageSchema,
   AgentBackgroundWorkListRequestMessageSchema,
@@ -4030,6 +4045,8 @@ export const ServerInfoStatusPayloadSchema = z
         agentTimelinePromptIndex: z.boolean().optional(),
         // COMPAT(agentHistorySearch): added in v0.3.0, remove gate after 2027-02-07.
         agentHistorySearch: z.boolean().optional(),
+        // COMPAT(messageSearch): fork v0.16.0-fork.6; gate the cross-chat message search on it.
+        messageSearch: z.boolean().optional(),
         // COMPAT(checkoutRefresh): added in v0.1.86, remove gate after 2026-11-29.
         checkoutRefresh: z.boolean().optional(),
         // COMPAT(workspaceMultiplicity): added in v0.1.97, drop the gate when floor >= v0.1.97
@@ -5136,6 +5153,51 @@ export const AgentTimelineSearchResponseMessageSchema = z.object({
     error: z.string().nullable(),
   }),
 });
+
+/**
+ * One hit is one message. `snippet` is the matched block cut around the first hit and
+ * `ranges` index into it, so the client marks it without re-searching the transcript.
+ * `partial` says the scan stopped at its budget, so the app can say "more in this host".
+ */
+export const AgentMessagesSearchResponseMessageSchema = z.object({
+  type: z.literal("agent.messages.search.response"),
+  payload: z.object({
+    requestId: z.string(),
+    query: z.string(),
+    hits: z.array(
+      z.object({
+        agentId: z.string(),
+        agentTitle: z.string().nullable(),
+        workspaceId: z.string().nullable(),
+        workspaceName: z.string().nullable(),
+        projectName: z.string().nullable(),
+        branch: z.string().nullable(),
+        cwd: z.string(),
+        archived: z.boolean(),
+        epoch: z.string(),
+        seq: z.number().int().nonnegative(),
+        role: z.enum(["user", "assistant"]),
+        occurredAt: z.string().nullable(),
+        snippet: z.string(),
+        ranges: z.array(
+          z.object({
+            start: z.number().int().nonnegative(),
+            length: z.number().int().nonnegative(),
+          }),
+        ),
+        score: z.number(),
+      }),
+    ),
+    nextCursor: z.number().int().nonnegative().nullable(),
+    scannedAgents: z.number().int().nonnegative().optional(),
+    partial: z.boolean().optional(),
+    error: z.string().nullable(),
+  }),
+});
+
+export type AgentMessagesSearchHit = z.infer<
+  typeof AgentMessagesSearchResponseMessageSchema
+>["payload"]["hits"][number];
 
 export const AgentTimelineListPromptsResponseMessageSchema = z.object({
   type: z.literal("agent.timeline.list_prompts.response"),
@@ -7530,6 +7592,7 @@ export const SessionOutboundMessageSchema = z.discriminatedUnion("type", [
   FetchAgentTimelineResponseMessageSchema,
   AgentTimelineReplacementMessageSchema,
   AgentTimelineSearchResponseMessageSchema,
+  AgentMessagesSearchResponseMessageSchema,
   AgentTimelineListPromptsResponseMessageSchema,
   ProviderSubagentListResponseMessageSchema,
   ProviderSubagentTimelineResponseMessageSchema,

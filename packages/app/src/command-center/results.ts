@@ -94,6 +94,30 @@ export interface CommandCenterFileResult {
   run(): void;
 }
 
+/** A message on some host whose text matched. The row shows the snippet, not a title. */
+export interface CommandCenterMessageResult {
+  kind: "message";
+  id: string;
+  serverId: string;
+  agentId: string;
+  agentTitle: string | null;
+  workspaceId: string | null;
+  /** Workspace, project, and branch, already joined for display. */
+  subtitle: string;
+  cwd: string;
+  archived: boolean;
+  /** Where the hit sits in the agent's timeline, so opening the chat can land on it. */
+  epoch: string;
+  seq: number;
+  role: "user" | "assistant";
+  occurredAt: string | null;
+  snippet: string;
+  /** Character spans the daemon's language-tolerant matcher marked. */
+  ranges: readonly { start: number; length: number }[];
+  score: number;
+  run(): void;
+}
+
 export interface CommandCenterContributionResult {
   kind: "contribution";
   id: string;
@@ -106,6 +130,7 @@ export interface CommandCenterContributionResult {
 export type CommandCenterResult =
   | CommandCenterWorkspaceResult
   | CommandCenterFileResult
+  | CommandCenterMessageResult
   | CommandCenterContributionResult;
 
 export interface CommandCenterResultSection {
@@ -203,6 +228,8 @@ function contributionSearchFields(
 function resultLineCount(result: CommandCenterResult): 1 | 2 | 3 {
   if (result.kind === "workspace") return result.matchedAgent ? 3 : 2;
   if (result.kind === "file") return 1;
+  // Two lines of snippet plus the where-from line.
+  if (result.kind === "message") return 3;
   const presentation = result.contribution.presentation;
   return presentation.kind === "action" && presentation.subtitle ? 2 : 1;
 }
