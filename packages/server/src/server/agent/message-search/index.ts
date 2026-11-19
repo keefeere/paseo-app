@@ -310,25 +310,50 @@ function remember(agentId: string, index: AgentMessageIndex): void {
   }
 }
 
+/** Whether a cached index for `agentId` is still valid at this timeline head, so the caller can
+ *  skip reading the transcript at all. */
+export function isMessageSearchIndexFresh(
+  agentId: string,
+  epoch: string,
+  lastSeq: number,
+): boolean {
+  const cached = cache.get(agentId);
+  return Boolean(cached && cached.epoch === epoch && cached.lastSeq === lastSeq);
+}
+
 /**
  * Hits in one agent, reusing its index while the timeline head is unchanged.
  *
- * Timeline rows are append-only within an epoch, so an unchanged `(epoch, count, lastSeq)` means
- * nothing was added, replaced, or reset: a re-typed query is a posting lookup, not a transcript
- * read. A reload or timeline replacement changes the epoch and rebuilds the index.
+ * Timeline rows are append-only within an epoch, so an unchanged `(epoch, lastSeq)` means nothing
+ * was added, replaced, or reset: a re-typed query is a posting lookup, not a transcript read.
+ * Pass `rows` as `undefined` when the caller already knows the index is fresh; a reload or
+ * timeline replacement changes the epoch and rebuilds the index.
  */
 export async function searchCachedAgentMessages(
   agentId: string,
   epoch: string,
-  rows: readonly AgentTimelineRow[],
+  rows: readonly AgentTimelineRow[] | undefined,
   query: string,
   options?: { limit?: number; deadline?: number },
 ): Promise<{ hits: MessageHit[]; exhausted: boolean }> {
-  const lastSeq = rows.length > 0 ? (rows[rows.length - 1]?.seq ?? 0) : 0;
-  let index = cache.get(agentId);
-  if (!index || index.epoch !== epoch || index.count !== rows.length || index.lastSeq !== lastSeq) {
-    index = buildAgentMessageIndex(agentId, epoch, rows);
-    remember(agentId, index);
+  const cached = cache.get(agentId);
+  let index: AgentMessageIndex;
+  if (rows === undefined) {
+    if (!cached || cached.epoch !== epoch) return { hits: [], exhausted: true };
+    index = cached;
+  } else {
+    const lastSeq = rows.length > 0 ? (rows[rows.length - 1]?.seq ?? 0) : 0;
+    if (
+      cached &&
+      cached.epoch === epoch &&
+      cached.count === rows.length &&
+      cached.lastSeq === lastSeq
+    ) {
+      index = cached;
+    } else {
+      index = buildAgentMessageIndex(agentId, epoch, rows);
+      remember(agentId, index);
+    }
   }
   return searchIndex(index, query, {
     limit: options?.limit ?? DEFAULT_LIMIT_PER_AGENT,

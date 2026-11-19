@@ -117,6 +117,28 @@ it("reads the transcript once while its head is unchanged", async () => {
   expect(scans).toBe(1);
 });
 
+it("searches a fresh index without reading the transcript again", async () => {
+  const source = rows([{ type: "user_message", text: "Яке максимальне обмеження контексту?" }]);
+  let scans = 0;
+  const counted = new Proxy(source, {
+    get(target, property) {
+      if (property === Symbol.iterator) scans += 1;
+      return Reflect.get(target, property);
+    },
+  });
+
+  const built = await searchCachedAgentMessages("agent-3", "e1", counted, "максимальне");
+  expect(built.hits).toHaveLength(1);
+
+  const headless = await searchCachedAgentMessages("agent-3", "e1", undefined, "контекст");
+  expect(headless.hits).toHaveLength(1);
+  expect(headless.exhausted).toBe(true);
+  expect(scans).toBe(1);
+
+  const unknown = await searchCachedAgentMessages("agent-404", "e1", undefined, "контекст");
+  expect(unknown).toEqual({ hits: [], exhausted: true });
+});
+
 it("re-reads the transcript when rows are appended or the epoch resets", async () => {
   const base = rows([{ type: "user_message", text: "перше повідомлення" }]);
   expect((await searchCachedAgentMessages("agent-2", "e1", base, "друге")).hits).toHaveLength(0);

@@ -11,7 +11,10 @@ import {
 import type { WorkspaceBaseBranchSetRequest } from "@getpaseo/protocol/messages";
 
 import { searchTimeline } from "./agent/chat-search/index.js";
-import { searchCachedAgentMessages } from "./agent/message-search/index.js";
+import {
+  isMessageSearchIndexFresh,
+  searchCachedAgentMessages,
+} from "./agent/message-search/index.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { BrowserAutomationHostCapabilitySchema } from "@getpaseo/protocol/browser-automation/capabilities";
 import type {
@@ -8708,12 +8711,17 @@ export class Session {
 
       const deadline = performance.now() + scanBudgetMs;
       for (const record of loaded) {
-        const rows = await this.agentManager.getCommittedTimelineRows(record.id);
-        const epoch = this.agentManager.fetchTimeline(record.id, {
-          direction: "tail",
-          limit: 1,
-        }).epoch;
-        const found = await searchCachedAgentMessages(record.id, epoch, rows, query, { deadline });
+        // The loaded head is cheap; reading the transcript and projecting a window is not, so an
+        // agent whose index is still valid is searched without touching its rows at all.
+        const head = this.agentManager.getLoadedTimelineHead(record.id);
+        if (!head) continue;
+        const fresh = isMessageSearchIndexFresh(record.id, head.epoch, head.seq);
+        const rows = fresh
+          ? undefined
+          : await this.agentManager.getCommittedTimelineRows(record.id);
+        const found = await searchCachedAgentMessages(record.id, head.epoch, rows, query, {
+          deadline,
+        });
         if (!found.exhausted) partial = true;
         if (found.hits.length) {
           const placement = await placementFor(record.workspaceId);
@@ -8727,7 +8735,7 @@ export class Session {
               branch: placement?.checkout.currentBranch ?? null,
               cwd: record.cwd,
               archived: Boolean(record.archivedAt),
-              epoch,
+              epoch: head.epoch,
               seq: hit.seq,
               role: hit.role,
               occurredAt: hit.timestamp,

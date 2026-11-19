@@ -35,15 +35,19 @@ partial answer assembled from other RPCs.
 Each agent is searched through a word index (`packages/server/src/server/agent/message-search/index.ts`)
 built once per `(agentId, epoch)` and held for the 24 most recently searched agents. Postings are
 token and stem → messages; a query intersects postings, and only the survivors are scored by
-`scoreLangTokens`, which stays the single source of truth for tiers and highlight ranges. The
-fuzzy pass over the vocabulary runs only when a token matched nothing at all, and scoring is
-capped at 1500 candidates newest first, which is what `partial` reports. Rows are read
+`scoreLangTokens`, which stays the single source of truth for tiers and highlight ranges. While an
+agent's loaded head (`epoch`, `seq`) still matches its index, the handler skips reading its rows
+entirely — `getLoadedTimelineHead` is cheap, `fetchTimeline` and `getCommittedTimelineRows` are
+not. The fuzzy pass over the vocabulary runs only when a token matched nothing at all, and scoring
+is capped at 1500 candidates newest first, which is what `partial` reports. Rows are read
 unprojected (`getCommittedTimelineRows`): a 20k-row transcript scores in about a second, so a
 projection on top of it is pure waste, and neither tool collapse nor reasoning merge changes what
 a text scan finds.
 
-The index is memory-only. A daemon restart rebuilds it lazily on the next search, and a timeline
-replacement changes the epoch, which drops the entry.
+The index is memory-only. A daemon restart rebuilds it lazily on the next search, which on a host
+with 30 long transcripts costs tens of seconds on the first query; warming it in the background and
+writing it to disk are the open work. A timeline replacement changes the epoch, which drops the
+entry.
 
 Each hit carries `epoch` and `seq` plus the ranges the matcher marked. A row opens the chat and
 leaves a jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once
