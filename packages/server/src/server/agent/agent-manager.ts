@@ -1438,6 +1438,19 @@ export class AgentManager {
     return this.timelineStore.getRows(id);
   }
 
+  /**
+   * Committed rows without projection, for callers that read raw item text (message search).
+   * Projecting a long transcript costs seconds per call, and neither tool collapse nor reasoning
+   * merge changes what a text scan finds.
+   */
+  async getCommittedTimelineRows(id: string): Promise<AgentTimelineRow[]> {
+    this.requireAgent(id);
+    if (this.durableTimelineStore) {
+      return this.durableTimelineStore.getCommittedRows(id);
+    }
+    return this.timelineStore.getRows(id);
+  }
+
   /** The timeline head of a loaded agent, or null when this agent is not loaded. Never loads. */
   getLoadedTimelineHead(id: string): { epoch: string; seq: number } | null {
     return this.getAgent(id) ? this.timelineStore.getHead(id) : null;

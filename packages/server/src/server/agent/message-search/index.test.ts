@@ -1,6 +1,12 @@
 import { expect, it } from "vitest";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
-import { matchMessageText, searchAgentMessages } from "./index.js";
+import type { AgentTimelineRow } from "../agent-timeline-store-types.js";
+import {
+  buildSearchableMessages,
+  matchMessageText,
+  searchAgentMessages,
+  searchCachedAgentMessages,
+} from "./index.js";
 
 function rows(items: AgentTimelineItem[]) {
   return items.map((item, index) => ({ item, seq: index + 1, timestamp: "2026-09-12T00:00:00Z" }));
@@ -67,4 +73,77 @@ it("returns nothing for a blank query", async () => {
     "   ",
   );
   expect(result).toEqual({ hits: [], exhausted: true });
+});
+
+it("joins assistant chunks of one turn into a single hit", async () => {
+  const chunks: AgentTimelineRow[] = [
+    {
+      seq: 1,
+      timestamp: "2026-09-12T00:00:00Z",
+      turnId: "t1",
+      item: { type: "assistant_message", text: "Максимальна " },
+    },
+    {
+      seq: 2,
+      timestamp: "2026-09-12T00:00:01Z",
+      turnId: "t1",
+      item: { type: "assistant_message", text: "бюджетна модель — 32B." },
+    },
+  ];
+  const result = await searchAgentMessages(chunks, "максимальна бюджетна");
+  expect(result.hits).toHaveLength(1);
+  expect(result.hits[0]?.seq).toBe(2);
+  expect(result.hits[0]?.snippet).toContain("бюджетна модель");
+});
+
+it("reads the transcript once while its head is unchanged", async () => {
+  const source = rows([
+    { type: "user_message", text: "Яке максимальне обмеження контексту?" },
+    { type: "assistant_message", text: "Контекст — 200k токенів." },
+  ]);
+  let scans = 0;
+  const counted = new Proxy(source, {
+    get(target, property) {
+      if (property === Symbol.iterator) scans += 1;
+      return Reflect.get(target, property);
+    },
+  });
+
+  const first = await searchCachedAgentMessages("agent-1", "e1", counted, "максимальне");
+  const second = await searchCachedAgentMessages("agent-1", "e1", counted, "контекст");
+
+  expect(first.hits).toHaveLength(1);
+  expect(second.hits).toHaveLength(2);
+  expect(scans).toBe(1);
+});
+
+it("re-reads the transcript when rows are appended or the epoch resets", async () => {
+  const base = rows([{ type: "user_message", text: "перше повідомлення" }]);
+  expect((await searchCachedAgentMessages("agent-2", "e1", base, "друге")).hits).toHaveLength(0);
+
+  const appended = [
+    ...base,
+    {
+      seq: 2,
+      timestamp: "2026-09-12T00:01:00Z",
+      item: { type: "user_message", text: "друге повідомлення" },
+    },
+  ];
+  expect((await searchCachedAgentMessages("agent-2", "e1", appended, "друге")).hits).toHaveLength(
+    1,
+  );
+
+  expect((await searchCachedAgentMessages("agent-2", "e2", base, "друге")).hits).toHaveLength(0);
+});
+
+it("extracts searchable text without projecting the timeline", () => {
+  const messages = buildSearchableMessages(
+    rows([
+      { type: "user_message", text: "питання" },
+      { type: "reasoning", text: "думки" },
+      { type: "tool_call", toolName: "bash", callId: "c1", args: { command: "каталог" } },
+      { type: "assistant_message", text: "відповідь" },
+    ]),
+  );
+  expect(messages.map((message) => message.role)).toEqual(["user", "assistant"]);
 });

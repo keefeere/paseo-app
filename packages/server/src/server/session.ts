@@ -11,7 +11,7 @@ import {
 import type { WorkspaceBaseBranchSetRequest } from "@getpaseo/protocol/messages";
 
 import { searchTimeline } from "./agent/chat-search/index.js";
-import { searchAgentMessages } from "./agent/message-search/index.js";
+import { searchCachedAgentMessages } from "./agent/message-search/index.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { BrowserAutomationHostCapabilitySchema } from "@getpaseo/protocol/browser-automation/capabilities";
 import type {
@@ -8643,7 +8643,9 @@ export class Session {
     const activityMillis = (record: StoredAgentRecord): number =>
       Date.parse(record.lastActivityAt ?? record.updatedAt ?? record.createdAt) || 0;
     const agentPage = 12;
-    const budgetMs = 6000;
+    const loadConcurrency = 4;
+    const loadBudgetMs = 8000;
+    const scanBudgetMs = 6000;
     const totalLimit = msg.limit ?? 60;
 
     try {
@@ -8658,7 +8660,7 @@ export class Session {
 
       const cursor = msg.cursor ?? 0;
       const page = candidates.slice(cursor, cursor + agentPage);
-      const deadline = performance.now() + budgetMs;
+      const loadDeadline = performance.now() + loadBudgetMs;
       const placements = new Map<string, ProjectPlacementPayload | null>();
       const placementFor = async (
         workspaceId: string | undefined,
@@ -8673,25 +8675,45 @@ export class Session {
 
       const hits: AgentMessagesSearchHit[] = [];
       let partial = false;
-      for (const record of page) {
-        try {
-          await ensureAgentLoaded(record.id, {
-            agentManager: this.agentManager,
-            agentStorage: this.agentStorage,
-            logger: this.sessionLogger,
-            purpose: "history",
-          });
-        } catch {
-          // An agent whose provider is gone has no readable transcript; the rest of the
-          // host is still searched.
-          continue;
+
+      // Loading a transcript is the slow half of a search and is independent per agent, so it
+      // runs in parallel under its own budget. The scan budget starts after the loads, otherwise
+      // three slow hydrations would leave the scan zero rows to read and the answer would be
+      // "no matches" on a host that has matches.
+      const loaded: StoredAgentRecord[] = [];
+      let consumed = 0;
+      for (let index = 0; index < page.length; index += loadConcurrency) {
+        const chunk = page.slice(index, index + loadConcurrency);
+        consumed += chunk.length;
+        const settled = await Promise.allSettled(
+          chunk.map((record) =>
+            ensureAgentLoaded(record.id, {
+              agentManager: this.agentManager,
+              agentStorage: this.agentStorage,
+              logger: this.sessionLogger,
+              purpose: "history",
+            }),
+          ),
+        );
+        settled.forEach((result, offset) => {
+          // An agent whose provider is gone has no readable transcript; the rest of the host
+          // is still searched.
+          if (result.status === "fulfilled") loaded.push(chunk[offset]);
+        });
+        if (performance.now() >= loadDeadline) {
+          partial = true;
+          break;
         }
-        const rows = await this.agentManager.getTimelineRows(record.id);
+      }
+
+      const deadline = performance.now() + scanBudgetMs;
+      for (const record of loaded) {
+        const rows = await this.agentManager.getCommittedTimelineRows(record.id);
         const epoch = this.agentManager.fetchTimeline(record.id, {
           direction: "tail",
           limit: 1,
         }).epoch;
-        const found = await searchAgentMessages(rows, query, { deadline });
+        const found = await searchCachedAgentMessages(record.id, epoch, rows, query, { deadline });
         if (!found.exhausted) partial = true;
         if (found.hits.length) {
           const placement = await placementFor(record.workspaceId);
@@ -8728,10 +8750,11 @@ export class Session {
       );
       const capped = hits.slice(0, totalLimit);
       if (capped.length < hits.length) partial = true;
-      const scanned = page.length;
+      const scanned = loaded.length;
+      const advanced = consumed;
       respond({
         hits: capped,
-        nextCursor: partial || cursor + scanned < candidates.length ? cursor + scanned : null,
+        nextCursor: partial || cursor + advanced < candidates.length ? cursor + advanced : null,
         scannedAgents: scanned,
         partial,
         error: null,

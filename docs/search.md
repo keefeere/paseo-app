@@ -26,9 +26,24 @@ respected, 20 000 entries scanned at depth 12. Deeper than the budget means sile
 Message text lives only in the provider transcript, so a search loads each agent with
 `purpose: "history"` — the same read path opening an archived chat uses. The handler
 (`packages/server/src/server/session.ts`, `handleAgentMessagesSearchRequest`) walks agents newest
-activity first, 12 per page, under a 6-second budget, and returns `nextCursor` plus `partial`.
+activity first, 12 per page, and returns `nextCursor` plus `partial`. Loads run 4 at a time under
+their own 8-second budget and the scan gets a fresh 6 seconds after them: one budget over both
+means three slow hydrations eat it and the host answers "no matches" while holding the text.
 Gated on `server_info.features.messageSearch`: an older host contributes nothing rather than a
 partial answer assembled from other RPCs.
+
+Each agent is searched through a word index (`packages/server/src/server/agent/message-search/index.ts`)
+built once per `(agentId, epoch)` and held for the 24 most recently searched agents. Postings are
+token and stem → messages; a query intersects postings, and only the survivors are scored by
+`scoreLangTokens`, which stays the single source of truth for tiers and highlight ranges. The
+fuzzy pass over the vocabulary runs only when a token matched nothing at all, and scoring is
+capped at 1500 candidates newest first, which is what `partial` reports. Rows are read
+unprojected (`getCommittedTimelineRows`): a 20k-row transcript scores in about a second, so a
+projection on top of it is pure waste, and neither tool collapse nor reasoning merge changes what
+a text scan finds.
+
+The index is memory-only. A daemon restart rebuilds it lazily on the next search, and a timeline
+replacement changes the epoch, which drops the entry.
 
 Each hit carries `epoch` and `seq` plus the ranges the matcher marked. A row opens the chat and
 leaves a jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once
