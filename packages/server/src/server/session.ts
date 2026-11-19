@@ -12,7 +12,10 @@ import type { WorkspaceBaseBranchSetRequest } from "@getpaseo/protocol/messages"
 
 import { searchTimeline } from "./agent/chat-search/index.js";
 import {
+  estimatedIndexCostMs,
+  hasMessageSearchIndex,
   isMessageSearchIndexFresh,
+  queueMessageSearchIndexWarm,
   searchCachedAgentMessages,
 } from "./agent/message-search/index.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
@@ -8710,18 +8713,43 @@ export class Session {
       }
 
       const deadline = performance.now() + scanBudgetMs;
+      const warmFor = (agentId: string): void => {
+        queueMessageSearchIndexWarm({
+          agentId,
+          build: async () => {
+            const agentRows = await this.agentManager.getCommittedTimelineRows(agentId);
+            const agentHead = this.agentManager.getLoadedTimelineHead(agentId);
+            return agentHead ? { epoch: agentHead.epoch, rows: agentRows } : null;
+          },
+        });
+      };
       for (const record of loaded) {
         // The loaded head is cheap; reading the transcript and projecting a window is not, so an
         // agent whose index is still valid is searched without touching its rows at all.
         const head = this.agentManager.getLoadedTimelineHead(record.id);
         if (!head) continue;
-        const fresh = isMessageSearchIndexFresh(record.id, head.epoch, head.seq);
-        const rows = fresh
-          ? undefined
-          : await this.agentManager.getCommittedTimelineRows(record.id);
-        const found = await searchCachedAgentMessages(record.id, head.epoch, rows, query, {
-          deadline,
-        });
+
+        let found;
+        if (isMessageSearchIndexFresh(record.id, head.epoch, head.seq)) {
+          found = await searchCachedAgentMessages(record.id, head.epoch, undefined, query, {
+            deadline,
+          });
+        } else {
+          const committed = await this.agentManager.getCommittedTimelineRows(record.id);
+          // Indexing a long transcript is seconds of work. When this request cannot afford it, the
+          // agent is queued for background warming rather than stalling the whole search.
+          if (
+            !hasMessageSearchIndex(record.id) &&
+            performance.now() + estimatedIndexCostMs(committed.length) > deadline
+          ) {
+            warmFor(record.id);
+            partial = true;
+            continue;
+          }
+          found = await searchCachedAgentMessages(record.id, head.epoch, committed, query, {
+            deadline,
+          });
+        }
         if (!found.exhausted) partial = true;
         if (found.hits.length) {
           const placement = await placementFor(record.workspaceId);

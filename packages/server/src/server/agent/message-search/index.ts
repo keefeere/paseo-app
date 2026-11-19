@@ -310,6 +310,10 @@ function remember(agentId: string, index: AgentMessageIndex): void {
   }
 }
 
+/** Rough rows-per-millisecond throughput of index building, used to decide whether an agent can
+ *  still be indexed inside the request budget. Tuned on a 20k-row transcript (~2s). */
+const INDEX_ROWS_PER_MS = 10;
+
 /** Whether a cached index for `agentId` is still valid at this timeline head, so the caller can
  *  skip reading the transcript at all. */
 export function isMessageSearchIndexFresh(
@@ -361,9 +365,68 @@ export async function searchCachedAgentMessages(
   });
 }
 
-/** Drop one agent's index. Called when its timeline is replaced or the agent is deleted. */
+/** Drop one agent's index and any queued warm task. */
 export function invalidateMessageSearchCache(agentId: string): void {
   cache.delete(agentId);
-  const at = cacheOrder.indexOf(agentId);
-  if (at >= 0) cacheOrder.splice(at, 1);
+  const at = warmQueue.findIndex((task) => task.agentId === agentId);
+  if (at >= 0) warmQueue.splice(at, 1);
+}
+
+/** Cache an index built outside the request path. */
+export function rememberMessageSearchIndex(
+  agentId: string,
+  epoch: string,
+  rows: readonly AgentTimelineRow[],
+): void {
+  remember(agentId, buildAgentMessageIndex(agentId, epoch, rows));
+}
+
+interface WarmTask {
+  agentId: string;
+  build: () => Promise<{ epoch: string; rows: readonly AgentTimelineRow[] } | null>;
+}
+
+const warmQueue: WarmTask[] = [];
+let warmRunning = false;
+
+async function runWarmQueue(): Promise<void> {
+  if (warmRunning) return;
+  warmRunning = true;
+  try {
+    while (warmQueue.length > 0) {
+      const task = warmQueue.shift();
+      if (!task) break;
+      try {
+        const built = await task.build();
+        if (built) rememberMessageSearchIndex(task.agentId, built.epoch, built.rows);
+      } catch {
+        // A transcript that cannot be read now is retried by the next search that asks for it.
+      }
+      await setImmediate();
+    }
+  } finally {
+    warmRunning = false;
+  }
+}
+
+/**
+ * Build an agent's index off the request path.
+ * One warm loop runs at a time, one agent per tick, so typing stays responsive while the host
+ * warms the transcripts the last search could not afford to index.
+ */
+export function queueMessageSearchIndexWarm(task: WarmTask): void {
+  if (warmQueue.some((queued) => queued.agentId === task.agentId)) return;
+  if (cache.has(task.agentId)) return;
+  warmQueue.push(task);
+  void runWarmQueue();
+}
+
+/** Whether an agent already holds an index, whatever its head. */
+export function hasMessageSearchIndex(agentId: string): boolean {
+  return cache.has(agentId);
+}
+
+/** How long indexing `rowCount` rows is expected to take. */
+export function estimatedIndexCostMs(rowCount: number): number {
+  return Math.ceil(rowCount / INDEX_ROWS_PER_MS);
 }

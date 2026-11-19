@@ -44,10 +44,11 @@ unprojected (`getCommittedTimelineRows`): a 20k-row transcript scores in about a
 projection on top of it is pure waste, and neither tool collapse nor reasoning merge changes what
 a text scan finds.
 
-The index is memory-only. A daemon restart rebuilds it lazily on the next search, which on a host
-with 30 long transcripts costs tens of seconds on the first query; warming it in the background and
-writing it to disk are the open work. A timeline replacement changes the epoch, which drops the
-entry.
+The index is memory-only. A daemon restart rebuilds it lazily, which on a host with 30 long
+transcripts is tens of seconds if the rebuild happens inside the request — so an agent whose index
+is too expensive to build inside the remaining budget is queued for background warming instead
+(one agent per tick, one warm loop at a time) and the response reports `partial`. Warming to disk
+is the open work. A timeline replacement changes the epoch, which drops the entry.
 
 Each hit carries `epoch` and `seq` plus the ranges the matcher marked. A row opens the chat and
 leaves a jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once

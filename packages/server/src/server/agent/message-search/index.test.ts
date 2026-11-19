@@ -1,9 +1,12 @@
+import { setImmediate } from "node:timers/promises";
 import { expect, it } from "vitest";
 import type { AgentTimelineItem } from "@getpaseo/protocol/agent-types";
 import type { AgentTimelineRow } from "../agent-timeline-store-types.js";
 import {
   buildSearchableMessages,
+  isMessageSearchIndexFresh,
   matchMessageText,
+  queueMessageSearchIndexWarm,
   searchAgentMessages,
   searchCachedAgentMessages,
 } from "./index.js";
@@ -156,6 +159,30 @@ it("re-reads the transcript when rows are appended or the epoch resets", async (
   );
 
   expect((await searchCachedAgentMessages("agent-2", "e2", base, "друге")).hits).toHaveLength(0);
+});
+
+it("warms an index off the request path so the next search skips the transcript", async () => {
+  const source = rows([{ type: "user_message", text: "Яке максимальне обмеження контексту?" }]);
+  let scans = 0;
+  const counted = new Proxy(source, {
+    get(target, property) {
+      if (property === Symbol.iterator) scans += 1;
+      return Reflect.get(target, property);
+    },
+  });
+
+  queueMessageSearchIndexWarm({
+    agentId: "agent-5",
+    build: async () => ({ epoch: "e1", rows: counted }),
+  });
+  await setImmediate();
+
+  expect(isMessageSearchIndexFresh("agent-5", "e1", 1)).toBe(true);
+  expect(scans).toBe(1);
+
+  const hit = await searchCachedAgentMessages("agent-5", "e1", undefined, "контекст");
+  expect(hit.hits).toHaveLength(1);
+  expect(scans).toBe(1);
 });
 
 it("extracts searchable text without projecting the timeline", () => {
