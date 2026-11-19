@@ -367,7 +367,7 @@ jobs:
 
   publish-windows:
     needs: [create-release]
-    if: ${{ github.repository == 'getpaseo/paseo' && always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows')) || (github.event_name == 'push' && (startsWith(github.ref_name, 'v') || startsWith(github.ref_name, 'desktop-v') || startsWith(github.ref_name, 'desktop-windows-v')))) }}
+    if: ${{ always() && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && (github.event.inputs.platform == 'all' || github.event.inputs.platform == 'windows')) || (github.event_name == 'push' && (startsWith(github.ref_name, 'v') || startsWith(github.ref_name, 'desktop-v') || startsWith(github.ref_name, 'desktop-windows-v')))) }}
     permissions:
       contents: write
       packages: read
@@ -533,7 +533,11 @@ jobs:
           manifests_dir="$PWD/final"
 
           if [[ "${{ github.repository }}" == "keefeere/paseo-app" ]]; then
+            # The fork ships Linux, and Windows when the dispatch asks for it. macOS stays upstream-only.
             expected_manifests=("${RELEASE_CHANNEL}-linux.yml")
+            if [[ "${{ needs.publish-windows.result }}" == "success" ]]; then
+              expected_manifests+=("${RELEASE_CHANNEL}.yml")
+            fi
           else
             expected_manifests=(
               "${RELEASE_CHANNEL}-mac.yml"
