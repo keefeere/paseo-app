@@ -28,7 +28,10 @@ Message text lives only in the provider transcript, so a search loads each agent
 (`packages/server/src/server/session.ts`, `handleAgentMessagesSearchRequest`) walks agents newest
 activity first, 12 per page, and returns `nextCursor` plus `partial`. Loads run 4 at a time under
 their own 8-second budget and the scan gets a fresh 6 seconds after them: one budget over both
-means three slow hydrations eat it and the host answers "no matches" while holding the text.
+means three slow hydrations eat it and the host answers "no matches" while holding the text. The
+load budget is enforced inside a chunk (`withTimeout`), not only between chunks — one 13-second
+hydration otherwise pushed a whole request to 20+ seconds. A hydration that runs out of budget is
+not a failure: the agent goes to the warm queue and keeps loading in the background.
 Gated on `server_info.features.messageSearch`: an older host contributes nothing rather than a
 partial answer assembled from other RPCs.
 
@@ -44,15 +47,20 @@ unprojected (`getCommittedTimelineRows`): a 20k-row transcript scores in about a
 projection on top of it is pure waste, and neither tool collapse nor reasoning merge changes what
 a text scan finds.
 
-The index is memory-only. A daemon restart rebuilds it lazily, which on a host with 30 long
-transcripts is tens of seconds if the rebuild happens inside the request — so an agent whose index
-is too expensive to build inside the remaining budget is queued for background warming instead
-(one agent per tick, one warm loop at a time) and the response reports `partial`. Warming to disk
-is the open work. A timeline replacement changes the epoch, which drops the entry.
+The index is memory-only. Warming it inside a request is what made the first search after a deploy
+feel broken, so an agent whose index is too expensive to build inside the remaining budget is
+queued instead (one agent per tick, one warm loop at a time) and the response reports `partial`.
+Warming also runs ahead of any search: the first `fetch_agents_request` of a session schedules the
+10 most recently active chats 15 seconds later, so a host that has been up for a while answers
+from postings. Warming to disk is the open work. A timeline replacement changes the epoch, which
+drops the entry.
 
-Each hit carries `epoch` and `seq` plus the ranges the matcher marked. A row opens the chat and
-leaves a jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once
-and scrolls to the position. Native has neither chat find nor the jump — it opens the chat.
+Each hit carries `epoch` and `seq` plus the ranges the matcher marked. The client
+(`packages/app/src/command-center/message-search.ts`) walks up to 3 pages per host and publishes
+what each page returned instead of waiting for the last one — a host that needs tens of seconds to
+scan every chat shows its first hits while it keeps scanning. A row opens the chat and leaves a
+jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once and scrolls
+to the position. Native has neither chat find nor the jump — it opens the chat.
 
 Markdown is searched block by block, the same rule as chat find
 (`packages/server/src/server/agent/chat-search/index.ts`): a hit the client cannot highlight

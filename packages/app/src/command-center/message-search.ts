@@ -60,14 +60,21 @@ function searchMessagePage(
 
 /**
  * Walk one host until it runs out of agents, the page budget is spent, or it stops finding
- * enough to be worth another round trip.
+ * enough to be worth another round trip. Pages are handed back as they arrive: a host that needs
+ * tens of seconds to scan its chats should show the first hits, not a spinner.
  */
-async function searchHost(serverId: string, query: string): Promise<MessageSearchHit[]> {
+async function searchHost(
+  serverId: string,
+  query: string,
+  onPage: (hits: MessageSearchHit[]) => void,
+): Promise<MessageSearchHit[]> {
   const hits: MessageSearchHit[] = [];
   let cursor: number | null | undefined;
   for (let page = 0; page < MESSAGE_SEARCH_MAX_PAGES; page += 1) {
     const payload = await searchMessagePage(serverId, query, cursor ?? undefined);
-    hits.push(...withHostIdentity(serverId, payload));
+    const pageHits = withHostIdentity(serverId, payload);
+    hits.push(...pageHits);
+    onPage(pageHits);
     cursor = payload.nextCursor;
     if (cursor === null || hits.length >= MESSAGE_SEARCH_PAGE_LIMIT) break;
   }
@@ -126,20 +133,33 @@ export function useMessageSearch(input: { enabled: boolean; query: string }): {
 
     let cancelled = false;
     const collect = async (): Promise<void> => {
+      const collected: MessageSearchHit[] = [];
+      let error: string | null = null;
+      const publish = (): void => {
+        if (cancelled) return;
+        setState({
+          requestKey,
+          hits: sortHits(collected),
+          loading: true,
+          error,
+        });
+      };
       const settled = await Promise.allSettled(
-        hosts.map((serverId) => searchHost(serverId, trimmed)),
+        hosts.map((serverId) =>
+          searchHost(serverId, trimmed, (pageHits) => {
+            collected.push(...pageHits);
+            publish();
+          }),
+        ),
       );
       if (cancelled) return;
-      const hits: MessageSearchHit[] = [];
-      let error: string | null = null;
       settled.forEach((result, index) => {
         if (result.status === "rejected") {
           error = error ?? `${hosts[index]}: ${String(result.reason)}`;
           return;
         }
-        hits.push(...result.value);
       });
-      setState({ requestKey, hits: sortHits(hits), loading: false, error });
+      setState({ requestKey, hits: sortHits(collected), loading: false, error });
     };
     const timer = setTimeout(() => {
       void collect();

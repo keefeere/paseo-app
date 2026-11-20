@@ -18,6 +18,7 @@ import {
   queueMessageSearchIndexWarm,
   searchCachedAgentMessages,
 } from "./agent/message-search/index.js";
+import { withTimeout } from "../utils/promise-timeout.js";
 import type { BrowserToolsBroker } from "./browser-tools/broker.js";
 import { BrowserAutomationHostCapabilitySchema } from "@getpaseo/protocol/browser-automation/capabilities";
 import type {
@@ -375,6 +376,10 @@ function beginAgentDeleteIfSupported(agentStorage: AgentStorage, agentId: string
 }
 
 const FETCH_AGENTS_SORT_KEYS = ["status_priority", "created_at", "updated_at", "title"] as const;
+/** Recently active chats whose message index is built after the app first lists agents, and the
+ *  delay that keeps that work off daemon startup. */
+const MESSAGE_SEARCH_WARM_AGENTS = 10;
+const MESSAGE_SEARCH_WARM_DELAY_MS = 15000;
 
 export function resolveWaitForFinishError(options: {
   status: "permission" | "error" | "idle";
@@ -802,6 +807,7 @@ export class Session {
   private readonly projectIcons: ProjectIconReader;
   private readonly worktreesRoot: string | undefined;
   private readonly rewindInitiators = new Map<string, object | undefined>();
+  private messageSearchWarmScheduled = false;
 
   private agentManager: AgentManager;
   private readonly agentStorage: AgentStorage;
@@ -6758,6 +6764,7 @@ export class Session {
         })
       : null;
     const subscriptionId = owner?.responseId;
+    this.scheduleMessageSearchWarm();
     const backgroundVisibility = this.resolveBackgroundVisibility(
       request.includeBackground || request.filter?.includeBackground,
     );
@@ -8611,6 +8618,58 @@ export class Session {
   }
 
   /**
+   * Build one agent's message index off the request path: hydrate the transcript, then index it.
+   * The warm queue runs one agent at a time, so this never competes with a live search.
+   */
+  private queueMessageIndexWarm(record: StoredAgentRecord): void {
+    queueMessageSearchIndexWarm({
+      agentId: record.id,
+      build: async () => {
+        await ensureAgentLoaded(record.id, {
+          agentManager: this.agentManager,
+          agentStorage: this.agentStorage,
+          logger: this.sessionLogger,
+          purpose: "history",
+        });
+        const rows = await this.agentManager.getCommittedTimelineRows(record.id);
+        const head = this.agentManager.getLoadedTimelineHead(record.id);
+        return head ? { epoch: head.epoch, rows } : null;
+      },
+    });
+  }
+
+  /**
+   * Warming on the first agent list is what makes the first search cheap. Before it, the index of
+   * every chat is cold and the first query pays for transcripts the user already has open;
+   * afterwards it is a posting lookup. Scheduled once per session, after startup settles.
+   */
+  private scheduleMessageSearchWarm(): void {
+    if (this.messageSearchWarmScheduled) {
+      return;
+    }
+    this.messageSearchWarmScheduled = true;
+    const timer = setTimeout(() => {
+      void this.warmRecentlyActiveMessages().catch((error: unknown) => {
+        this.sessionLogger.warn({ err: error }, "Failed to warm message search indexes");
+      });
+    }, MESSAGE_SEARCH_WARM_DELAY_MS);
+    timer.unref?.();
+  }
+
+  private async warmRecentlyActiveMessages(): Promise<void> {
+    const records = await this.agentStorage.listAll();
+    const activityMillis = (record: StoredAgentRecord): number =>
+      Date.parse(record.lastActivityAt ?? record.updatedAt ?? record.createdAt) || 0;
+    records
+      .filter((record) => !record.internal)
+      .filter((record) => this.isProviderVisibleToClient(record.provider))
+      .filter((record) => !hasMessageSearchIndex(record.id))
+      .sort((left, right) => activityMillis(right) - activityMillis(left))
+      .slice(0, MESSAGE_SEARCH_WARM_AGENTS)
+      .forEach((record) => this.queueMessageIndexWarm(record));
+  }
+
+  /**
    * Search message text across this host's chats. `cursor` walks the agent list, most recent
    * activity first, so one page is one slice of agents and `nextCursor` continues it.
    *
@@ -8689,39 +8748,48 @@ export class Session {
       const loaded: StoredAgentRecord[] = [];
       let consumed = 0;
       for (let index = 0; index < page.length; index += loadConcurrency) {
+        // The budget is checked before the chunk starts and enforced inside it: without the race
+        // one 13s hydration pushed whole requests past the load budget and the client sat waiting.
+        const remainingMs = loadDeadline - performance.now();
+        if (remainingMs <= 0) {
+          partial = true;
+          break;
+        }
         const chunk = page.slice(index, index + loadConcurrency);
         consumed += chunk.length;
         const settled = await Promise.allSettled(
           chunk.map((record) =>
-            ensureAgentLoaded(record.id, {
-              agentManager: this.agentManager,
-              agentStorage: this.agentStorage,
-              logger: this.sessionLogger,
-              purpose: "history",
-            }),
+            withTimeout(
+              ensureAgentLoaded(record.id, {
+                agentManager: this.agentManager,
+                agentStorage: this.agentStorage,
+                logger: this.sessionLogger,
+                purpose: "history",
+              }),
+              remainingMs,
+              `load transcript ${record.id}`,
+            ),
           ),
         );
         settled.forEach((result, offset) => {
-          // An agent whose provider is gone has no readable transcript; the rest of the host
-          // is still searched.
-          if (result.status === "fulfilled") loaded.push(chunk[offset]);
+          const record = chunk[offset];
+          if (!record) return;
+          if (result.status === "fulfilled") {
+            loaded.push(record);
+            return;
+          }
+          // A provider whose transcript is gone stays unsearched; a hydration still running is not
+          // a failure, so the agent goes to the warm queue and the rest of the host is searched.
+          this.queueMessageIndexWarm(record);
         });
-        if (performance.now() >= loadDeadline) {
-          partial = true;
-          break;
-        }
+      }
+      if (consumed < page.length) {
+        partial = true;
       }
 
       const deadline = performance.now() + scanBudgetMs;
-      const warmFor = (agentId: string): void => {
-        queueMessageSearchIndexWarm({
-          agentId,
-          build: async () => {
-            const agentRows = await this.agentManager.getCommittedTimelineRows(agentId);
-            const agentHead = this.agentManager.getLoadedTimelineHead(agentId);
-            return agentHead ? { epoch: agentHead.epoch, rows: agentRows } : null;
-          },
-        });
+      const warmFor = (record: StoredAgentRecord): void => {
+        this.queueMessageIndexWarm(record);
       };
       for (const record of loaded) {
         // The loaded head is cheap; reading the transcript and projecting a window is not, so an
@@ -8742,7 +8810,7 @@ export class Session {
             !hasMessageSearchIndex(record.id) &&
             performance.now() + estimatedIndexCostMs(committed.length) > deadline
           ) {
-            warmFor(record.id);
+            warmFor(record);
             partial = true;
             continue;
           }
