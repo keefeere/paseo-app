@@ -84,6 +84,7 @@ jobs:
             fi
             gh release create "$RELEASE_TAG" \
               --repo "${{ github.repository }}" \
+              --target "${{ env.CHECKOUT_REF }}" \
               --title "Paseo $RELEASE_TAG" \
               --notes "" \
               --draft \
