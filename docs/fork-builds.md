@@ -10,6 +10,22 @@ This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cove
 - Desktop and Docker come from the same commit, so both report the same version.
 - Never push a `v*` tag. It starts Desktop Release, Android, Docker and Release Notes Sync.
 
+## Fork changes
+
+What this fork carries on top of upstream `main`, so a merge or an upstream PR knows what is ours.
+
+| Change                                         | Where it lives                                                                                                                                                                                                             | Upstreamable                                                                                            |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Message text search across every chat          | RPC `agent.messages.search.request`/`.response`, capability `messageSearch`, index in `packages/server/src/server/agent/message-search/`, Command Center "Messages" tab, chat jump via `stores/chat-message-jump-store.ts` | Yes — [search.md](search.md) is the spec                                                                |
+| Exact (literal substring) match mode           | optional `fuzzy` field on the search request, `searchExact` in the same index, Command Center chip                                                                                                                         | Yes, with the feature above                                                                             |
+| Language-tolerant matching for search          | `packages/protocol/src/search/lang-match.ts` (stems, Unicode typos)                                                                                                                                                        | Yes                                                                                                     |
+| Windows builds in the fork                     | `.github/workflows/desktop-release.yml`: the `github.repository == 'getpaseo/paseo'` gate on `publish-windows` is removed and `finalize-rollout` expects `beta.yml` as well                                                | Not as written — `main` keeps the upstream shape, so this patch is cherry-picked onto each build branch |
+| Update feed                                    | `packages/desktop/electron-builder.yml` publishes to the fork                                                                                                                                                              | No                                                                                                      |
+| Desktop release tag targets the stamped commit | known gap: `gh release create` runs without `--target "$CHECKOUT_REF"`, so the tag lands on `main` head                                                                                                                    | Yes — worth an upstream fix                                                                             |
+
+Fork-only workflow patches stay out of `main`: build branches carry them by cherry-pick, which is
+why a build branch is not identical to `main` even ignoring the version stamp.
+
 ## Version
 
 `<official stable X.Y.Z>-beta.N`, for example `0.11.2-beta.901`.

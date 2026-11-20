@@ -763,6 +763,8 @@ export type AgentTimelineSearchPayload = Extract<
 
 export interface AgentMessagesSearchOptions {
   query: string;
+  /** false = literal substring match, for numbers and identifiers. */
+  fuzzy?: boolean;
   workspaceId?: string;
   includeArchived?: boolean;
   limit?: number;

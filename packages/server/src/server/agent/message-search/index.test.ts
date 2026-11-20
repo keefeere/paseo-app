@@ -196,3 +196,46 @@ it("extracts searchable text without projecting the timeline", () => {
   );
   expect(messages.map((message) => message.role)).toEqual(["user", "assistant"]);
 });
+
+it("exact mode keeps the word order the user typed", async () => {
+  const source = rows([
+    { type: "user_message", text: "до Bq 250 в іншому запиті" },
+    { type: "user_message", text: "ліміт 250 Bq" },
+  ]);
+
+  const fuzzy = await searchAgentMessages(source, "250 Bq");
+  expect(fuzzy.hits).toHaveLength(2);
+
+  const exact = await searchAgentMessages(source, "250 Bq", { mode: "exact" });
+  expect(exact.hits).toHaveLength(1);
+  expect(exact.hits[0]?.seq).toBe(2);
+  expect(exact.hits[0]?.snippet).toContain("250 Bq");
+});
+
+it("exact mode ignores case and keeps the newest matches", async () => {
+  const result = await searchAgentMessages(
+    rows([
+      { type: "user_message", text: "Ліміт 250 Bq" },
+      { type: "user_message", text: "ліміт 250 BQ" },
+      { type: "user_message", text: "інше повідомлення" },
+    ]),
+    "250 bq",
+    { mode: "exact", limit: 1 },
+  );
+
+  expect(result.hits).toHaveLength(1);
+  expect(result.hits[0]?.seq).toBe(2);
+  expect(result.exhausted).toBe(false);
+});
+
+it("reuses one index for both match modes", async () => {
+  const source = rows([{ type: "user_message", text: "ліміт 250 Bq" }]);
+
+  const exact = await searchCachedAgentMessages("agent-6", "e1", source, "250 Bq", {
+    mode: "exact",
+  });
+  expect(exact.hits).toHaveLength(1);
+
+  const fuzzy = await searchCachedAgentMessages("agent-6", "e1", undefined, "ліміт");
+  expect(fuzzy.hits).toHaveLength(1);
+});

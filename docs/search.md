@@ -66,6 +66,19 @@ Markdown is searched block by block, the same rule as chat find
 (`packages/server/src/server/agent/chat-search/index.ts`): a hit the client cannot highlight
 inflates the result list.
 
+### Match mode
+
+`fuzzy` is the default and is stem and typo tolerant. `fuzzy: false` on the request switches that
+host to a literal, case-insensitive substring (`searchExact` in
+`packages/server/src/server/agent/message-search/index.ts`): what you typed, in the order you typed
+it. Numeric and identifier queries need it — `250` under the fuzzy tiers stems and typo-matches
+into every chat containing digits, and a version string like `0.16.2-beta.905` splits into tokens
+that match half the host. Exact mode scans the lowercased blocks it already keeps per message, so
+it is cheaper than fuzzy, not slower, and its hits all score 0, which makes the list newest-first.
+The Command Center chip next to the tabs is the switch (`shell.commandCenter.exactMatch` /
+`fuzzyMatch`); it is per Command Center session, not a saved preference. A host that predates the
+optional `fuzzy` field ignores it and answers with the fuzzy behaviour.
+
 ## Language-tolerant matching
 
 `packages/protocol/src/search/lang-match.ts` adds stem tiers and Unicode typos on top of

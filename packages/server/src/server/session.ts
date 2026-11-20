@@ -8684,6 +8684,7 @@ export class Session {
   ): Promise<void> {
     const requestId = msg.requestId;
     const query = msg.query.trim();
+    const mode = msg.fuzzy === false ? "exact" : "fuzzy";
     const respond = (payload: {
       hits: AgentMessagesSearchHit[];
       nextCursor: number | null;
@@ -8801,6 +8802,7 @@ export class Session {
         if (isMessageSearchIndexFresh(record.id, head.epoch, head.seq)) {
           found = await searchCachedAgentMessages(record.id, head.epoch, undefined, query, {
             deadline,
+            mode,
           });
         } else {
           const committed = await this.agentManager.getCommittedTimelineRows(record.id);
@@ -8816,6 +8818,7 @@ export class Session {
           }
           found = await searchCachedAgentMessages(record.id, head.epoch, committed, query, {
             deadline,
+            mode,
           });
         }
         if (!found.exhausted) partial = true;

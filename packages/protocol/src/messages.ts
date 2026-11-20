@@ -2092,6 +2092,8 @@ export const AgentMessagesSearchRequestMessageSchema = z.object({
   type: z.literal("agent.messages.search.request"),
   requestId: z.string(),
   query: z.string(),
+  /** false = literal substring match. Optional, so an old client keeps the stem/typo behaviour. */
+  fuzzy: z.boolean().optional(),
   workspaceId: z.string().optional(),
   includeArchived: z.boolean().optional(),
   limit: z.number().int().positive().optional(),

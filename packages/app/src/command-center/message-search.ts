@@ -47,11 +47,13 @@ function searchMessagePage(
   serverId: string,
   query: string,
   cursor: number | undefined,
+  fuzzy: boolean,
 ): Promise<AgentMessagesSearchPayload> {
   const client = getHostRuntimeStore().getClient(serverId);
   if (!client) return Promise.reject(new Error("Host disconnected"));
   return client.searchAgentMessages({
     query,
+    fuzzy,
     cursor,
     includeArchived: true,
     limit: MESSAGE_SEARCH_PAGE_LIMIT,
@@ -66,12 +68,13 @@ function searchMessagePage(
 async function searchHost(
   serverId: string,
   query: string,
+  fuzzy: boolean,
   onPage: (hits: MessageSearchHit[]) => void,
 ): Promise<MessageSearchHit[]> {
   const hits: MessageSearchHit[] = [];
   let cursor: number | null | undefined;
   for (let page = 0; page < MESSAGE_SEARCH_MAX_PAGES; page += 1) {
-    const payload = await searchMessagePage(serverId, query, cursor ?? undefined);
+    const payload = await searchMessagePage(serverId, query, cursor ?? undefined, fuzzy);
     const pageHits = withHostIdentity(serverId, payload);
     hits.push(...pageHits);
     onPage(pageHits);
@@ -95,14 +98,16 @@ const EMPTY_STATE: MessageSearchState = { requestKey: null, hits: [], loading: f
  *
  * Gated on the capability: a host without it contributes nothing rather than a partial answer
  * assembled from other RPCs. Hosts are searched in parallel; one failing host is reported and
- * the rest still answer.
+ * the rest still answer. `fuzzy` false switches the host to a literal substring match; a host
+ * that predates the field ignores it and answers with the stem/typo behaviour.
  */
-export function useMessageSearch(input: { enabled: boolean; query: string }): {
+export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy: boolean }): {
   hits: readonly MessageSearchHit[];
   loading: boolean;
   error: string | null;
 } {
   const trimmed = input.query.trim();
+  const fuzzy = input.fuzzy;
   const sessions = useSessionStore((state) => state.sessions);
   const serverIds = useMemo(
     () =>
@@ -114,8 +119,11 @@ export function useMessageSearch(input: { enabled: boolean; query: string }): {
     [sessions],
   );
   const requestKey = useMemo(
-    () => (input.enabled && trimmed ? `${trimmed}\0${serverIds.join(",")}` : null),
-    [input.enabled, serverIds, trimmed],
+    () =>
+      input.enabled && trimmed
+        ? `${trimmed}\0${fuzzy ? "fuzzy" : "exact"}\0${serverIds.join(",")}`
+        : null,
+    [fuzzy, input.enabled, serverIds, trimmed],
   );
   const [state, setState] = useState<MessageSearchState>(EMPTY_STATE);
   // Hosts churn as agents update; the request key already encodes the host set, so the
@@ -146,7 +154,7 @@ export function useMessageSearch(input: { enabled: boolean; query: string }): {
       };
       const settled = await Promise.allSettled(
         hosts.map((serverId) =>
-          searchHost(serverId, trimmed, (pageHits) => {
+          searchHost(serverId, trimmed, fuzzy, (pageHits) => {
             collected.push(...pageHits);
             publish();
           }),
@@ -169,7 +177,7 @@ export function useMessageSearch(input: { enabled: boolean; query: string }): {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [requestKey, trimmed]);
+  }, [fuzzy, requestKey, trimmed]);
 
   return {
     hits: requestKey && state.requestKey === requestKey ? state.hits : [],

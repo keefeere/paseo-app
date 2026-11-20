@@ -18,6 +18,9 @@ interface SearchableMessage {
   role: "user" | "assistant";
   timestamp: string;
   blocks: string[];
+  /** Same blocks lowercased, for exact substring search. Offsets line up with `blocks`.
+   *  `toLowerCase()` preserves length for the scripts chat text is written in. */
+  lowerBlocks: string[];
 }
 
 export interface MessageHit {
@@ -78,11 +81,13 @@ export function buildSearchableMessages(rows: readonly AgentTimelineRow[]): Sear
   const flush = () => {
     if (!openAssistant) return;
     const raw = openAssistant.chunks.join("").replace(/\r/g, "");
+    const blocks = searchableBlocks(raw);
     messages.push({
       seq: openAssistant.seq,
       role: "assistant",
       timestamp: openAssistant.timestamp,
-      blocks: searchableBlocks(raw),
+      blocks,
+      lowerBlocks: blocks.map((block) => block.toLowerCase()),
     });
     openAssistant = null;
   };
@@ -91,11 +96,13 @@ export function buildSearchableMessages(rows: readonly AgentTimelineRow[]): Sear
     const item = row.item;
     if (item.type === "user_message") {
       flush();
+      const text = item.text.replace(/\r/g, "");
       messages.push({
         seq: row.seq,
         role: "user",
         timestamp: row.timestamp,
-        blocks: [item.text.replace(/\r/g, "")],
+        blocks: [text],
+        lowerBlocks: [text.toLowerCase()],
       });
       continue;
     }
@@ -232,6 +239,61 @@ function expandToken(index: AgentMessageIndex, token: string): Set<number> {
  *  transcript is scored newest first and cut here, so the answer stays interactive; `exhausted`
  *  then reports the scan was not complete. */
 const CANDIDATE_SCORE_BUDGET = 1500;
+/** Highlights per message in exact mode; a query like `250` occurs hundreds of times. */
+const MAX_EXACT_RANGES = 40;
+
+/** Every occurrence of `needle` in the lowercased block, capped. */
+function findAllRanges(lower: string, needle: string): { start: number; length: number }[] {
+  const ranges: { start: number; length: number }[] = [];
+  let at = lower.indexOf(needle);
+  while (at >= 0 && ranges.length < MAX_EXACT_RANGES) {
+    ranges.push({ start: at, length: needle.length });
+    at = lower.indexOf(needle, at + needle.length);
+  }
+  return ranges;
+}
+
+/**
+ * Exact substring hits, newest first.
+ *
+ * Numeric and identifier queries (`250 Bq`, `0.16.2-beta.905`) are where the fuzzy tiers hurt:
+ * a digit run stems and typo-matches into every message that contains digits. Exact mode answers
+ * with the literal text, ignoring case only. Every hit scores the same, so the newest matches are
+ * the ones kept.
+ */
+function searchExact(
+  index: AgentMessageIndex,
+  query: string,
+  options: { limit: number; deadline?: number },
+): { hits: MessageHit[]; exhausted: boolean } {
+  const needle = query.toLowerCase();
+  if (!needle) return { hits: [], exhausted: true };
+  const hits: MessageHit[] = [];
+  for (let messageId = index.messages.length - 1; messageId >= 0; messageId -= 1) {
+    if (options.deadline !== undefined && performance.now() >= options.deadline) {
+      return { hits, exhausted: false };
+    }
+    const message = index.messages[messageId];
+    if (!message) continue;
+    for (let blockIndex = 0; blockIndex < message.blocks.length; blockIndex += 1) {
+      const lower = message.lowerBlocks[blockIndex];
+      if (!lower || !lower.includes(needle)) continue;
+      const ranges = findAllRanges(lower, needle);
+      const block = message.blocks[blockIndex] ?? "";
+      hits.push({
+        seq: message.seq,
+        role: message.role,
+        timestamp: message.timestamp,
+        snippet: buildSnippet(block, ranges),
+        ranges,
+        score: 0,
+      });
+      break;
+    }
+    if (hits.length >= options.limit) return { hits, exhausted: false };
+  }
+  return { hits, exhausted: true };
+}
 
 function collectCandidates(index: AgentMessageIndex, tokens: string[]): number[] {
   const sets = tokens.map((token) => expandToken(index, token));
@@ -245,13 +307,32 @@ function collectCandidates(index: AgentMessageIndex, tokens: string[]): number[]
     .sort((left, right) => right - left);
 }
 
+/**
+ * How a query is matched against message text.
+ *
+ * `fuzzy` is stem and typo tolerant, which is what people want when they recall a conversation.
+ * `exact` is a literal substring, which is what they want for numbers and identifiers.
+ */
+export type MessageSearchMode = "fuzzy" | "exact";
+
+interface SearchOptions {
+  limit?: number;
+  deadline?: number;
+  /** Defaults to `fuzzy`. */
+  mode?: MessageSearchMode;
+}
+
 /** Hits in one agent's index, best match first. Stops on the deadline and reports `exhausted`. */
 function searchIndex(
   index: AgentMessageIndex,
   query: string,
-  options: { limit: number; deadline?: number },
+  options: { limit: number; deadline?: number; mode: MessageSearchMode },
 ): { hits: MessageHit[]; exhausted: boolean } {
   const trimmed = query.trim();
+  if (!trimmed) return { hits: [], exhausted: true };
+  if (options.mode === "exact") {
+    return searchExact(index, trimmed, options);
+  }
   const tokens = trimmed.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return { hits: [], exhausted: true };
 
@@ -285,13 +366,14 @@ function searchIndex(
 export async function searchAgentMessages(
   rows: readonly AgentTimelineRow[],
   query: string,
-  options?: { limit?: number; deadline?: number },
+  options?: SearchOptions,
 ): Promise<{ hits: MessageHit[]; exhausted: boolean }> {
   await setImmediate();
   const index = buildAgentMessageIndex("", "scan", rows);
   return searchIndex(index, query, {
     limit: options?.limit ?? DEFAULT_LIMIT_PER_AGENT,
     deadline: options?.deadline,
+    mode: options?.mode ?? "fuzzy",
   });
 }
 
@@ -338,7 +420,7 @@ export async function searchCachedAgentMessages(
   epoch: string,
   rows: readonly AgentTimelineRow[] | undefined,
   query: string,
-  options?: { limit?: number; deadline?: number },
+  options?: SearchOptions,
 ): Promise<{ hits: MessageHit[]; exhausted: boolean }> {
   const cached = cache.get(agentId);
   let index: AgentMessageIndex;
@@ -362,6 +444,7 @@ export async function searchCachedAgentMessages(
   return searchIndex(index, query, {
     limit: options?.limit ?? DEFAULT_LIMIT_PER_AGENT,
     deadline: options?.deadline,
+    mode: options?.mode ?? "fuzzy",
   });
 }
 

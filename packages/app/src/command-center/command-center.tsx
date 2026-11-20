@@ -354,6 +354,9 @@ interface CommandCenterState {
   fileSearchLoading: boolean;
   fileSearchError: string | null;
   messageSearchError: string | null;
+  /** Message text match mode: false = stem and typo tolerant, true = literal substring. */
+  exactMatch: boolean;
+  toggleExactMatch(): void;
   close(): void;
   select(result: CommandCenterResult): void;
   key(event: { key: string; shiftKey?: boolean }): boolean;
@@ -419,12 +422,18 @@ function useCommandCenterState(
       })),
     [fileSearchEntries, openFile],
   );
+  // Numbers and identifiers want a literal substring: the fuzzy tiers turn "250" into a hit on
+  // every chat that contains digits. Off by default, because recalling a conversation is the
+  // common case.
+  const [exactMatch, setExactMatch] = useState(false);
+  const toggleExactMatch = useCallback(() => setExactMatch((value) => !value), []);
   const messageSearch = useMessageSearch({
     enabled:
       open &&
       tabs.includes("messages") &&
       (tab === "messages" || (tab === "all" && Boolean(query.trim()))),
     query,
+    fuzzy: !exactMatch,
   });
   const messages = useMemo(
     () =>
@@ -602,6 +611,8 @@ function useCommandCenterState(
     fileSearchLoading,
     fileSearchError,
     messageSearchError: messageSearch.error,
+    exactMatch,
+    toggleExactMatch,
     close,
     select,
     key,
@@ -1148,6 +1159,18 @@ export function CommandCenter() {
     />
   );
   const placeholder = t(placeholderKey(state.tab, state.tabs));
+  const showsMessageMode =
+    state.tabs.includes("messages") && (state.tab === "messages" || state.tab === "all");
+  const messageModeChip = showsMessageMode ? (
+    <MessageMatchModeChip
+      exact={state.exactMatch}
+      label={t(
+        state.exactMatch ? "shell.commandCenter.exactMatch" : "shell.commandCenter.fuzzyMatch",
+      )}
+      toggleLabel={t("shell.commandCenter.toggleMatchMode")}
+      onPress={state.toggleExactMatch}
+    />
+  ) : null;
 
   if (showBottomSheet) {
     return (
@@ -1189,7 +1212,10 @@ export function CommandCenter() {
               />
             </View>
           </View>
-          <View style={styles.tabBar}>{tabs}</View>
+          <View style={styles.tabBar}>
+            <View style={styles.tabBarTabs}>{tabs}</View>
+            {messageModeChip}
+          </View>
           {fileSearchError}
           {messageSearchError}
           <BottomSheetFlatList ref={bottomSheetListRef} {...commonListProps} />
@@ -1223,7 +1249,10 @@ export function CommandCenter() {
                 />
               </View>
             </View>
-            <View style={styles.tabBar}>{tabs}</View>
+            <View style={styles.tabBar}>
+              <View style={styles.tabBarTabs}>{tabs}</View>
+              {messageModeChip}
+            </View>
             {fileSearchError}
             {messageSearchError}
             <FlatList ref={listRef} {...commonListProps} />
@@ -1247,6 +1276,36 @@ function FileSearchLoadingIndicator({ loading, label }: { loading: boolean; labe
         </View>
       ) : null}
     </View>
+  );
+}
+
+/** The chip shows the mode in effect and switches it. Exact mode exists for queries that are
+ *  numbers or identifiers, where stem and typo matching matches half the host. */
+function MessageMatchModeChip({
+  exact,
+  label,
+  toggleLabel,
+  onPress,
+}: {
+  exact: boolean;
+  label: string;
+  toggleLabel: string;
+  onPress(): void;
+}) {
+  const accessibilityState = useMemo(() => ({ selected: exact }), [exact]);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={toggleLabel}
+      accessibilityState={accessibilityState}
+      testID="command-center-match-mode"
+      style={[styles.matchChip, exact ? styles.matchChipActive : null]}
+    >
+      <Text style={[styles.matchChipLabel, exact ? styles.matchChipLabelActive : null]}>
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -1280,8 +1339,30 @@ const styles = StyleSheet.create((theme) => ({
   // pills sit with equal space above and below. A fixed bar, so switching tabs never moves the
   // field or the list.
   tabBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.spacing[2],
     paddingHorizontal: theme.spacing[4],
     paddingTop: COMMAND_CENTER_SECTION_GAP,
+  },
+  tabBarTabs: { flex: 1, minWidth: 0 },
+  matchChip: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing[2],
+    paddingVertical: theme.spacing[1],
+  },
+  matchChipActive: {
+    borderColor: theme.colors.borderAccent,
+    backgroundColor: theme.colors.surface2,
+  },
+  matchChipLabel: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.foregroundMuted,
+  },
+  matchChipLabelActive: {
+    color: theme.colors.foreground,
   },
   input: {
     fontSize: theme.fontSize.base,
