@@ -17,7 +17,7 @@ interface RewindComposerRestoreProviderProps {
   setText: (text: string) => void;
   attachments: UserComposerAttachment[];
   setAttachments: (updater: AttachmentUpdater) => void;
-  onRewindComplete: () => void;
+  onRewindComplete: (restoredComposerText: boolean) => void;
   children?: ReactNode;
 }
 
@@ -59,15 +59,15 @@ export function RewindComposerRestoreProvider({
   const completeRewind = useCallback(
     (rewindInput: RewindRestoreInput) => {
       const currentText = textSource.getSnapshot();
-      if (shouldRestoreComposer({ currentText, currentAttachments: attachments })) {
-        if (rewindInput.text.length > 0) {
-          setText(rewindInput.text);
-        }
-        if (rewindInput.imageAttachments.length > 0) {
-          setAttachments(toImageComposerAttachments(rewindInput.imageAttachments));
-        }
+      const canRestore = shouldRestoreComposer({ currentText, currentAttachments: attachments });
+      const restoredComposerText = canRestore && rewindInput.text.length > 0;
+      if (restoredComposerText) {
+        setText(rewindInput.text);
       }
-      onRewindComplete();
+      if (canRestore && rewindInput.imageAttachments.length > 0) {
+        setAttachments(toImageComposerAttachments(rewindInput.imageAttachments));
+      }
+      onRewindComplete(restoredComposerText);
     },
     [attachments, onRewindComplete, setAttachments, setText, textSource],
   );

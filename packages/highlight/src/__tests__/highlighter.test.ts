@@ -83,6 +83,21 @@ describe("highlightCode", () => {
     expect(result[2]).toContainEqual({ text: "if", style: "keyword" });
   });
 
+  it.each(["scripts/build.sh", "build.bash", "build.zsh"])("highlights shell in %s", (path) => {
+    const lines = highlightCode('export MESSAGE="hello"', path);
+    expect(lines[0]).toContainEqual({ text: "export", style: "keyword" });
+    expect(lines[0]).toContainEqual({ text: '"hello"', style: "string" });
+  });
+
+  it.each(["Dockerfile", "docker/Dockerfile", "C:\\docker\\Dockerfile", "build.dockerfile"])(
+    "highlights Docker instructions in %s",
+    (path) => {
+      const lines = highlightCode("FROM alpine\n# Build stage", path);
+      expect(lines[0]).toContainEqual({ text: "FROM", style: "keyword" });
+      expect(lines[1]).toEqual([{ text: "# Build stage", style: "comment" }]);
+    },
+  );
+
   it("highlights Swift code", () => {
     const code = 'struct Greeter {\n    let message = "hello"\n}';
     const result = highlightCode(code, "test.swift");

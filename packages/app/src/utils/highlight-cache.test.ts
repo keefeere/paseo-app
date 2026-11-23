@@ -1,26 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  extensionFromPath,
-  highlightToKeyedLines,
-  MAX_HIGHLIGHT_CHARS,
-  tokenizeToLines,
-} from "./highlight-cache";
-
-describe("extensionFromPath", () => {
-  it("extracts a lowercased extension regardless of absolute/relative path", () => {
-    expect(extensionFromPath("/repo/src/Index.TS")).toBe("ts");
-    expect(extensionFromPath("src/index.ts")).toBe("ts");
-    expect(extensionFromPath("a.b/c.tsx")).toBe("tsx");
-  });
-
-  it("returns null for paths without a usable extension", () => {
-    expect(extensionFromPath(null)).toBeNull();
-    expect(extensionFromPath(undefined)).toBeNull();
-    expect(extensionFromPath("Makefile")).toBeNull();
-    expect(extensionFromPath(".gitignore")).toBeNull();
-    expect(extensionFromPath("trailingdot.")).toBeNull();
-  });
-});
+import { highlightToKeyedLines, MAX_HIGHLIGHT_CHARS, tokenizeToLines } from "./highlight-cache";
 
 describe("tokenizeToLines", () => {
   it("returns one token array per line for a supported language", () => {
@@ -47,7 +26,7 @@ describe("tokenizeToLines", () => {
     expect(lines?.[1]).toEqual([{ text: "hello", style: null }]);
   });
 
-  it("returns null when there is no extension", () => {
+  it("returns null when there is no filename", () => {
     expect(tokenizeToLines("whatever", null)).toBeNull();
   });
 

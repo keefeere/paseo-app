@@ -6,6 +6,7 @@ import {
   FONT_SIZE,
   SPACING,
   REGISTERED_THEMES,
+  themeContentMaxWidth,
   type Theme,
 } from "@/styles/theme";
 import { applyRootUiFont } from "./apply-root-font";
@@ -23,7 +24,7 @@ export interface AppearanceInput {
   textLineHeightPercent: number;
   sidebarSpacingPercent: number;
   codeFontSize: number; // already clamped
-  contentMaxWidth: number; // already clamped, default resolved
+  contentMaxWidth: number | undefined; // undefined fills the available width
   syntaxTheme: SyntaxThemeId;
 }
 
@@ -89,6 +90,7 @@ export function applyAppearance(input: AppearanceInput): void {
     controlSm: Math.max(22, 28 * uiRatio),
     controlMd: Math.max(24, 32 * uiRatio),
   };
+  const contentMaxWidth = themeContentMaxWidth(input.contentMaxWidth);
   const activeTheme = UnistylesRuntime.themeName;
   // Unistyles web emits after each registry patch. Updating the mounted theme
   // first ensures subscribers receive its new numeric tokens in this render;
@@ -137,7 +139,7 @@ export function applyAppearance(input: AppearanceInput): void {
           fontFamily,
           fontSize,
           lineHeight,
-          contentMaxWidth: input.contentMaxWidth,
+          contentMaxWidth,
           colors: { ...t.colors, syntax: resolveSyntaxColors(input.syntaxTheme, t.colorScheme) },
         };
       }
@@ -152,7 +154,7 @@ export function applyAppearance(input: AppearanceInput): void {
         fontFamily,
         fontSize,
         lineHeight,
-        contentMaxWidth: input.contentMaxWidth,
+        contentMaxWidth,
         colors: { ...t.colors, syntax: resolveSyntaxColors(input.syntaxTheme, t.colorScheme) },
       };
     });

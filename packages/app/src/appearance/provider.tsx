@@ -65,6 +65,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     return options.find((option) => option.id === settings.pluginThemeId) ?? null;
   }, [options, settings.pluginThemeId, settings.theme]);
 
+  const contentMaxWidth = resolveContentMaxWidth(settings);
   useEffect(() => {
     if (isLoading) return;
     applyTheme({ preference: settings.theme, contributedTheme: selected });
@@ -78,7 +79,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       textLineHeightPercent: settings.textLineHeightPercent,
       sidebarSpacingPercent: settings.sidebarSpacingPercent,
       codeFontSize: settings.codeFontSize,
-      contentMaxWidth: resolveContentMaxWidth({ contentMaxWidth: settings.contentMaxWidth }),
+      contentMaxWidth,
       syntaxTheme: settings.syntaxTheme,
     });
     setHasAppliedAppearance(true);
@@ -95,7 +96,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     settings.textLineHeightPercent,
     settings.sidebarSpacingPercent,
     settings.codeFontSize,
-    settings.contentMaxWidth,
+    contentMaxWidth,
     settings.syntaxTheme,
   ]);
 
