@@ -86,6 +86,8 @@ Agent-scoped `create_agent` defaults `notifyOnFinish` to true. Set it to `false`
 
 **`update_agent`** — `{ agentId, name?, labels?, settings? }`. Use `settings` for runtime changes on an existing agent: `modeId`, `model`, `thinkingOptionId`, and provider-specific `features`. For Codex fast mode, pass `settings: { features: { "fast_mode": true } }`.
 
+**`search_messages`** — search message text across chats. `mode: "exact"` for literal substring (order preserved); default `fuzzy` is language-tolerant. Optional `agentId`, `cwd`, `limit` (per agent), `sinceHours`, `includeArchived`. Returns compact snippets, not transcripts.
+
 **`list_agents`** — filter by `cwd`, `statuses`, `sinceHours`, `includeArchived`; set `includeBackground: true` to include agents in background workspaces.
 
 **`archive_agent`** — `{ agentId }`. Interrupts if running, removes from active list.

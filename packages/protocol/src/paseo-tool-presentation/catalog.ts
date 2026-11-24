@@ -176,6 +176,14 @@ export const PASEO_TOOL_CATALOG = {
     completedLabel: "Listed agents",
     detail: { inputOrder: ["cwd", "statuses", "sinceHours", "limit", "includeArchived"] },
   },
+  search_messages: {
+    label: "Search messages",
+    completedLabel: "Searched messages",
+    context: field("query"),
+    detail: {
+      inputOrder: ["query", "agentId", "cwd", "mode", "limit", "sinceHours", "includeArchived"],
+    },
+  },
   update_agent: {
     label: "Update agent",
     completedLabel: "Updated agent",

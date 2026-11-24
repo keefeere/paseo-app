@@ -41,6 +41,14 @@ import {
 import { summarizeAgentActivity } from "../activity-curator.js";
 import type { AgentStorage, StoredAgentRecord } from "../agent-storage.js";
 import { AgentNotFoundError, ensureAgentLoaded } from "../agent-loading.js";
+import {
+  estimatedIndexCostMs,
+  hasMessageSearchIndex,
+  isMessageSearchIndexFresh,
+  queueMessageSearchIndexWarm,
+  searchCachedAgentMessages,
+} from "../message-search/index.js";
+import { withTimeout } from "../../../utils/promise-timeout.js";
 import { isStoredAgentProviderAvailable } from "../../persistence-hooks.js";
 import {
   archiveByScope,
@@ -2232,6 +2240,322 @@ function createToolCatalog(
         content: [],
         structuredContent: ensureValidJson({ agents }),
       };
+    },
+  );
+
+  const resolveRequestedCwd = (
+    requestedCwd: string | undefined,
+    callerAgent: ReturnType<typeof resolveCallerAgent>,
+  ): string | undefined => {
+    if (callerAgent) {
+      return resolveScopedCwd(requestedCwd);
+    }
+    return requestedCwd?.trim() ? expandUserPath(requestedCwd) : undefined;
+  };
+
+  interface SearchCandidate {
+    id: string;
+    cwd: string;
+    title: string | null;
+    archivedAt: string | null | undefined;
+    updatedAt: string;
+    createdAt: string;
+    internal?: boolean;
+    background?: boolean;
+    lastUserMessageAt?: string | null;
+  }
+
+  const resolveSearchCandidates = async (params: {
+    agentId?: string;
+    requestedCwd: string | undefined;
+    sinceHours: number;
+    includeArchived: boolean;
+  }): Promise<SearchCandidate[]> => {
+    if (params.agentId) {
+      const record = await agentStorage.get(params.agentId);
+      if (!record) throw new PaseoToolInputError(`Agent ${params.agentId} not found`);
+      return [
+        {
+          id: record.id,
+          cwd: record.cwd,
+          title: record.title ?? null,
+          archivedAt: record.archivedAt ?? null,
+          updatedAt: record.lastActivityAt ?? record.updatedAt ?? record.createdAt,
+          lastUserMessageAt: record.lastUserMessageAt ?? null,
+          createdAt: record.createdAt,
+          internal: record.internal,
+          background: record.background ?? false,
+        },
+      ];
+    }
+    if (!options.workspaceRegistry) throw new Error("Workspace registry is not configured");
+    const directory = new AgentDirectory({
+      manager: agentManager,
+      storage: agentStorage,
+      workspaces: options.workspaceRegistry,
+      projectLive: projectLiveAgent,
+      projectStored: (record) =>
+        buildStoredAgentPayload(
+          record,
+          new Set(providerSnapshotManager.listRegisteredProviderIds()),
+          (provider, own) => agentManager.effectiveOptionsFor(provider, own),
+        ),
+      isProviderVisible: () => true,
+      isStoredProviderAvailable: (record) =>
+        isStoredAgentProviderAvailable(
+          record,
+          new Set(providerSnapshotManager.listRegisteredProviderIds()),
+        ),
+    });
+    const listed = await directory.list({ includeBackground: false, includeArchived: true });
+    const sinceMs = Date.now() - params.sinceHours * 60 * 60 * 1000;
+    const activityMillis = (agent: {
+      updatedAt: string;
+      lastUserMessageAt?: string | null;
+      createdAt: string;
+    }): number =>
+      Math.max(
+        Date.parse(agent.updatedAt) || 0,
+        Date.parse(agent.lastUserMessageAt ?? "") || 0,
+        Date.parse(agent.createdAt) || 0,
+      );
+    const scoped = listed
+      .filter((agent) => {
+        if (!params.includeArchived && agent.archivedAt) return false;
+        if (agent.internal) return false;
+        if (agent.background) return false;
+        if (params.requestedCwd && !isSameOrDescendantPath(params.requestedCwd, agent.cwd))
+          return false;
+        if (activityMillis(agent) < sinceMs) return false;
+        return true;
+      })
+      .map((agent) => ({
+        id: agent.id,
+        cwd: agent.cwd,
+        title: agent.title,
+        archivedAt: agent.archivedAt ?? null,
+        updatedAt: agent.updatedAt,
+        lastUserMessageAt: agent.lastUserMessageAt ?? null,
+        createdAt: agent.createdAt,
+        internal: agent.internal,
+        background: agent.background,
+      }));
+    scoped.sort((left, right) => {
+      const activity = (agent: SearchCandidate) =>
+        Math.max(
+          Date.parse(agent.updatedAt) || 0,
+          Date.parse(agent.lastUserMessageAt ?? "") || 0,
+          Date.parse(agent.createdAt) || 0,
+        );
+      return activity(right) - activity(left);
+    });
+    // Bound the fan-out: a recent handful of chats per call, not an unbounded scan.
+    return scoped.slice(0, 20);
+  };
+
+  const runMessageSearch = async (params: {
+    query: string;
+    mode: "fuzzy" | "exact";
+    limit: number;
+    candidates: SearchCandidate[];
+  }) => {
+    const hits: Array<{
+      agentId: string;
+      agentTitle: string | null;
+      cwd: string;
+      role: "user" | "assistant";
+      snippet: string;
+      score: number;
+      timestamp: string;
+    }> = [];
+    let partial = false;
+    const deadline = performance.now() + 12000;
+
+    for (const agent of params.candidates) {
+      if (performance.now() >= deadline) {
+        partial = true;
+        break;
+      }
+      try {
+        await withTimeout(
+          ensureAgentLoaded(agent.id, {
+            agentManager,
+            agentStorage,
+            logger: childLogger,
+            purpose: "history",
+          }),
+          Math.max(deadline - performance.now(), 1),
+          `load transcript ${agent.id}`,
+        );
+      } catch {
+        // A hydration still running is not a failure; warm in the background and move on.
+        queueMessageSearchIndexWarm({
+          agentId: agent.id,
+          build: async () => {
+            await ensureAgentLoaded(agent.id, {
+              agentManager,
+              agentStorage,
+              logger: childLogger,
+              purpose: "history",
+            });
+            const rows = await agentManager.getCommittedTimelineRows(agent.id);
+            const warmHead = agentManager.getLoadedTimelineHead(agent.id);
+            return warmHead ? { epoch: warmHead.epoch, rows } : null;
+          },
+        });
+        partial = true;
+        continue;
+      }
+      const loadedHead = agentManager.getLoadedTimelineHead(agent.id);
+      if (!loadedHead) {
+        partial = true;
+        continue;
+      }
+      let found;
+      if (isMessageSearchIndexFresh(agent.id, loadedHead.epoch, loadedHead.seq)) {
+        found = await searchCachedAgentMessages(
+          agent.id,
+          loadedHead.epoch,
+          undefined,
+          params.query,
+          {
+            limit: params.limit,
+            deadline: performance.now() + 1500,
+            mode: params.mode,
+          },
+        );
+      } else {
+        const committed = await agentManager.getCommittedTimelineRows(agent.id);
+        if (
+          !hasMessageSearchIndex(agent.id) &&
+          performance.now() + estimatedIndexCostMs(committed.length) > deadline
+        ) {
+          queueMessageSearchIndexWarm({
+            agentId: agent.id,
+            build: async () => {
+              const rows = await agentManager.getCommittedTimelineRows(agent.id);
+              const warmHead = agentManager.getLoadedTimelineHead(agent.id);
+              return warmHead ? { epoch: warmHead.epoch, rows } : null;
+            },
+          });
+          partial = true;
+          continue;
+        }
+        found = await searchCachedAgentMessages(
+          agent.id,
+          loadedHead.epoch,
+          committed,
+          params.query,
+          {
+            limit: params.limit,
+            deadline: performance.now() + 1500,
+            mode: params.mode,
+          },
+        );
+      }
+      if (!found.exhausted) partial = true;
+      for (const hit of found.hits.slice(0, params.limit)) {
+        hits.push({
+          agentId: agent.id,
+          agentTitle: agent.title ?? null,
+          cwd: agent.cwd,
+          role: hit.role,
+          snippet: hit.snippet,
+          score: hit.score,
+          timestamp: hit.timestamp,
+        });
+      }
+    }
+
+    hits.sort(
+      (left, right) =>
+        left.score - right.score || Date.parse(right.timestamp) - Date.parse(left.timestamp),
+    );
+
+    return {
+      content: [],
+      structuredContent: ensureValidJson({
+        hits: hits.slice(0, 40),
+        scannedAgents: params.candidates.length,
+        partial,
+      }),
+    };
+  };
+
+  registerTool(
+    "search_messages",
+    {
+      title: "Search messages",
+      description:
+        "Search message text across this host's chats (or one agent). Matching is language-tolerant by default; use mode 'exact' for a literal substring. Returns compact snippets, not full transcripts.",
+      inputSchema: {
+        query: z.string().trim().min(1).describe("Text to find."),
+        agentId: z
+          .string()
+          .optional()
+          .describe("Optional agent id; search just one chat instead of listing them."),
+        cwd: z
+          .string()
+          .optional()
+          .describe(
+            "Scope to agents whose cwd is this directory or a descendant. Defaults to the caller agent's cwd when agent-scoped; otherwise all chats.",
+          ),
+        mode: z
+          .enum(["fuzzy", "exact"])
+          .optional()
+          .default("fuzzy")
+          .describe(
+            "'exact' = literal substring, case-insensitive, order preserved; 'fuzzy' = stemmed / language-tolerant match.",
+          ),
+        limit: z
+          .number()
+          .int()
+          .positive()
+          .max(20)
+          .optional()
+          .default(5)
+          .describe("Max hits per agent."),
+        sinceHours: z
+          .number()
+          .int()
+          .positive()
+          .max(24 * 30)
+          .optional()
+          .default(48)
+          .describe("Only search agents active within this many hours."),
+        includeArchived: z.boolean().optional().default(false).describe("Include archived agents."),
+      },
+      outputSchema: {
+        hits: z.array(
+          z.object({
+            agentId: z.string(),
+            agentTitle: z.string().nullable(),
+            cwd: z.string(),
+            role: z.enum(["user", "assistant"]),
+            snippet: z.string(),
+            score: z.number(),
+            timestamp: z.string(),
+          }),
+        ),
+        scannedAgents: z.number(),
+        partial: z.boolean(),
+      },
+    },
+    async (input) => {
+      const callerAgent = callerAgentId ? resolveCallerAgent() : null;
+      const requestedCwd = resolveRequestedCwd(input.cwd, callerAgent);
+      const candidates = await resolveSearchCandidates({
+        agentId: input.agentId,
+        requestedCwd,
+        sinceHours: input.sinceHours ?? 48,
+        includeArchived: input.includeArchived ?? false,
+      });
+      return runMessageSearch({
+        query: input.query,
+        mode: input.mode ?? "fuzzy",
+        limit: input.limit ?? 5,
+        candidates,
+      });
     },
   );
 
