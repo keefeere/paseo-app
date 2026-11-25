@@ -123,6 +123,7 @@ export const en = {
       fuzzyMatch: "Fuzzy match",
       toggleMatchMode: "Switch match mode",
       noMatches: "No matches",
+      partialResultsHint: "Some chats were still loading — results may be incomplete",
       actions: "Actions",
       files: "Files",
       workspaces: "Workspaces",

@@ -123,6 +123,7 @@ export const zhCN: TranslationResources = {
       fuzzyMatch: "模糊匹配",
       toggleMatchMode: "切换匹配模式",
       noMatches: "没有匹配项",
+      partialResultsHint: "部分对话仍在加载，结果可能不完整",
       actions: "操作",
       files: "文件",
       workspaces: "工作区",

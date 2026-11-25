@@ -52,8 +52,10 @@ feel broken, so an agent whose index is too expensive to build inside the remain
 queued instead (one agent per tick, one warm loop at a time) and the response reports `partial`.
 Warming also runs ahead of any search: the first `fetch_agents_request` of a session schedules the
 10 most recently active chats 15 seconds later, so a host that has been up for a while answers
-from postings. Warming to disk is the open work. A timeline replacement changes the epoch, which
-drops the entry.
+from postings. Warming to disk is the open work. A timeline replacement or an agent removal drops
+the cached entry on the spot (`invalidateMessageSearchCache`, wired to `timeline_replacement` and
+`agent_removed`); an unchanged head is what keeps the cache alive, since timeline rows are
+append-only within an epoch.
 
 Each hit carries `epoch` and `seq` plus the ranges the matcher marked. The client
 (`packages/app/src/command-center/message-search.ts`) walks up to 3 pages per host and publishes
@@ -61,6 +63,10 @@ what each page returned instead of waiting for the last one — a host that need
 scan every chat shows its first hits while it keeps scanning. A row opens the chat and leaves a
 jump request in `stores/chat-message-jump-store.ts`; the chat outline consumes it once and scrolls
 to the position. Native has neither chat find nor the jump — it opens the chat.
+
+A host that could not scan everything within budget answers with `partial: true`; the client
+surfaces it as a one-line hint under the result list ("some chats were still loading"), so an
+empty-looking answer is honest about being partial instead of looking like a clean miss.
 
 Markdown is searched block by block, the same rule as chat find
 (`packages/server/src/server/agent/chat-search/index.ts`): a hit the client cannot highlight
@@ -91,3 +97,20 @@ the exact tiers run first.
 tier over `\p{L}\p{N}` belongs to `lang-match`. Keep pickers and Command Center rows on
 `text-match` — they search labels the user can read, and stem tolerance there would only add
 noise. Message search is the one place `lang-match` runs.
+
+### Strict tokens
+
+Two classes of token get whole-word matching only — `isStrictToken` in
+`lang-match.ts`:
+
+- Short runs (under 3 characters, e.g. `я`, `и`). The substring and subsequence tiers turn a
+  one-letter query into a hit on every word containing that letter.
+- Digit runs (e.g. `250`, `2024`). A substring match turns a number into a hit on `1250` or
+  `2500`.
+
+Both must appear as a whole word, at a boundary, exactly as typed. Everything else — normal
+words, identifiers with punctuation (`v0.17.4`, `search_messages`), stems, typos — matches the
+way above. The search index (`message-search/index.ts`) skips the substring-inclusion and typo
+candidate passes for strict tokens for the same reason, which keeps the candidate set small and
+the 1500-candidate cap from truncating real matches. Identifiers and numbers still belong to
+exact mode when the user wants literal text; fuzzy strict tokens are only the safe default.

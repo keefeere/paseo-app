@@ -124,6 +124,7 @@ export const ko: TranslationResources = {
       fuzzyMatch: "유사 검색",
       toggleMatchMode: "검색 모드 전환",
       noMatches: "일치 항목 없음",
+      partialResultsHint: "일부 채팅이 아직 로딩 중입니다 — 결과가 불완전할 수 있습니다",
       actions: "작업",
       files: "파일",
       workspaces: "워크스페이스",

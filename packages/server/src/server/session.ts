@@ -14,6 +14,7 @@ import { searchTimeline } from "./agent/chat-search/index.js";
 import {
   estimatedIndexCostMs,
   hasMessageSearchIndex,
+  invalidateMessageSearchCache,
   isMessageSearchIndexFresh,
   queueMessageSearchIndexWarm,
   searchCachedAgentMessages,
@@ -2207,11 +2208,13 @@ export class Session {
     this.unsubscribeAgentEvents = this.agentManager.subscribe(
       (event) => {
         if (event.type === "timeline_replacement") {
+          invalidateMessageSearchCache(event.agentId);
           this.deliverTimelineReplacement(event.agentId, this.rewindInitiators.get(event.agentId));
           return;
         }
 
         if (event.type === "agent_removed") {
+          invalidateMessageSearchCache(event.agentId);
           if (event.internal) return;
           void this.agentUpdates
             .removeAgent(event.agentId)

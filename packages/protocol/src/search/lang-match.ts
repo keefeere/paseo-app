@@ -127,6 +127,30 @@ const MIN_STEM_LENGTH = 2;
 const CYRILLIC = /[\u0400-\u04FF]/u;
 
 /**
+ * A token that must match as a whole word, nothing else.
+ *
+ * Short letter runs (`я`, `и`) match every word containing the letter under the
+ * substring and subsequence tiers, which answers a single-letter query with the whole
+ * host. Digit-only runs (`250`) match `1250`, `2500` and every version string with a
+ * substring, which turns "250 Bq" into a hit on any chat with numbers. Both are strict:
+ * the whole word has to appear, at a boundary, exactly as typed.
+ */
+export function isStrictToken(token: string): boolean {
+  const trimmed = token.trim();
+  if (trimmed.length < 3) return true;
+  return /^\d[\d.,-]*$/u.test(trimmed);
+}
+
+/** Whole-word occurrence of `token`; null when it does not appear at a boundary. */
+function wholeWordOnlyHit(token: string, text: string): WordHit | null {
+  const escaped = token.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}'’])${escaped}(?![\\p{L}\\p{N}'’])`, "giu");
+  const match = pattern.exec(text);
+  if (!match || match.index === undefined) return null;
+  return { score: { tier: 1, offset: match.index }, start: match.index, length: match[0].length };
+}
+
+/**
  * Case- and apostrophe-folded form used for comparing. `й` folds to `і` because the two
  * alternate across the same paradigm (`який`/`якій`), and apostrophes are a spelling
  * artifact, not a letter (`п'ятый`).
@@ -223,9 +247,14 @@ function scoreLangFuzzy(token: string, text: string): WordHit | null {
 /**
  * Where one token lands in a field, and how well. Whole-field exact hits first, because a
  * typed phrase should outrank any single word; then per-word exact/prefix hits, stems, typos.
+ *
+ * Strict tokens (see `isStrictToken`) short-circuit to a whole-word match only — the
+ * substring, subsequence and typo tiers are exactly what turns "250" into "1250" or
+ * "я" into every word containing "я".
  */
 function bestTokenHit(token: string, text: string): WordHit | null {
   if (!token) return null;
+  if (isStrictToken(token)) return wholeWordOnlyHit(token, text);
   const direct = scoreMatch(token, text, { subsequence: true });
   if (direct && direct.tier <= TIER_WORD_START) {
     return { score: remapScore(direct), start: direct.offset, length: token.length };

@@ -70,18 +70,20 @@ async function searchHost(
   query: string,
   fuzzy: boolean,
   onPage: (hits: MessageSearchHit[]) => void,
-): Promise<MessageSearchHit[]> {
+): Promise<{ hits: MessageSearchHit[]; partial: boolean }> {
   const hits: MessageSearchHit[] = [];
+  let partial = false;
   let cursor: number | null | undefined;
   for (let page = 0; page < MESSAGE_SEARCH_MAX_PAGES; page += 1) {
     const payload = await searchMessagePage(serverId, query, cursor ?? undefined, fuzzy);
     const pageHits = withHostIdentity(serverId, payload);
     hits.push(...pageHits);
+    partial ||= payload.partial === true;
     onPage(pageHits);
     cursor = payload.nextCursor;
     if (cursor === null || hits.length >= MESSAGE_SEARCH_PAGE_LIMIT) break;
   }
-  return hits;
+  return { hits, partial };
 }
 
 interface MessageSearchState {
@@ -89,9 +91,16 @@ interface MessageSearchState {
   hits: MessageSearchHit[];
   loading: boolean;
   error: string | null;
+  partial: boolean;
 }
 
-const EMPTY_STATE: MessageSearchState = { requestKey: null, hits: [], loading: false, error: null };
+const EMPTY_STATE: MessageSearchState = {
+  requestKey: null,
+  hits: [],
+  loading: false,
+  error: null,
+  partial: false,
+};
 
 /**
  * Message text across every chat on every host that advertises `messageSearch`.
@@ -105,6 +114,8 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
   hits: readonly MessageSearchHit[];
   loading: boolean;
   error: string | null;
+  /** True when some chats could not be scanned within budget. */
+  partial: boolean;
 } {
   const trimmed = input.query.trim();
   const fuzzy = input.fuzzy;
@@ -143,6 +154,7 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
     const collect = async (): Promise<void> => {
       const collected: MessageSearchHit[] = [];
       let error: string | null = null;
+      let partial = false;
       const publish = (): void => {
         if (cancelled) return;
         setState({
@@ -150,6 +162,7 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
           hits: sortHits(collected),
           loading: true,
           error,
+          partial,
         });
       };
       const settled = await Promise.allSettled(
@@ -157,6 +170,9 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
           searchHost(serverId, trimmed, fuzzy, (pageHits) => {
             collected.push(...pageHits);
             publish();
+          }).then(({ hits: hostHits, partial: hostPartial }) => {
+            partial = partial || hostPartial;
+            return hostHits;
           }),
         ),
       );
@@ -167,7 +183,7 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
           return;
         }
       });
-      setState({ requestKey, hits: sortHits(collected), loading: false, error });
+      setState({ requestKey, hits: sortHits(collected), loading: false, error, partial });
     };
     const timer = setTimeout(() => {
       void collect();
@@ -183,5 +199,6 @@ export function useMessageSearch(input: { enabled: boolean; query: string; fuzzy
     hits: requestKey && state.requestKey === requestKey ? state.hits : [],
     loading: Boolean(requestKey) && (state.requestKey !== requestKey || state.loading),
     error: requestKey && state.requestKey === requestKey ? state.error : null,
+    partial: Boolean(requestKey) && state.requestKey === requestKey ? state.partial : false,
   };
 }

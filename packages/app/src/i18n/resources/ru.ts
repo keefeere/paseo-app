@@ -126,6 +126,7 @@ export const ru: TranslationResources = {
       fuzzyMatch: "Нечёткий поиск",
       toggleMatchMode: "Изменить режим поиска",
       noMatches: "Нет совпадений",
+      partialResultsHint: "Некоторые чаты до сих пор загружаются — результаты могут быть неполными",
       actions: "Действия",
       files: "Файлы",
       workspaces: "Рабочие пространства",

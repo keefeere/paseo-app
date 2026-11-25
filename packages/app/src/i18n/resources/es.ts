@@ -126,6 +126,8 @@ export const es: TranslationResources = {
       fuzzyMatch: "Búsqueda difusa",
       toggleMatchMode: "Cambiar el modo de búsqueda",
       noMatches: "No hay coincidencias",
+      partialResultsHint:
+        "Algunas conversaciones aún se están cargando — los resultados pueden estar incompletos",
       actions: "Comportamiento",
       files: "Archivos",
       workspaces: "Espacios de trabajo",
