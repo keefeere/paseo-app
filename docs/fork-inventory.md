@@ -179,7 +179,7 @@ The current setting is `openInSidePane.terminals`, exposed in `packages/app/src/
 
 ### Appearance refresh boundary
 
-The old whole-workspace remount was reverted in `e4606bfcc` because it reset screen-owned editor, draft, terminal and plugin hosts. When porting spacing changes, do not reintroduce a workspace-wide appearance remount as a shortcut to refresh web tokens. Follow [unistyles.md](unistyles.md), and check both live spacing and preservation of draft/attachment state. `packages/app/src/components/appearance-style-boundary.test.ts` passed locally (three tests), but this audit has not repeated the draft-preservation interaction on each platform.
+The old whole-workspace remount was reverted in `e4606bfcc` because it reset screen-owned editor, draft, terminal and plugin hosts. When porting spacing changes, do not reintroduce a workspace-wide appearance remount as a shortcut to refresh web tokens. Follow [unistyles.md](unistyles.md), and check both live spacing and preservation of draft/attachment state. `packages/app/src/components/appearance-style-boundary.test.ts` passed locally (three tests), but this audit has not repeated the draft-preservation interaction on each platform. The fork also scales the saved settings-sidebar scroll offset by the content-height change in `navigation/settings-presentation/index.ts`, with owner-guarded state in `model.ts`. `model.test.ts` passed ten tests including ownership and visit reset; those tests do not reference `rememberHeight` or directly exercise the proportional scroll calculation. Verify settings sidebar position visually when changing appearance, especially after repeated size changes.
 
 ### Manual checks after a merge
 
