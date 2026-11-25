@@ -1,5 +1,10 @@
 import { setImmediate } from "node:timers/promises";
-import { langMatchRanges, scoreLangTokens, stemToken } from "@getpaseo/protocol/search/lang-match";
+import {
+  isStrictToken,
+  langMatchRanges,
+  scoreLangTokens,
+  stemToken,
+} from "@getpaseo/protocol/search/lang-match";
 import { boundedEditDistance } from "@getpaseo/protocol/search/text-match";
 import type { AgentTimelineRow } from "../agent-timeline-store-types.js";
 import { searchableBlocks } from "../chat-search/index.js";
@@ -190,6 +195,9 @@ function buildAgentMessageIndex(
 /**
  * Messages that could hold `token`: exact, prefix either way, substring inside a longer word, or
  * within the typo budget. Everything here is only a candidate list — the scorer decides.
+ * Strict tokens (short letters, digit runs) get only the exact/stem postings: substring
+ * inclusion turns "я" into every word containing "я" and bloats the candidate set until the
+ * truncation cap drops the messages that actually matter.
  */
 function expandToken(index: AgentMessageIndex, token: string): Set<number> {
   const cached = index.expanded.get(token);
@@ -202,6 +210,11 @@ function expandToken(index: AgentMessageIndex, token: string): Set<number> {
     if (posting) {
       for (const messageId of posting) found.add(messageId);
     }
+  }
+
+  if (isStrictToken(token)) {
+    index.expanded.set(token, found);
+    return found;
   }
 
   for (const word of index.words) {

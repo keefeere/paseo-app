@@ -354,6 +354,8 @@ interface CommandCenterState {
   fileSearchLoading: boolean;
   fileSearchError: string | null;
   messageSearchError: string | null;
+  /** True when some chats could not be scanned within budget. */
+  messageSearchPartial: boolean;
   /** Message text match mode: false = stem and typo tolerant, true = literal substring. */
   exactMatch: boolean;
   toggleExactMatch(): void;
@@ -611,6 +613,7 @@ function useCommandCenterState(
     fileSearchLoading,
     fileSearchError,
     messageSearchError: messageSearch.error,
+    messageSearchPartial: messageSearch.partial,
     exactMatch,
     toggleExactMatch,
     close,
@@ -1073,6 +1076,15 @@ export function CommandCenter() {
       ),
     [state.fileSearchError, state.fileSearchLoading, state.messageSearchError, t],
   );
+  const partialFooter = useMemo(
+    () =>
+      state.messageSearchPartial ? (
+        <Text style={styles.partialHintText} testID="command-center-partial-hint">
+          {t("shell.commandCenter.partialResultsHint")}
+        </Text>
+      ) : null,
+    [state.messageSearchPartial, t],
+  );
   const fileSearchError = useMemo(
     () =>
       state.fileSearchError ? (
@@ -1105,6 +1117,7 @@ export function CommandCenter() {
     keyExtractor,
     getItemLayout,
     ListEmptyComponent: empty,
+    ListFooterComponent: () => partialFooter,
     style: styles.results,
     testID: "command-center-results",
     keyboardShouldPersistTaps: KEYBOARD_SHOULD_PERSIST_TAPS,
@@ -1461,11 +1474,15 @@ const styles = StyleSheet.create((theme) => ({
     flexShrink: 0,
   },
   emptyText: {
-    paddingHorizontal: theme.spacing[4],
-    paddingVertical: theme.spacing[6],
     textAlign: "center",
     color: theme.colors.foregroundMuted,
     fontSize: theme.fontSize.base,
+  },
+  partialHintText: {
+    marginTop: theme.spacing[2],
+    textAlign: "center",
+    color: theme.colors.foregroundMuted,
+    fontSize: theme.fontSize.sm,
   },
   errorText: {
     paddingHorizontal: theme.spacing[4],

@@ -122,6 +122,7 @@ export const uk = {
       fuzzyMatch: "Нечітко",
       toggleMatchMode: "Змінити режим пошуку",
       noMatches: "Немає збігів",
+      partialResultsHint: "Деякі чати ще завантажуються — результати можуть бути неповними",
       actions: "Дії",
       files: "Файли",
       workspaces: "Робочі простори",

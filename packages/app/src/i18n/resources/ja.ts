@@ -125,6 +125,7 @@ export const ja: TranslationResources = {
       fuzzyMatch: "あいまい検索",
       toggleMatchMode: "検索モードを切り替える",
       noMatches: "一致なし",
+      partialResultsHint: "まだ読み込み中のチャットがあります。結果が不完全な場合があります",
       actions: "アクション",
       files: "ファイル",
       workspaces: "ワークスペース",

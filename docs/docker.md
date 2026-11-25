@@ -81,9 +81,24 @@ Create a child image for the agents you use:
 ```Dockerfile
 FROM ghcr.io/getpaseo/paseo:latest
 
+ENV NPM_PREFIX=/opt/agent-cli
+ENV PATH="${NPM_PREFIX}/bin:${PATH}"
+
 USER root
-RUN npm install -g @openai/codex @anthropic-ai/claude-code opencode-ai
+RUN mkdir -p "${NPM_PREFIX}" && chown -R paseo:paseo "${NPM_PREFIX}"
+
+USER paseo
+RUN npm install -g --prefix "${NPM_PREFIX}" \
+  @openai/codex @anthropic-ai/claude-code opencode-ai
+
+USER root
 ```
+
+Install agent CLIs into a paseo-writable prefix, not `/usr/local`. The daemon
+runs as the non-root `paseo` user, so a root-owned `/usr/local` install cannot
+self-update from the app (`pi update --self` and similar fail with "install path
+is not writable"). Keep the prefix outside `/home/paseo` — that path is
+typically a bind mount and would shadow the installed CLIs.
 
 Build it:
 

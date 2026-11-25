@@ -126,6 +126,8 @@ export const ptBR: TranslationResources = {
       fuzzyMatch: "Correspondência aproximada",
       toggleMatchMode: "Alternar modo de busca",
       noMatches: "Nenhuma correspondência",
+      partialResultsHint:
+        "Algumas conversas ainda estão carregando — os resultados podem estar incompletos",
       actions: "Ações",
       files: "Arquivos",
       workspaces: "Espaços de trabalho",

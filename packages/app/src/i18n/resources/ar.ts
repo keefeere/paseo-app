@@ -124,6 +124,7 @@ export const ar: TranslationResources = {
       fuzzyMatch: "بحث متسامح",
       toggleMatchMode: "تبديل وضع البحث",
       noMatches: "لا توجد مباريات",
+      partialResultsHint: "بعض المحادثات لا تزال قيد التحميل — قد تكون النتائج غير مكتملة",
       actions: "الإجراءات",
       files: "الملفات",
       workspaces: "مساحات العمل",

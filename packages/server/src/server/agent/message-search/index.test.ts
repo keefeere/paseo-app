@@ -239,3 +239,47 @@ it("reuses one index for both match modes", async () => {
   const fuzzy = await searchCachedAgentMessages("agent-6", "e1", undefined, "ліміт");
   expect(fuzzy.hits).toHaveLength(1);
 });
+
+it("does not match digit-only queries inside larger numbers", async () => {
+  const result = await searchAgentMessages(
+    rows([
+      { type: "user_message", text: "the dose was 250 Bq" },
+      { type: "user_message", text: "the dose was 1250 Bq, not 25" },
+      { type: "user_message", text: "version 0.16.2-beta.905 was pinned" },
+    ]),
+    "250",
+  );
+  expect(result.hits.map((hit) => hit.seq)).toEqual([1]);
+});
+
+it("does not match single letters inside words", async () => {
+  const result = await searchAgentMessages(
+    rows([
+      { type: "user_message", text: "яка є тут" },
+      { type: "user_message", text: "я вибрав" },
+    ]),
+    "я",
+  );
+  expect(result.hits.map((hit) => hit.seq)).toEqual([2]);
+});
+
+it("indexes a digit-only token without matching every digit-containing word", async () => {
+  const result = await searchAgentMessages(
+    [
+      {
+        seq: 1,
+        timestamp: "2026-09-12T00:00:00Z",
+        turnId: "t1",
+        item: { type: "assistant_message", text: "the cost is 250 dollars" },
+      },
+      {
+        seq: 2,
+        timestamp: "2026-09-12T00:00:01Z",
+        turnId: "t2",
+        item: { type: "assistant_message", text: "the cost is 1250 dollars" },
+      },
+    ] as never,
+    "250",
+  );
+  expect(result.hits.map((hit) => hit.seq)).toEqual([1]);
+});

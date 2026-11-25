@@ -4,14 +4,28 @@
 #   docker build -f docker/Dockerfile.agents.example -t paseo-with-agents .
 #
 # Then set `image: paseo-with-agents` in docker/docker-compose.example.yml.
+#
+# Agent CLIs are installed into a paseo-writable prefix (not /usr/local) so the
+# agent user can self-update them from the app (e.g. `pi update --self`).
+# The prefix lives outside /home/paseo because that path is typically a bind
+# mount that would shadow the installed CLIs.
 
-FROM ghcr.io/getpaseo/paseo:latest
+ARG BASE_IMAGE=ghcr.io/getpaseo/paseo:latest
+FROM ${BASE_IMAGE}
+
+ENV NPM_PREFIX=/opt/agent-cli
+ENV PATH="${NPM_PREFIX}/bin:${PATH}"
 
 USER root
-RUN npm install -g \
+RUN mkdir -p "${NPM_PREFIX}" && chown -R paseo:paseo "${NPM_PREFIX}"
+
+USER paseo
+RUN npm install -g --prefix "${NPM_PREFIX}" \
   @anthropic-ai/claude-code \
   @openai/codex \
+  @earendil-works/pi-coding-agent \
   opencode-ai
 
 # Leave the image user as root. The base entrypoint prepares mounted volumes,
 # then drops the daemon and launched agents to the non-root `paseo` user.
+USER root

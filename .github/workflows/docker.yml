@@ -11,6 +11,10 @@ on:
         description: "Export the standard Docker image as a downloadable archive (linux/amd64)."
         type: boolean
         default: false
+      with_agents:
+        description: "Also build the agent-CLI child image (docker/Dockerfile.agents.example) and export it."
+        type: boolean
+        default: false
       checkout_ref:
         description: "Source commit for the exported image (defaults to workflow commit)."
         required: false
@@ -303,6 +307,45 @@ jobs:
             echo "image_id=$config_id"
             echo "platform=linux/amd64"
           } | tee image-artifact/image-metadata.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Build and export agent-CLI image
+        if: inputs.with_agents == true
+        env:
+          VERSION: ${{ needs.setup.outputs.install_version }}
+        run: |
+          set -euo pipefail
+          revision="$(git -C source rev-parse HEAD)"
+          docker build --build-arg BASE_IMAGE="paseo-base:$VERSION" \
+            --label "org.opencontainers.image.revision=$revision" \
+            -f source/docker/Dockerfile.agents.example -t "paseo-agents:$VERSION" -t "paseo-agents:sha-$revision" source
+          docker run --rm --entrypoint /bin/bash "paseo-agents:$VERSION" -ec '
+            test -x /opt/agent-cli/bin/pi
+            test -x /opt/agent-cli/bin/claude
+            test -x /opt/agent-cli/bin/codex
+            test -x /opt/agent-cli/bin/opencode
+          '
+          docker save "paseo-agents:$VERSION" "paseo-agents:sha-$revision" | gzip -1 > "image-artifact/paseo-agents-$VERSION.tar.gz"
+          (cd image-artifact && sha256sum *.tar.gz > SHA256SUMS)
+          config_id="$(gzip -dc "image-artifact/paseo-agents-$VERSION.tar.gz" | tar -xOf - manifest.json | node -e '
+            const manifest = JSON.parse(require("fs").readFileSync(0, "utf8"));
+            if (manifest.length !== 1) {
+              console.error("expected a single image in the docker archive");
+              process.exit(1);
+            }
+            const config = manifest[0].Config;
+            const digest = config.split("/").at(-1);
+            if (!/^[0-9a-f]{64}$/.test(digest)) {
+              console.error(`unexpected config entry: ${config}`);
+              process.exit(1);
+            }
+            process.stdout.write(`sha256:${digest}`);
+          ')"
+          {
+            echo "version=$VERSION"
+            echo "revision=$revision"
+            echo "image=paseo-agents:sha-$revision"
+            echo "image_id=$config_id"
+            echo "platform=linux/amd64"
+          } | tee image-artifact/agents-image-metadata.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: paseo-image

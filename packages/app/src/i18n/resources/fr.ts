@@ -127,6 +127,8 @@ export const fr: TranslationResources = {
       fuzzyMatch: "Recherche approximative",
       toggleMatchMode: "Changer le mode de recherche",
       noMatches: "Aucun résultat",
+      partialResultsHint:
+        "Certaines conversations sont encore en cours de chargement — les résultats peuvent être incomplets",
       actions: "Actions",
       files: "Fichiers",
       workspaces: "Espaces de travail",

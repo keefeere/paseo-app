@@ -66,3 +66,28 @@ describe("langMatchRanges", () => {
     expect(words).toEqual(["яка", "бюджетн"]);
   });
 });
+
+describe("strict tokens", () => {
+  it("matches a short letter run only as a whole word", () => {
+    expect(scoreLangToken("я", "я")?.tier).toBe(1);
+    expect(scoreLangToken("я", "які")).toBeNull();
+    expect(scoreLangToken("я", "які щось")).toBeNull();
+    expect(scoreLangToken("я", "я і я")?.tier).toBe(1);
+    expect(scoreLangToken("и", "и")?.tier).toBe(1);
+    expect(scoreLangToken("и", "и пішов")?.tier).toBe(1);
+    expect(scoreLangToken("и", "ін")).toBeNull();
+  });
+
+  it("matches a digit run only as a whole word", () => {
+    expect(scoreLangToken("250", "250 Bq")?.tier).toBe(1);
+    expect(scoreLangToken("250", "1250 Bq")).toBeNull();
+    expect(scoreLangToken("250", "2500")).toBeNull();
+    expect(scoreLangToken("2024", "20240")).toBeNull();
+    expect(scoreLangToken("250", "250")?.tier).toBe(1);
+  });
+
+  it("still matches normal words loosely", () => {
+    expect(scoreLangToken("який", "яка")?.tier).toBe(4);
+    expect(scoreLangToken("render", "rendered")?.tier).toBe(2);
+  });
+});
