@@ -51,6 +51,28 @@ The unit of progress is a feature group, not a file or a passing test. Mark a gr
 
 **Current count:** 0 complete, 11 partial, 0 unstarted groups. This measures documentation/audit coverage, not the percentage of preserved code. The number of undiscovered groups is unknown, so it is not a percentage-complete estimate.
 
+### Historical inventory crosswalk
+
+The earlier `home/AI/Paseo-доробки.md` enumerates 13 v0.15-era subjects. Each has an owner in this working inventory; a linked section means the topic is represented, not that its full audit is complete.
+
+| Historical subject                  | Current audit owner                                                     |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| CI, releases and updates            | [Fork CI coverage](#fork-ci-coverage), [fork-builds.md](fork-builds.md) |
+| Ukrainian localization              | [Locale parity](#ukrainian-locale-parity-failing)                       |
+| Ukrainian TTS and Whisper Small     | [Local speech models](#local-speech-models)                             |
+| Appearance spacing                  | [Appearance refresh boundary](#appearance-refresh-boundary)             |
+| Flatten single-workspace projects   | [Flattened sidebar projects](#flattened-sidebar-projects)               |
+| Shell and console highlighting      | [Local speech models](#local-speech-models)                             |
+| URI schemes and link routing        | [Link routing](#link-routing)                                           |
+| Terminal open location              | [Terminal placement](#terminal-placement)                               |
+| Plugin code-block actions           | [Plugin code-block actions](#plugin-code-block-actions)                 |
+| Desktop downloads and toast actions | [Desktop behavior](#desktop-behavior)                                   |
+| Closed output and updater           | [Desktop behavior](#desktop-behavior)                                   |
+| User-image history                  | [Image history branch](#image-history-branch)                           |
+| Provider sheet width                | [Provider sheets](#provider-sheets)                                     |
+
+The old note predates Pi replay and cross-chat search. Its historical claim of complete Ukrainian parity and its old terminal-setting names are not current acceptance evidence; use the sections above and current source.
+
 ### Diff scope ledger
 
 The fixed comparison `git diff --name-only v0.17.4 679493d90` contains **269 paths**: app 176, server 36, `.github` 13, desktop 12, docs 10, protocol 9, public-docs 3, and 2 each in skills, plugin, highlight and client; `scripts` and `CLAUDE.md` each contribute 1. These are changed-path counts, not reviewed-path counts. Both added upstream-derived changes and fork-specific changes can occur in a path; do not use the numbers as a preservation score.
