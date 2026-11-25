@@ -1,0 +1,90 @@
+# First-parent commit audit queue
+
+Snapshot: `v0.15.0..679493d90`, first-parent non-merge commits only. This is a mechanical inventory, not proof that the change survives or that its subject is accurate. Merge commits, commits behind merges, older fork history and later branches need separate review. Look up each hash in [fork-inventory.md](fork-inventory.md) and compare the resulting behavior before marking it covered.
+
+- `1448b43eb` ci: adapt fork workflow gating and Docker artifacts to v0.15.0
+- `33f4f8447` chore(desktop): take fork desktop updates from keefeere/paseo-app
+- `2e796c046` feat(i18n): add Ukrainian UI localization matching v0.15.0
+- `4ab5e8e3f` feat(opener): support opening obsidian, logseq, notion, slack, and other app schemes
+- `4aa64434b` feat(highlight): add shell and console syntax highlighting
+- `0dd784787` chore(release): lockfile version sync and fork linux-only release manifests
+- `00328aceb` fix(ci): create draft release on platform-specific desktop release dispatches
+- `707a0c650` fix(i18n): remove all Russian leftovers from Ukrainian localization
+- `82c402b15` feat(sidebar): flatten single-workspace projects with preference
+- `03753bd28` feat(appearance): granular spacing sliders, textLineHeight and markdown line height
+- `84d2758cc` feat(speech): support Ukrainian VITS models in catalog
+- `0a13be0ba` fix(i18n): localize browser tools, terminal agents, and purge Russian strings
+- `314572d7d` chore(release): stamp v0.15.0-beta.903
+- `2cc65f6da` feat(appearance,sidebar): wire granular spacing sliders and flatten single-workspace projects
+- `e4c072987` revert(appearance): drop partial spacing port before cherry-picking originals
+- `7e153a12e` feat(appearance): port spacing controls onto the v0.15 renderer and sidebar density
+- `2c91bde89` fix(app): align spacing test theme and flatten default key order
+- `69b0160ce` fix(i18n): nest browser tools and terminal agents under settings.host, fix error key paths, translate remaining uk strings
+- `89d31590d` fix(speech): drop espeak-ng-data requirement for character-based Ukrainian VITS voices
+- `f142fb6cd` feat(app): open chat links in workspace browser
+- `125610c74` fix: persist user images in conversation history
+- `778e97a80` feat(app): choose how chat URLs open
+- `c1b4acd96` fix(desktop): avoid logging to closed packaged pipes
+- `bd052cc21` fix(app): honor chat link dialog choices
+- `d9a06d4aa` feat: open resource links according to type and available handlers
+- `143f7d53a` feat(app): open terminals at the preferred location
+- `6f319721f` fix(app): read the terminal open-location preference through app settings
+- `8670a64a9` feat(i18n): translate resource link copy into Ukrainian
+- `4e42454f7` fix(i18n): translate host picker system options
+- `8e4a8b5b1` fix(i18n): translate browser tools settings card
+- `a8c26066b` fix(i18n): shorten Ukrainian add-model button
+- `e9782dd1b` feat(i18n): localize relative time, usage format, and setup duration
+- `b1eed5590` feat(i18n): localize host workspace and terminal agent settings
+- `dcce23133` fix(app): cap provider settings sheets at 780px on desktop
+- `8f2845515` fix(desktop): download files through main instead of navigating the app window
+- `f43850cb3` fix(desktop): stop a stalled download from spinning forever
+- `00584b358` feat(desktop): keep the download toast and add Open / Open folder buttons
+- `2e94fbc90` feat(speech): add the Whisper Small local STT model
+- `f31bca0a5` fix(desktop): stop update-check errors and a dead stderr from crashing the main process
+- `9f4924abb` fix(desktop): require closed-output before main.ts calls it
+- `e1befadd1` fix(i18n): localize run-out label and refresh time and host labels on language change
+- `f8db90eba` fix(i18n): localize sidebar workspace mark as read/unread
+- `f0e32c409` feat(links): setting to open system-handler links without asking
+- `2ee7de7c3` fix(i18n): restore ported locale keys across all 10 languages and purge Russian strings from uk
+- `df73c844d` feat(plugins): port inline assistant code-block actions to EnrichedMarkdownText
+- `25ee48254` fix(app): show user-message images to plugin timeline transformers
+- `405132b77` chore(deps): resync package-lock after merging v0.15.3
+- `5e9e30872` docs(website): translate assistant code-block actions section
+- `12f664bcf` fix(app): keep Android toast and desktop settings out of chat graphs
+- `6fe0853f7` test(app): unblock app unit tests after the v0.15.3 merge
+- `cc8e71596` docs(plugins): list addCodeBlockActions in the timeline migration guide
+- `360e76d0d` feat(i18n): fill the Ukrainian gaps left by the v0.15.3 merge
+- `200a61e96` style(docs): drop the doubled blank line in the zh-CN plugin reference
+- `73ebd2418` fix(desktop): keep the console log transport in packaged builds
+- `509297d77` test(server): stub persistSubmittedPromptImages in the MCP agent manager spies
+- `95d633c26` test(app): relearn the spacing and find E2E expectations from the running app
+- `c299a3e0f` chore(e2e): make the Metro warmup deadline configurable
+- `2f5a8a665` fix(app): keep history image previews alive while their pill is mounted
+- `efb87f30d` fix(pi): replay full session history and mark compactions
+- `c062c1bcb` fix(app): restore rewound message images into the composer
+- `e606c35ac` ci(fork): keep artifacts in a 3-day window and prune superseded buildx caches
+- `7ea09748f` test(app): read the spacing row through its testID, not a parent-chain selector
+- `28b55a8df` fix(fork): keep fork behaviors green against upstream v0.16.0
+- `d518ae6d6` ci(fork): export the docker archive config digest as image_id
+- `0d65fbea6` test(server): expect the fork Pi transcript fields in history-mapper
+- `48bd678a1` fix(app): remount web settings content when appearance tokens change
+- `b0c0c0cb8` test(app): relearn composer and file-preview E2E against the merged UI
+- `6cd321674` fix(app): remount the web composer when appearance tokens change
+- `6ca471963` fix(app): remount the web workspace screen when appearance tokens change
+- `cb7b95368` docs(fork): stamp must sync package-lock; web appearance boundaries cover screen-owned surfaces
+- `9da809d04` fix(app): keep the settings sidebar scroll offset across web appearance remounts
+- `e4606bfcc` fix(app): keep appearance refresh from resetting workspace hosts and sidebar anchors
+- `6d352b37c` test(app): keep the composer rail assertion about the composer edge only
+- `672ce4ce9` feat(app): give the sidebar its own spacing axis
+- `599a42350` feat(app): interface airiness now tightens controls, dropdown pills and menu rows
+- `c78bacf56` test(app): give minimal theme fixtures the uiRow tokens
+- `9018b1d75` feat: search chat message text across all chats in Command Center
+- `216702e55` test(app): rotate command center tabs through the Messages tab
+- `8317bba87` fix(server): index chat message text so search answers instead of timing out
+- `3288b76e5` fix(server): skip transcript reads for agents whose message index is still fresh
+- `8d54d3b9e` fix(server): warm message indexes in the background instead of inside the search
+- `cffc03e8b` fix(search): warm chat indexes on app open and stream search pages
+- `3f198dac5` feat(search): exact substring match mode for chat message search
+- `b06b7cf8d` fix(ci): create the desktop release tag on the checked-out commit
+- `2d85af039` feat(tools): search_messages MCP tool + paseo-search skill
+- `679493d90` docs: register the search_messages tool + paseo-search skill in fork changes

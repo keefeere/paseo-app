@@ -22,6 +22,8 @@ At the time of this audit, the separate main checkout had 18 uncommitted search-
 
 ## Audit progress
 
+The [first-parent commit queue](fork-commit-queue.md) enumerates all 86 non-merge commits in the fixed v0.15.0-to-snapshot range; it is a lead list, not a completed audit.
+
 The unit of progress is a feature group, not a file or a passing test. Mark a group complete only after reconciling relevant Git branches/PRs and history against both trees, recording the current code and remaining limitations, and documenting a reproducible check. Record inaccessible sources explicitly; do not turn them into evidence of absence.
 
 | Feature group                  | Status  | Next unresolved check                                                           |
