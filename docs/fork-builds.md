@@ -12,20 +12,11 @@ This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cove
 
 ## Fork changes
 
-What this fork carries on top of upstream `main`, so a merge or an upstream PR knows what is ours.
+See the [fork inventory](fork-inventory.md) for changes, evidence and merge checks. The inventory is still under audit.
 
-| Change                                            | Where it lives                                                                                                                                                                                                             | Upstreamable                                                                                            |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Message text search across every chat             | RPC `agent.messages.search.request`/`.response`, capability `messageSearch`, index in `packages/server/src/server/agent/message-search/`, Command Center "Messages" tab, chat jump via `stores/chat-message-jump-store.ts` | Yes — [search.md](search.md) is the spec                                                                |
-| Exact (literal substring) match mode              | optional `fuzzy` field on the search request, `searchExact` in the same index, Command Center chip                                                                                                                         | Yes, with the feature above                                                                             |
-| Language-tolerant matching for search             | `packages/protocol/src/search/lang-match.ts` (stems, Unicode typos)                                                                                                                                                        | Yes                                                                                                     |
-| Windows builds in the fork                        | `.github/workflows/desktop-release.yml`: the `github.repository == 'getpaseo/paseo'` gate on `publish-windows` is removed and `finalize-rollout` expects `beta.yml` as well                                                | Not as written — `main` keeps the upstream shape, so this patch is cherry-picked onto each build branch |
-| Update feed                                       | `packages/desktop/electron-builder.yml` publishes to the fork                                                                                                                                                              | No                                                                                                      |
-| `search_messages` MCP tool + `paseo-search` skill | `search_messages` tool (fuzzy/exact, bounded fan-out) in `tools/paseo-tools.ts`, timeline catalog entry in `paseo-tool-presentation/catalog.ts`, `skills/paseo-search/SKILL.md`, surfaced from `skills/paseo/SKILL.md`     | Yes — with the search feature above                                                                     |
-| Desktop release tag targets the stamped commit    | known gap: `gh release create` runs without `--target "$CHECKOUT_REF"`, so the tag lands on `main` head                                                                                                                    | Yes — worth an upstream fix                                                                             |
-
-Fork-only workflow patches stay out of `main`: build branches carry them by cherry-pick, which is
-why a build branch is not identical to `main` even ignoring the version stamp.
+The Windows release workflow patch stays out of `main`: build branches carry it by cherry-pick,
+so a build branch can differ from `main` beyond the version stamp. Other fork CI and release
+changes are present on `main`; see the inventory before comparing build sources.
 
 ## Version
 
@@ -44,7 +35,7 @@ Existing higher legacy versions can make a build under this policy look like a d
 
 ## Update feed
 
-`packages/desktop/electron-builder.yml` publishes to keefeere/paseo-app. The auto-updater downloads any newer release from that feed. Pointed at upstream, it would replace the fork build with vanilla Paseo the first time upstream releases a higher version. The fork publishes no releases, so fork builds see no updates.
+`packages/desktop/electron-builder.yml` points to the keefeere/paseo-app release feed. Pointing it at upstream risks replacing the fork with vanilla Paseo when an upstream release is newer. Published fork releases can provide updates; draft releases and unpublished artifacts do not by themselves provide a published feed. Verify the selected channel and release assets before relying on an update.
 
 ## Build
 

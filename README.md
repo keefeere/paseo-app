@@ -1,3 +1,15 @@
+## About this fork
+
+This is the personal [keefeere/paseo-app](https://github.com/keefeere/paseo-app) fork of [Paseo](https://github.com/getpaseo/paseo). It carries changes including:
+
+- Search across chat messages in Command Center and through the `search_messages` MCP tool, with exact and language-tolerant modes.
+- Ukrainian localization (incomplete: some newer strings still fall back to English), appearance controls and optional single-workspace project flattening.
+- Plugin actions for assistant code blocks, link-opening and terminal-placement preferences.
+- Ukrainian local speech models, Whisper Small and shell/console highlighting additions.
+- Fork-specific Pi history replay, user-image history and desktop download/build/update changes.
+
+See the [fork inventory](docs/fork-inventory.md) for source references, verification steps and audit status. The inventory is still being reconciled with upstream; this list is not a complete compatibility guarantee.
+
 <p align="center">
   <img src="packages/website/public/logo.svg" width="64" height="64" alt="Paseo logo">
 </p>
