@@ -40,6 +40,12 @@ The unit of progress is a feature group, not a file or a passing test. Mark a gr
 
 **Current count:** 0 complete, 11 partial, 0 unstarted groups. This measures documentation/audit coverage, not the percentage of preserved code. The number of undiscovered groups is unknown, so it is not a percentage-complete estimate.
 
+### Diff scope ledger
+
+The fixed comparison `git diff --name-only v0.17.4 679493d90` contains **269 paths**: app 176, server 36, `.github` 13, desktop 12, docs 10, protocol 9, public-docs 3, and 2 each in skills, plugin, highlight and client; `scripts` and `CLAUDE.md` each contribute 1. These are changed-path counts, not reviewed-path counts. Both added upstream-derived changes and fork-specific changes can occur in a path; do not use the numbers as a preservation score.
+
+The cross-package boundary includes `DaemonClient.searchAgentMessages` and `FilePreviewUnavailableError` in `packages/client`, plus `openTerminal` and `addCodeBlockActions` in the plugin contract. The public plugin reference and migration notes describe related API changes; the two changed skills are `paseo` and `paseo-search`. Review these contracts and consumers along with their feature groups, not only the app files. The path count does not cover older branches, uncommitted WIP or content absent from both endpoints.
+
 ## Candidates to audit
 
 | Feature                                                                                     | History / starting point                                                                 | Verification after an upstream merge                                                                                                                                                                                             |
