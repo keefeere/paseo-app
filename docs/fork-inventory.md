@@ -1,10 +1,10 @@
 # Fork inventory (audit in progress)
 
-Snapshot: fork `679493d90`, official tag `v0.17.4` (remote fork main and latest official stable rechecked 2026-11-25 UTC). Their tree diff spans 269 files (including tests and documentation); the audit has not classified every file. This is a working inventory, not proof that every change survived the merge. Compare the current implementation and run the checks before carrying a feature into a newer release. Historical source: `home/AI/Paseo-доробки.md` in the personal vault (v0.15.0); later release evidence: `knowledge/home/paseo/fork-v0150-release-evidence.md`. Vault paths are not repository links.
+Snapshot: fork `679493d90`, official tag `v0.17.4` (remote fork main and latest official stable initially checked 2026-11-25 UTC; main has since advanced as noted below). Their tree diff spans 269 files (including tests and documentation); the audit has not classified every file. This is a working inventory, not proof that every change survived the merge. Compare the current implementation and run the checks before carrying a feature into a newer release. Historical source: `home/AI/Paseo-доробки.md` in the personal vault (v0.15.0); later release evidence: `knowledge/home/paseo/fork-v0150-release-evidence.md`. Vault paths are not repository links.
 
-## Separate in-progress search changes
+## Main advanced during the audit
 
-At the time of this audit, the separate main checkout had 18 uncommitted search-related files on `build/v0.17.4-beta.901`. Its draft includes a partial-results UI hint, cache invalidation on timeline replacement/removal and strict short/numeric matching. These are not part of snapshot `679493d90` or this documentation branch; the other agent reported them as uncommitted. Review and integrate that work separately, without overwriting its worktree or claiming it is in `main`.
+This inventory and its test results remain pinned to `679493d90`; they do not describe every behavior on current `main`. On 2026-11-25 a remote check found `origin/main` at `72d5f4ffb`, two commits ahead of that snapshot. `72d5f4ffb` commits the previously separate search work (partial-results UI, cache invalidation and stricter tokens); `45b603d46` adds an agent-CLI child image to the Docker export workflow. The previously observed 18-file search WIP is no longer uncommitted in the main checkout. These commits are not in this documentation branch and have not been independently audited or tested here. Reconcile them before treating the snapshot findings as current, including the search `partial` limitation and localization parity counts; do not overwrite the other checkout.
 
 ## Open findings at this snapshot
 
@@ -26,19 +26,19 @@ The [first-parent commit queue](fork-commit-queue.md) enumerates all 86 non-merg
 
 The unit of progress is a feature group, not a file or a passing test. Mark a group complete only after reconciling relevant Git branches/PRs and history against both trees, recording the current code and remaining limitations, and documenting a reproducible check. Record inaccessible sources explicitly; do not turn them into evidence of absence.
 
-| Feature group                  | Status  | Next unresolved check                                                           |
-| ------------------------------ | ------- | ------------------------------------------------------------------------------- |
-| Cross-chat search and MCP      | Partial | Reconcile the separate WIP; test MCP tool and live multi-host partial behavior. |
-| Ukrainian localization         | Partial | Reconcile branch and missing/extra keys; language-switch UI.                    |
-| Appearance and sidebar density | Partial | Compare remaining branch changes; visual state preservation.                    |
-| Single-workspace flattening    | Partial | Verify pinned-chat counting, actions and persistence in UI.                     |
-| User images and rewind         | Partial | Reconcile all PR #5829 cases; projection mismatch; real-provider rewind.        |
-| Pi history                     | Partial | Verify inactive-branch and long-history behavior; real-provider rewind.         |
-| Plugin code-block actions      | Partial | Check later PR fixes and browser/native behavior across render caps.            |
-| Links and terminal location    | Partial | Reconcile feature branches; exercise platform handlers and terminal placement.  |
-| Voice models and highlighting  | Partial | Compare all old voice branch changes; real synthesis and rendering checks.      |
-| Desktop downloads and dialogs  | Partial | Reconcile historical branches and test packaged app behavior.                   |
-| Fork build and CI              | Partial | Reconcile remaining workflow branches and failing contract test.                |
+| Feature group                  | Status  | Next unresolved check                                                                              |
+| ------------------------------ | ------- | -------------------------------------------------------------------------------------------------- |
+| Cross-chat search and MCP      | Partial | Reconcile the subsequently merged `72d5f4ffb`; test MCP tool and live multi-host partial behavior. |
+| Ukrainian localization         | Partial | Reconcile branch and missing/extra keys; language-switch UI.                                       |
+| Appearance and sidebar density | Partial | Compare remaining branch changes; visual state preservation.                                       |
+| Single-workspace flattening    | Partial | Verify pinned-chat counting, actions and persistence in UI.                                        |
+| User images and rewind         | Partial | Reconcile all PR #5829 cases; projection mismatch; real-provider rewind.                           |
+| Pi history                     | Partial | Verify inactive-branch and long-history behavior; real-provider rewind.                            |
+| Plugin code-block actions      | Partial | Check later PR fixes and browser/native behavior across render caps.                               |
+| Links and terminal location    | Partial | Reconcile feature branches; exercise platform handlers and terminal placement.                     |
+| Voice models and highlighting  | Partial | Compare all old voice branch changes; real synthesis and rendering checks.                         |
+| Desktop downloads and dialogs  | Partial | Reconcile historical branches and test packaged app behavior.                                      |
+| Fork build and CI              | Partial | Reconcile remaining workflow branches and failing contract test.                                   |
 
 **Current count:** 0 complete, 11 partial, 0 unstarted groups. This measures documentation/audit coverage, not the percentage of preserved code. The number of undiscovered groups is unknown, so it is not a percentage-complete estimate.
 
