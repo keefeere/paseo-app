@@ -20,6 +20,26 @@ At the time of this audit, the separate main checkout had 18 uncommitted search-
 - **Present but incomplete:** Ukrainian locale is registered, but its parity test fails. User-image submission/rewind code is present, but later image-history branch behavior is not fully reconciled.
 - **Not established:** full agent-history coverage, real-device UI acceptance, provider-history recovery and all non-ancestor branch contents. A green targeted test is not a live acceptance result.
 
+## Audit progress
+
+The unit of progress is a feature group, not a file or a passing test. Mark a group complete only after reconciling relevant Git branches/PRs and history against both trees, recording the current code and remaining limitations, and documenting a reproducible check. Record inaccessible sources explicitly; do not turn them into evidence of absence.
+
+| Feature group                  | Status  | Next unresolved check                                                           |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------- |
+| Cross-chat search and MCP      | Partial | Reconcile the separate WIP; test MCP tool and live multi-host partial behavior. |
+| Ukrainian localization         | Partial | Reconcile branch and missing/extra keys; language-switch UI.                    |
+| Appearance and sidebar density | Partial | Compare remaining branch changes; visual state preservation.                    |
+| Single-workspace flattening    | Partial | Verify pinned-chat counting, actions and persistence in UI.                     |
+| User images and rewind         | Partial | Reconcile all PR #5829 cases; projection mismatch; real-provider rewind.        |
+| Pi history                     | Partial | Verify inactive-branch and long-history behavior; real-provider rewind.         |
+| Plugin code-block actions      | Partial | Check later PR fixes and browser/native behavior across render caps.            |
+| Links and terminal location    | Partial | Reconcile feature branches; exercise platform handlers and terminal placement.  |
+| Voice models and highlighting  | Partial | Compare all old voice branch changes; real synthesis and rendering checks.      |
+| Desktop downloads and dialogs  | Partial | Reconcile historical branches and test packaged app behavior.                   |
+| Fork build and CI              | Partial | Reconcile remaining workflow branches and failing contract test.                |
+
+**Current count:** 0 complete, 11 partial, 0 unstarted groups. This measures documentation/audit coverage, not the percentage of preserved code. The number of undiscovered groups is unknown, so it is not a percentage-complete estimate.
+
 ## Candidates to audit
 
 | Feature                                                                                     | History / starting point                                                                 | Verification after an upstream merge                                                                                                                                                                                             |
