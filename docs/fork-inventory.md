@@ -6,6 +6,12 @@ Snapshot: fork `679493d90`, official tag `v0.17.4` (remote fork main and latest 
 
 This inventory and its test results remain pinned to `679493d90`; they do not describe every behavior on current `main`. On 2026-11-25 a remote check found `origin/main` at `72d5f4ffb`, two commits ahead of that snapshot. `72d5f4ffb` commits the previously separate search work (partial-results UI, cache invalidation and stricter tokens); `45b603d46` adds an agent-CLI child image to the Docker export workflow. The previously observed 18-file search WIP is no longer uncommitted in the main checkout. These commits are not in this documentation branch and have not been independently audited or tested here. Reconcile them before treating the snapshot findings as current, including the search `partial` limitation and localization parity counts; do not overwrite the other checkout.
 
+### Post-snapshot source review
+
+At `72d5f4ffb`, `searchHost` accumulates server `partial` across fetched pages and returns it to the Command Center, which renders `command-center-partial-hint`; the session invalidates message-search caches on timeline replacement and agent removal. The same commit adds whole-word matching for short letter and digit tokens and test cases in protocol and server search suites. This addresses the identified snapshot code gaps at source level; these newer tests and the multi-host UI have not been run by this audit. It does not establish behavior when a client-side page or result cap is hit without the daemon returning `partial`.
+
+At `45b603d46`, the optional Docker `with_agents` workflow input builds a child image from the exported base, checks four CLI executables inside it, and exports a separately checksummed archive and metadata. This is workflow source evidence only: no image was built or deployed during the audit. It is a new fork build capability outside the fixed diff count and must be included when reconciling the final registry.
+
 ## Open findings at this snapshot
 
 - **Confirmed test failure:** Ukrainian resource parity has 82 English-only and 8 Ukrainian-only canonical keys. See [Ukrainian locale parity](#ukrainian-locale-parity-failing).
