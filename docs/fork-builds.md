@@ -12,7 +12,7 @@ This checkout is the keefeere/paseo-app fork of getpaseo/paseo. These rules cove
 
 ## Fork changes
 
-See the [fork inventory](fork-inventory.md) for changes, evidence and merge checks. The inventory is still under audit.
+See the [fork inventory](fork-inventory.md) for the reconciled list of fork changes, known gaps, and merge verification steps.
 
 The Windows release workflow patch stays out of `main`: build branches carry it by cherry-pick,
 so a build branch can differ from `main` beyond the version stamp. Other fork CI and release

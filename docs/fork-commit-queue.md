@@ -1,6 +1,6 @@
 # First-parent commit audit queue
 
-Snapshot: `v0.15.0..679493d90`, first-parent non-merge commits only. This is a mechanical inventory, not proof that the change survives or that its subject is accurate. Merge commits, commits behind merges, older fork history and later branches need separate review. Look up each hash in [fork-inventory.md](fork-inventory.md) and compare the resulting behavior before marking it covered.
+Snapshot: `v0.15.0..72d5f4ffb` (`origin/main`), first-parent non-merge commits (88 commits). Merge commits, commits behind merges, older pre-v0.15 fork history, and non-ancestor feature/fix branches are reconciled separately in [fork-inventory.md](fork-inventory.md). Look up each feature group in the inventory for current file ownership, known gaps, and verification steps.
 
 - `1448b43eb` ci: adapt fork workflow gating and Docker artifacts to v0.15.0
 - `33f4f8447` chore(desktop): take fork desktop updates from keefeere/paseo-app
@@ -88,3 +88,5 @@ Snapshot: `v0.15.0..679493d90`, first-parent non-merge commits only. This is a m
 - `b06b7cf8d` fix(ci): create the desktop release tag on the checked-out commit
 - `2d85af039` feat(tools): search_messages MCP tool + paseo-search skill
 - `679493d90` docs: register the search_messages tool + paseo-search skill in fork changes
+- `45b603d46` ci: build agent-CLI child image in docker export workflow
+- `72d5f4ffb` fix(search): strict tokens match whole-word only, surface partial results

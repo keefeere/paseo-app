@@ -1,14 +1,17 @@
 ## About this fork
 
-This is the personal [keefeere/paseo-app](https://github.com/keefeere/paseo-app) fork of [Paseo](https://github.com/getpaseo/paseo). It carries changes including:
+This is the personal [keefeere/paseo-app](https://github.com/keefeere/paseo-app) fork of [Paseo](https://github.com/getpaseo/paseo) (reconciled against upstream `v0.17.4` at `72d5f4ffb`). Differences from upstream:
 
-- Search across chat messages in Command Center and through the `search_messages` MCP tool, with exact and language-tolerant modes.
-- Ukrainian localization (incomplete: some newer strings still fall back to English), appearance controls and optional single-workspace project flattening.
-- Plugin actions for assistant code blocks, link-opening and terminal-placement preferences.
-- Ukrainian local speech models, Whisper Small and shell/console highlighting additions.
-- Fork-specific Pi history replay, user-image history and desktop download/build/update changes.
+- **Cross-chat message search:** Command Center **Messages** tab and `search_messages` MCP tool (`paseo-search` skill) with exact and language-tolerant modes, background index warming, strict short/numeric token matching, and scan-budget `partial` hints.
+- **Ukrainian UI localization (`uk`):** language selector entry, relative-time/duration formatting, and fork UI copy (some newer upstream keys still fall back to English).
+- **Appearance and sidebar layout:** independent sliders for interface spacing, paragraph/block spacing, prose line height, and sidebar row spacing, plus optional single-workspace project flattening.
+- **Plugin code-block actions:** `client.addCodeBlockActions` API for inline actions below assistant code blocks on web and native.
+- **Link routing and terminal placement:** preferences for HTTP chat links (`chatLinkBehavior`), custom system URI schemes (`systemLinkBehavior`, e.g., `obsidian://`), unavailable file-preview preflight metadata, and terminal open location (`openInSidePane.terminals`).
+- **Speech models and syntax highlighting:** local Ukrainian Sherpa VITS TTS voices (`vits-coqui-uk-mai`, `vits-mms-ukr`), local `whisper-small` STT, plus `shell` and `$`-prompt `console` highlighting.
+- **History and attachments:** Pi full active-path replay across compactions and durable user-message image persistence with rewind-to-composer restoration.
+- **Desktop and fork infrastructure:** main-process Electron downloads with persistent **Open** / **Open folder** toasts, closed-pipe startup guards, 780 px desktop cap on provider sheets, fork release feed (`keefeere/paseo-app`), Linux-focused fork CI gating, and optional Docker `with_agents` child-image export.
 
-See the [fork inventory](docs/fork-inventory.md) for source references, verification steps and audit status. The inventory is still being reconciled with upstream; this list is not a complete compatibility guarantee.
+See the [fork inventory](docs/fork-inventory.md) for file ownership, upstream PR tracking, known gaps, and merge verification steps, and [fork builds](docs/fork-builds.md) for release policy.
 
 <p align="center">
   <img src="packages/website/public/logo.svg" width="64" height="64" alt="Paseo logo">
