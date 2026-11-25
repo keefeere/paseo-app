@@ -17,6 +17,8 @@ At `45b603d46`, the optional Docker `with_agents` workflow input builds a child 
 - **Confirmed test failure:** Ukrainian resource parity has 82 English-only and 8 Ukrainian-only canonical keys. See [Ukrainian locale parity](#ukrainian-locale-parity-failing).
 - **Confirmed test failure:** the desktop CI contract asserts a literal directory-creation command that differs from the current valid parent-directory creation. See [CI contract test](#ci-contract-test-failing).
 - **Confirmed source mismatch:** plugin timeline projection filters daemon images using `mediaType`, while the protocol schema uses `mimeType`. See [User-image timeline projection](#user-image-timeline-projection).
+- **Confirmed model discrepancies:** pinned workspaces are excluded before the flatten decision, and a flattened workspace can be absent from shortcuts when its project was collapsed. Focused temporary tests reproduced both model outcomes; the live UI remains untested. See [Flattened sidebar projects](#flattened-sidebar-projects).
+- **Post-snapshot search limit:** the current main client can stop with a remaining cursor without raising the server-budget partial hint. This is a source-path finding; the desired result-limit UI is not established. See [Post-snapshot source review](#post-snapshot-source-review).
 - **Potential incomplete ports:** provider image recovery/rewind cleanup, AppImage smoke isolation and host-filter language refresh need behavior-level checks. See the branch follow-ups below.
 - **Audit incomplete:** historical agent searches returned limited results; non-ancestor feature and fix branches still need content-level review. Do not use this snapshot as proof that every fork change is preserved.
 
