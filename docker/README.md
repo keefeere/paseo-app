@@ -22,9 +22,20 @@ agents you use:
 ```Dockerfile
 FROM ghcr.io/getpaseo/paseo:latest
 
+ENV NPM_PREFIX=/opt/agent-cli
+ENV PATH="${NPM_PREFIX}/bin:${PATH}"
+
 USER root
-RUN npm install -g @openai/codex @anthropic-ai/claude-code
+RUN mkdir -p "${NPM_PREFIX}" && chown -R paseo:paseo "${NPM_PREFIX}"
+
+USER paseo
+RUN npm install -g --prefix "${NPM_PREFIX}" @openai/codex @anthropic-ai/claude-code
+
+USER root
 ```
+
+Install into a paseo-writable prefix outside `/home/paseo` so agent CLIs can
+self-update from the app. See [docs/docker.md](../docs/docker.md) for details.
 
 See [docs/docker.md](../docs/docker.md) for Compose, reverse proxy, security,
 agent auth, and troubleshooting notes.
