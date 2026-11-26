@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useAppSettings } from "@/hooks/use-settings";
 import React, { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import {
   useSidebarWorkspacesList,
@@ -58,6 +59,7 @@ export function SidebarModelProvider({
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const { settings } = useAppSettings();
   const modelActive = active !== false || keyboardNavigationActive;
   const list = useSidebarWorkspacesList({ enabled: modelActive });
   const showBackground = useSidebarViewStore((state) => state.showBackground);
@@ -163,12 +165,14 @@ export function SidebarModelProvider({
       pinnedCollapsed,
       collapsedProjectKeys,
       collapsedWorkspaceGroupKeys,
+      flattenSingleWorkspaceProjects: settings.flattenSingleWorkspaceProjects,
       t,
     }),
     [
       collapsedProjectKeys,
       collapsedWorkspaceGroupKeys,
       groupMode,
+      settings.flattenSingleWorkspaceProjects,
       list.projectNamesByViewKey,
       filteredProjects,
       pinnedCollapsed,

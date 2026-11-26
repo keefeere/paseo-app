@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { StreamItem } from "@/types/stream";
+import type { AgentTimelineImage } from "@getpaseo/protocol/agent-types";
+import type { StreamItem, UserMessageImageAttachment } from "@/types/stream";
 import type { TimelineItemTransform } from "./model";
 import { projectPluginTimelineItems } from "./projection";
 
@@ -191,5 +192,57 @@ describe("plugin timeline projection", () => {
       "split/thought-1/right",
     ]);
     expect(filtered).toEqual([]);
+  });
+});
+
+describe("user message image projection", () => {
+  it("keeps daemon-shaped images and drops local attachment metadata", () => {
+    const daemonImage = {
+      id: "d1",
+      mimeType: "image/png",
+      source: "https://example/img.png",
+      fileName: "a.png",
+      byteSize: 12,
+    };
+    const localImage: UserMessageImageAttachment = {
+      id: "l1",
+      mimeType: "image/jpeg",
+      storageType: "web-indexeddb",
+      storageKey: "blob-key",
+      fileName: "b.jpg",
+      byteSize: 7,
+      createdAt: 123,
+    };
+    const source: StreamItem = {
+      kind: "user_message",
+      id: "u1",
+      text: "hi",
+      timestamp: new Date("2026-01-01T00:00:00.000Z"),
+      images: [daemonImage, localImage],
+    };
+    let seen: unknown;
+    const transform: TimelineItemTransform = ({ item }) => {
+      if (item.type === "user_message") seen = item.images;
+      return undefined;
+    };
+    projectPluginTimelineItems([source], transform);
+    expect(seen).toEqual([daemonImage]);
+  });
+
+  it("drops daemon images missing a required field", () => {
+    const source: StreamItem = {
+      kind: "user_message",
+      id: "u2",
+      text: "hi",
+      timestamp: new Date("2026-01-01T00:00:00.000Z"),
+      images: [{ id: "d1", mimeType: "image/png" } as unknown as AgentTimelineImage],
+    };
+    let seen: unknown;
+    const transform: TimelineItemTransform = ({ item }) => {
+      if (item.type === "user_message") seen = item.images;
+      return undefined;
+    };
+    projectPluginTimelineItems([source], transform);
+    expect(seen).toEqual([]);
   });
 });

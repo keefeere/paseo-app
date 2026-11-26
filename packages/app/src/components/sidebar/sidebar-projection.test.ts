@@ -176,3 +176,54 @@ describe("buildSidebarProjection", () => {
     ]);
   });
 });
+
+describe("buildSidebarProjection flattening", () => {
+  it("keeps a collapsed flattened single-workspace project in shortcuts", () => {
+    const pinned = makeWorkspace("pinned", "running");
+    const unpinned = makeWorkspace("unpinned", "needs_input");
+    const input = projectionInput();
+    const projection = buildSidebarProjection({
+      ...input,
+      projects: [makeProject([pinned.placement, unpinned.placement])],
+      collapsedProjectKeys: new Set(["project"]),
+      flattenSingleWorkspaceProjects: true,
+    });
+
+    // Two workspaces total, one pinned away → not flattened; collapsed section is skipped.
+    expect(projection.shortcutModel.shortcutTargets).toEqual([
+      { serverId: "srv", workspaceId: "pinned" },
+    ]);
+  });
+
+  it("includes a collapsed flattened project's workspace in shortcuts", () => {
+    const only = makeWorkspace("only", "running");
+    const input = projectionInput();
+    const projection = buildSidebarProjection({
+      ...input,
+      projects: [makeProject([only.placement])],
+      pinnedKeys: { pinnedWorkspaceKeys: [], pinnedAtByKey: {} },
+      workspaceEntriesByKey: new Map([[only.entry.workspaceKey, only.entry]]),
+      collapsedProjectKeys: new Set(["project"]),
+      flattenSingleWorkspaceProjects: true,
+    });
+
+    expect(projection.shortcutModel.shortcutTargets).toEqual([
+      { serverId: "srv", workspaceId: "only" },
+    ]);
+  });
+
+  it("skips a collapsed non-flattened project in shortcuts", () => {
+    const only = makeWorkspace("only", "running");
+    const input = projectionInput();
+    const projection = buildSidebarProjection({
+      ...input,
+      projects: [makeProject([only.placement])],
+      pinnedKeys: { pinnedWorkspaceKeys: [], pinnedAtByKey: {} },
+      workspaceEntriesByKey: new Map([[only.entry.workspaceKey, only.entry]]),
+      collapsedProjectKeys: new Set(["project"]),
+      flattenSingleWorkspaceProjects: false,
+    });
+
+    expect(projection.shortcutModel.shortcutTargets).toEqual([]);
+  });
+});

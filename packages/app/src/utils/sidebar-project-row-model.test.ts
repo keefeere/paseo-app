@@ -323,3 +323,47 @@ describe("buildSidebarProjectRowModel", () => {
     });
   });
 });
+
+describe("buildSidebarProjectRowModel flattening", () => {
+  it("flattens a single-workspace project when enabled", () => {
+    const result = buildSidebarProjectRowModel({
+      project: project({ workspaces: [workspace({ workspaceId: "ws-only" })] }),
+      collapsed: false,
+      flattenSingleWorkspaceProjects: true,
+    });
+
+    expect(result.kind).toBe("project_workspace");
+  });
+
+  it("flattens a single-workspace project even when collapsed", () => {
+    const result = buildSidebarProjectRowModel({
+      project: project({ workspaces: [workspace({ workspaceId: "ws-only" })] }),
+      collapsed: true,
+      flattenSingleWorkspaceProjects: true,
+    });
+
+    expect(result.kind).toBe("project_workspace");
+  });
+
+  it("does not flatten when one workspace was pinned away (total count is two)", () => {
+    const result = buildSidebarProjectRowModel({
+      project: project({ workspaces: [workspace({ workspaceId: "ws-unpinned" })] }),
+      collapsed: false,
+      flattenSingleWorkspaceProjects: true,
+      totalWorkspaceCount: 2,
+    });
+
+    expect(result.kind).toBe("project_section");
+  });
+
+  it("does not flatten when the single workspace was pinned away", () => {
+    const result = buildSidebarProjectRowModel({
+      project: project({ workspaces: [] }),
+      collapsed: false,
+      flattenSingleWorkspaceProjects: true,
+      totalWorkspaceCount: 1,
+    });
+
+    expect(result.kind).toBe("project_section");
+  });
+});

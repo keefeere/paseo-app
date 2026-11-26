@@ -54,6 +54,18 @@ function hostTarget(input: {
   };
 }
 
+export function shouldFlattenSidebarProject(input: {
+  flattenSingleWorkspaceProjects?: boolean;
+  totalWorkspaceCount: number;
+  visibleWorkspaceCount: number;
+}): boolean {
+  return (
+    input.flattenSingleWorkspaceProjects === true &&
+    input.totalWorkspaceCount === 1 &&
+    input.visibleWorkspaceCount === 1
+  );
+}
+
 export function resolveSidebarProjectIconTarget(
   project: SidebarProjectEntry,
 ): SidebarProjectHostTarget | null {
@@ -134,6 +146,8 @@ export function buildSidebarProjectRowModel(input: {
   preferredServerId?: string | null;
   flattenSingleWorkspaceProjects?: boolean;
   supportsMultiplicityByServerId?: ReadonlyMap<string, boolean>;
+  /** Total workspaces across all hosts before pinned removal — the flatten gate counts these. */
+  totalWorkspaceCount?: number;
 }): SidebarProjectRowModel {
   const trailingAction = projectTrailingAction(
     input.project,
@@ -141,8 +155,15 @@ export function buildSidebarProjectRowModel(input: {
     input.preferredServerId,
   );
   const [workspace] = input.project.workspaces;
-  const isSingleWorkspace = input.project.workspaces.length === 1;
-  if (input.flattenSingleWorkspaceProjects && isSingleWorkspace && workspace) {
+  const totalWorkspaceCount = input.totalWorkspaceCount ?? input.project.workspaces.length;
+  if (
+    shouldFlattenSidebarProject({
+      flattenSingleWorkspaceProjects: input.flattenSingleWorkspaceProjects,
+      totalWorkspaceCount,
+      visibleWorkspaceCount: input.project.workspaces.length,
+    }) &&
+    workspace
+  ) {
     return { kind: "project_workspace", chevron: null, workspace, trailingAction };
   }
   return {

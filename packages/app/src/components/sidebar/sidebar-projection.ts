@@ -12,6 +12,7 @@ import type {
 import type { SidebarGroupMode } from "@/stores/sidebar-view-store";
 import {
   resolveSidebarProjectIconTargets,
+  shouldFlattenSidebarProject,
   type SidebarProjectIconTarget,
 } from "@/utils/sidebar-project-row-model";
 import {
@@ -46,6 +47,7 @@ export interface SidebarProjectionInput {
   pinnedCollapsed: boolean;
   collapsedProjectKeys: ReadonlySet<string>;
   collapsedWorkspaceGroupKeys: ReadonlySet<string>;
+  flattenSingleWorkspaceProjects?: boolean;
   t: TFunction;
 }
 
@@ -69,11 +71,22 @@ export function buildSidebarProjection(input: SidebarProjectionInput): SidebarPr
     sections.push({ workspaces: pinnedGroups.pinnedChats });
   }
   if (input.groupMode === "project") {
+    const totalByViewKey = new Map(
+      input.projects.map((project) => [project.viewKey, project.workspaces.length]),
+    );
     sections.push(
-      ...pinnedGroups.unpinnedProjects.map((project) => ({
-        workspaces: project.workspaces,
-        collapsed: input.collapsedProjectKeys.has(project.viewKey),
-      })),
+      ...pinnedGroups.unpinnedProjects.map((project) => {
+        const total = totalByViewKey.get(project.viewKey) ?? project.workspaces.length;
+        const flattened = shouldFlattenSidebarProject({
+          flattenSingleWorkspaceProjects: input.flattenSingleWorkspaceProjects,
+          totalWorkspaceCount: total,
+          visibleWorkspaceCount: project.workspaces.length,
+        });
+        return {
+          workspaces: project.workspaces,
+          collapsed: !flattened && input.collapsedProjectKeys.has(project.viewKey),
+        };
+      }),
     );
   } else {
     sections.push(

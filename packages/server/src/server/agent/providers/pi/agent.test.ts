@@ -3458,7 +3458,16 @@ describe("PiRpcAgentClient", () => {
       events.push(event);
     }
 
-    expect(events.map((e) => e.item)).toEqual([
+    expect(events.map((e) => e.type)).toEqual([
+      "timeline",
+      "timeline",
+      "timeline",
+      "timeline",
+      "timeline",
+      "session_metrics_updated",
+    ]);
+    const timeline = events.filter((e) => e.type === "timeline");
+    expect(timeline.map((e) => e.item)).toEqual([
       {
         type: "user_message",
         text: "first question",
@@ -3486,6 +3495,10 @@ describe("PiRpcAgentClient", () => {
       },
     ]);
 
+    const metricsEvents = events.filter((e) => e.type === "session_metrics_updated");
+    expect(metricsEvents).toHaveLength(1);
+    expect(metricsEvents[0]).toMatchObject({ provider: "pi", metrics: expect.any(Array) });
+
     // Rewind target for the pre-compaction message was registered
     await session.revertConversation?.({ messageId: "msg-user-1" });
     expect(fakeSession.treeNavigationRequests).toEqual(["msg-user-1"]);
@@ -3507,7 +3520,9 @@ describe("PiRpcAgentClient", () => {
       events.push(event);
     }
 
-    expect(events.map((e) => e.item)).toEqual([
+    expect(events.map((e) => e.type)).toEqual(["timeline", "timeline", "session_metrics_updated"]);
+    const timeline = events.filter((e) => e.type === "timeline");
+    expect(timeline.map((e) => e.item)).toEqual([
       {
         type: "user_message",
         text: "fallback user",
@@ -3518,6 +3533,9 @@ describe("PiRpcAgentClient", () => {
         messageId: "pi-history-assistant-1",
       },
     ]);
+    const metricsEvents = events.filter((e) => e.type === "session_metrics_updated");
+    expect(metricsEvents).toHaveLength(1);
+    expect(metricsEvents[0]).toMatchObject({ provider: "pi", metrics: expect.any(Array) });
   });
 
   test("injects MCP servers without replacing the Pi global MCP config", async () => {

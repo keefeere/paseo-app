@@ -14,6 +14,16 @@ const projectionCache = new WeakMap<
   WeakMap<StreamItem, Partial<Record<AssistantPhase, StreamItem[]>>>
 >();
 
+function isAgentTimelineImage(image: unknown): image is AgentTimelineImage {
+  if (!image || typeof image !== "object") return false;
+  const candidate = image as Record<string, unknown>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.mimeType === "string" &&
+    typeof candidate.source === "string"
+  );
+}
+
 function sourceToolCallTimelineItem(data: AgentToolCallData): ToolCallTimelineItem {
   const { callId, name, status, error, detail, metadata, agentMessage } = data;
   const base = {
@@ -47,9 +57,10 @@ function sourceTimelineItem(item: StreamItem): AgentTimelineItem | null {
         // already drawing the picture inline.
         ...(item.images
           ? {
-              images: item.images.filter(
-                (image): image is AgentTimelineImage => "mediaType" in image,
-              ),
+              // Only daemon-stored images match the AgentTimelineImage contract plugins
+              // see. Local attachment metadata is a different shape and must not be
+              // projected as a daemon image.
+              images: item.images.filter(isAgentTimelineImage),
             }
           : {}),
       };
