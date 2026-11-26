@@ -157,6 +157,9 @@ export const uk = {
       fastModeSearchKeywords: "швидко швидкість низька затримка fast speed low latency",
       settingOn: "Увімк.",
       settingOff: "Вимк.",
+
+      profileGroupLabel: "Профіль",
+      profileSearchKeywords: "профіль застосувати профіль агента пресет",
     },
   },
   composer: {
@@ -388,6 +391,8 @@ export const uk = {
       forkFailed: "Не вдалося відгалузити чат",
       openFile: "Відкрити файл",
       copied: "Скопійовано",
+
+      copyQuote: "Копіювати цитату",
     },
     attachments: {
       dismissImage: "Закрити зображення",
@@ -1008,6 +1013,9 @@ export const uk = {
           deletedLines: "Видалених рядків: {{count}}",
           unpushedCommit: "{{count}} ненадісланий коміт",
           unpushedCommits: "Ненадісланих комітів: {{count}}",
+
+          bulkTitle: "Архівувати {{count}} робочих просторів?",
+          bulkWorkspaceReason: "{{workspaceName}}: {{reason}}",
         },
       },
       diff: {
@@ -1417,6 +1425,8 @@ export const uk = {
         hiding: "Приховування...",
         markAsRead: "Позначити прочитаним",
         markAsUnread: "Позначити непрочитаним",
+
+        select: "Вибрати",
       },
       confirmations: {
         hideTitle: "Приховати робочий простір?",
@@ -1440,7 +1450,12 @@ export const uk = {
         archived: "Воркспейс архівовано",
         undoArchive: "Скасувати",
         undoArchiveFailed: "Не вдалося скасувати архівування",
+
+        archiveMultipleFailed: "Не вдалося архівувати {{count}} робочих просторів",
+        archivedCount: "Архівовано робочих просторів: {{count}}",
       },
+
+      selection: { count: "Вибрано: {{count}}", exit: "Вийти з режиму вибору" },
     },
   },
   newWorkspace: {
@@ -1618,6 +1633,18 @@ export const uk = {
         installed: "Оновлення застосунку встановлено. Потрібен перезапуск.",
         failed: "Не вдалося оновити застосунок.",
         idle: "Оновлення ще не перевірялися.",
+
+        downloadingVersionProgress: "Завантаження {{version}}... {{percent}}%",
+        downloadingProgress: "Завантаження оновлення... {{percent}}%",
+        pendingWithVersionProgress: "Знайдено оновлення: {{version}}. Завантаження... {{percent}}%",
+        pendingWithVersionProgressAndLastChecked:
+          "Знайдено оновлення: {{version}}. Завантаження... {{percent}}%. Востаннє перевірено о {{time}}.",
+        downloadAvailableWithVersion: "Доступне оновлення: {{version}}",
+        downloadAvailableWithVersionAndLastChecked:
+          "Доступне оновлення: {{version}}. Востаннє перевірено о {{time}}.",
+        downloadAvailable: "Доступне оновлення застосунку.",
+        downloadAvailableWithLastChecked:
+          "Доступне оновлення застосунку. Востаннє перевірено о {{time}}.",
       },
       installError: "Не вдалося встановити оновлення застосунку для комп'ютера.",
       callout: {
@@ -1632,6 +1659,14 @@ export const uk = {
         versionReady: "Версія {{version}} готова до встановлення.",
         newVersionReady: "Нова версія готова до встановлення.",
         restartWarning: "Оновлення застосунку зупинить запущені агенти й закриє сесії терміналів.",
+
+        downloadingTitle: "Завантаження оновлення",
+        downloadingAction: "Завантаження...",
+        downloadAndRestart: "Завантажити",
+        downloadingVersionDescription: "Завантаження {{version}}... {{percent}}%",
+        downloadingDescription: "Завантаження оновлення... {{percent}}%",
+        versionAvailable: "{{version}} доступна для завантаження.",
+        newVersionAvailable: "Нова версія доступна для завантаження.",
       },
     },
     settings: {
@@ -1849,18 +1884,6 @@ export const uk = {
             "Повноцінний нативний мобільний застосунок дає змогу керувати будь-яким комп’ютером із Paseo з телефона",
           appStore: "App Store",
           googlePlay: "Google Play",
-          connectTitle: "Виберіть спосіб під’єднання",
-          connectDocs: "Документація",
-          openConnectDocs: "Відкрити документацію про під’єднання",
-          recommended: "Рекомендовано",
-          relay: {
-            title: "Ретранслятор",
-            hint: "Наскрізне шифрування, скануйте QR-код",
-          },
-          tailscale: {
-            title: "Tailscale",
-            hint: "Потрібне невелике налаштування",
-          },
         },
       },
     },
@@ -1897,6 +1920,11 @@ export const uk = {
     searchAllPlaceholder: "Пошук серед усіх моделей...",
     searchPlaceholder: "Пошук моделей...",
     openProviderSettings: "Відкрити налаштування {{provider}}",
+
+    models: "Моделі",
+    profileSaved: "Збережено «{{name}}»",
+    undo: "Скасувати",
+    undoProfileSave: "Скасувати збереження профілю",
   },
   providerCatalog: {
     title: "Додати провайдера",
@@ -2528,6 +2556,8 @@ export const uk = {
       terminals: "Термінали",
       plugins: "Плагіни",
       host: "Огляд",
+
+      agentProfiles: "Профілі агентів",
     },
     plugins: {
       gallery: {
@@ -2915,6 +2945,23 @@ export const uk = {
         checking: "Перевірка...",
         alertTitle: "Помилка",
         alertMessage: "Не вдалося відкрити діалог підтвердження оновлення.",
+
+        downloadTitle: "Завантажити оновлення для комп'ютера",
+        downloadMessage: "Оновлення Paseo буде завантажено і встановлено на цьому комп'ютері",
+        downloadConfirm: "Завантажити та встановити",
+        download: "Завантажити",
+        downloadTo: "Завантажити {{version}}",
+        downloading: "Завантаження...",
+      },
+
+      autoUpdate: {
+        label: "Автоматичні оновлення",
+        options: { automatic: "Автоматично", notify: "Сповіщати", off: "Вимкнено" },
+        descriptions: {
+          automatic: "Перевіряти та завантажувати оновлення у фоні",
+          notify: "Перевіряти оновлення, але завантажувати лише за вашим вибором",
+          off: "Не перевіряти автоматично. Перевіряти лише за вашою командою",
+        },
       },
     },
     appearance: {
@@ -3164,6 +3211,24 @@ export const uk = {
         preview: {
           workspaceName: "my-workspace",
         },
+
+        icon: {
+          label: "Іконка",
+          accessibilityLabel: "Іконка, {{value}}",
+          auto: "Автоматично",
+          autoDetected: "Автоматично ({{icon}})",
+          options: {
+            server: "Сервер",
+            laptop: "Ноутбук",
+            desktop: "Комп'ютер",
+            mini: "Мінікомп'ютер",
+            workstation: "Робоча станція",
+            cloud: "Хмара",
+            container: "Контейнер",
+            board: "Одноплатний комп'ютер",
+            terminal: "Термінал",
+          },
+        },
       },
       notFound: "Хост не знайдено",
       badges: {
@@ -3181,10 +3246,7 @@ export const uk = {
         timeout: "Тайм-аут",
       },
       pairDevices: {
-        title: "Сполучення пристроїв",
         rowTitle: "Сполучити пристрій",
-        rowHint:
-          "Відскануйте QR-код або скопіюйте посилання, щоб під'єднати телефон до цього хоста",
       },
       skills: {
         sectionTitle: "Навички оркестрації",
@@ -3335,6 +3397,32 @@ export const uk = {
         removeConfirmMessage: "Вилучити «{{name}}»?",
         moveUp: "Перемістити вгору",
         moveDown: "Перемістити вниз",
+
+        searchPlaceholder: "Пошук профілів",
+        clearSearch: "Очистити пошук",
+        noSearchMatches: "Немає профілів за запитом «{{query}}»",
+        noRoutingNote: "Без примітки",
+        duplicate: "Дублювати",
+        copyName: "{{name}} (копія)",
+        moveToTop: "Перемістити нагору",
+        profileActions: "Дії для {{name}}",
+        reorderProfile: "Змінити порядок {{name}}",
+        previousProfile: "Попередній профіль",
+        nextProfile: "Наступний профіль",
+        chooseModelPlaceholder: "Виберіть модель",
+        searchModelsPlaceholder: "Пошук моделей",
+        chooseModelSubtitle: "Виберіть модель",
+        customizeSettings: "Налаштувати параметри",
+        addRoutingNoteShort: "Додати примітку",
+        providerOptionsLabel: "Параметри {{provider}}",
+        discardTitle: "Відкинути зміни?",
+        discardMessage: "У цьому профілі є незбережені зміни.",
+        discardConfirm: "Відкинути",
+        columns: {
+          profile: "Профіль",
+          runtime: "Модель і середовище",
+          whenToUse: "Коли використовувати",
+        },
       },
       daemon: {
         rename: {
@@ -3417,6 +3505,15 @@ export const uk = {
           accessibilityLabel: "Увімкнути хуки термінальних агентів",
           failedToUpdate: "Не вдалося оновити хуки термінальних агентів",
         },
+      },
+
+      connectionKinds: {
+        local: "Локально",
+        relay: "Релей",
+        tailscale: "Tailscale",
+        ssh: "SSH",
+        direct: "Напряму",
+        routed: "Через",
       },
     },
     providers: {
@@ -3622,5 +3719,32 @@ export const uk = {
     message: "Відкрити {{url}} у Paseo чи в зовнішньому браузері?",
     internalTab: "Вбудований браузер — вкладка",
     externalBrowser: "Зовнішній браузер",
+  },
+
+  devices: {
+    title: "Пристрої",
+    waysToConnect: "Способи підключення",
+    docs: "Документація",
+    docsAccessibility: "Відкрити документацію з підключення",
+    recommended: "Рекомендовано",
+    relay: { title: "Релей", hint: "Наскрізне шифрування, скануйте QR-код" },
+    tailscale: {
+      hint: "Пряме підключення через tailnet, введіть адресу",
+      unavailable: "Tailscale не запущено на цьому хості",
+      install: "Встановити Tailscale",
+      waiting: "Очікуємо запуску Tailscale на цьому хості",
+      alwaysOn: "Завжди увімкнено, оскільки хост уже приймає підключення Tailscale",
+      socket: "Вимкнено, оскільки хост слухає локальний сокет",
+      launch: "Керується командою запуску цього хоста",
+      update: "Оновіть цей хост, щоб використовувати Tailscale",
+      updateDocs: "Як оновити",
+      address: "На телефоні з Tailscale додайте хост за цією адресою",
+      statusError: "Не вдалося перевірити Tailscale",
+      turnOnError: "Не вдалося увімкнути Tailscale",
+      turnOffError: "Не вдалося вимкнути Tailscale",
+      confirmTitle: "Вимкнути Tailscale?",
+      confirmMessage: "Цей пристрій підключено через Tailscale і він втратить зв'язок із хостом.",
+      confirmAction: "Вимкнути",
+    },
   },
 } as const;
