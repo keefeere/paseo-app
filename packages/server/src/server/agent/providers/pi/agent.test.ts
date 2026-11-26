@@ -3079,6 +3079,37 @@ describe("PiRpcAgentClient", () => {
     },
   );
 
+  test("defaults to Pi's per-model thinking level from settings.json", async () => {
+    const agentDir = mkdtempSync(path.join(tmpdir(), "paseo-pi-levels-"));
+    onTestFinished(() => rmSync(agentDir, { recursive: true, force: true }));
+    writeFileSync(
+      path.join(agentDir, "settings.json"),
+      JSON.stringify({
+        modelThinkingLevels: { "kimi-coding/kimi-k3": "low", "local/other": "minimal" },
+      }),
+    );
+    const pi = new FakePi();
+    pi.queueSessionSetup((session) => {
+      session.models = [
+        RESTRICTED_THINKING_MODEL,
+        { ...RESTRICTED_THINKING_MODEL, provider: "local", id: "other", name: "Other" },
+      ];
+    });
+    const client = new PiRpcAgentClient({
+      logger: pino({ level: "silent" }),
+      runtime: pi,
+      runtimeSettings: { env: { PI_CODING_AGENT_DIR: agentDir } },
+    });
+    const catalog = await client.fetchCatalog({
+      scope: "workspace",
+      cwd: "/workspace/project",
+      force: false,
+    });
+
+    // a supported level wins; an unsupported one (minimal is null here) keeps the usual default
+    expect(catalog.models.map((model) => model.defaultThinkingOptionId)).toEqual(["low", "high"]);
+  });
+
   test("lists no draft controls without starting a Pi session", async () => {
     const pi = new FakePi();
     const client = createClient(pi);
