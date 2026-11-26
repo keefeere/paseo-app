@@ -81,7 +81,7 @@ async function refillDecodeBudget(): Promise<void> {
 export async function materializeProviderImage(image: {
   data: string;
   mimeType: string | null;
-}): Promise<MaterializedProviderImage> {
+}): Promise<MaterializedProviderImage & { id: string; mimeType: string; byteSize: number }> {
   const maxEncodedCharacters = Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4;
   // Check length before inspecting/copying the payload, including a bounded data URI header.
   if (image.data.length > maxEncodedCharacters + 256) {
@@ -100,18 +100,24 @@ export async function materializeProviderImage(image: {
     throw new Error(`Image attachment exceeds ${MAX_PROVIDER_IMAGE_BYTES} bytes`);
   }
   const hash = createHash("sha256");
-  for await (const bytes of decodeImage(data)) hash.update(bytes);
-  const filename = `${hash.digest("hex")}.${getImageExtension(mimeType)}`;
+  let byteSize = 0;
+  for await (const bytes of decodeImage(data)) {
+    hash.update(bytes);
+    byteSize += bytes.byteLength;
+  }
+  const id = hash.digest("hex");
+  const filename = `${id}.${getImageExtension(mimeType)}`;
+  const metadata = { id, mimeType, byteSize };
   const directory = getMaterializedImageAttachmentDir();
   const dir = await directory;
   try {
-    return await materializeInDirectory(dir, filename, data);
+    return { ...(await materializeInDirectory(dir, filename, data)), ...metadata };
   } catch (error) {
     if (!isMissingPath(error)) throw error;
     // Other requests may have already replaced the directory after the same deletion.
     if (attachmentDirectory === directory) attachmentDirectory = undefined;
     const replacement = await getMaterializedImageAttachmentDir();
-    return materializeInDirectory(replacement, filename, data);
+    return { ...(await materializeInDirectory(replacement, filename, data)), ...metadata };
   }
 }
 

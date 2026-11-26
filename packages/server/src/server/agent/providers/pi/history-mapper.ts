@@ -1,6 +1,8 @@
 import { mapCustomMessageToToolCall } from "../custom-message.js";
 import type {
+  AgentHistoryOptions,
   AgentMetric,
+  AgentTimelineImage,
   AgentStreamEvent,
   AgentTimelineItem,
   ToolCallDetail,
@@ -44,7 +46,8 @@ export interface PiCapturedUserMessageEntry {
   text: string;
 }
 
-export interface PiHistoryMapperHooks {
+export interface PiHistoryMapperHooks extends AgentHistoryOptions {
+  onUserImageError?: (error: unknown) => void;
   mapCustomMessage?: (
     text: string,
     provider: string,
@@ -225,18 +228,19 @@ export class PiHistoryMapper {
     ];
   }
 
-  private mapUserMessage(
+  private async mapUserMessage(
     message: Extract<PiAgentMessage, { role: "user" }>,
     explicitId?: string,
     timestamp?: string,
-  ): AgentStreamEvent[] {
+  ): Promise<AgentStreamEvent[]> {
     const text = getUserMessageText(message.content);
-    this.userIndex += 1;
-    if (!text) {
-      return [];
-    }
-    const userEntry = this.userEntries[this.userIndex - 1];
+    const userEntry = this.userEntries[this.userIndex++];
     const messageId = explicitId ?? userEntry?.id;
+    const submitted = messageId ? this.hooks.findSubmittedUserImages?.(messageId) : undefined;
+    const images = submitted?.length
+      ? submitted
+      : await this.materializeUserImages(message.content);
+    if (!text && !images.length) return [];
     return [
       {
         type: "timeline",
@@ -246,9 +250,35 @@ export class PiHistoryMapper {
           type: "user_message",
           text,
           ...(messageId ? { messageId } : {}),
+          ...(images.length ? { images } : {}),
         },
       },
     ];
+  }
+
+  private async materializeUserImages(
+    content: Extract<PiAgentMessage, { role: "user" }>["content"],
+  ): Promise<AgentTimelineImage[]> {
+    const images: AgentTimelineImage[] = [];
+    if (!Array.isArray(content)) return images;
+    for (const block of content) {
+      if (
+        block?.type !== "image" ||
+        typeof block.data !== "string" ||
+        !block.data ||
+        typeof block.mimeType !== "string" ||
+        !block.mimeType.startsWith("image/")
+      )
+        continue;
+      try {
+        const { path, id, mimeType, byteSize } = await materializeProviderImage(block);
+        if (byteSize && mimeType.startsWith("image/"))
+          images.push({ id, mimeType, source: path, byteSize });
+      } catch (error) {
+        this.hooks.onUserImageError?.(error);
+      }
+    }
+    return images;
   }
 
   private mapCustomMessage(

@@ -5,7 +5,7 @@ import {
   formatAgentMessage,
   formatSystemNotificationPrompt,
 } from "./agent-messages/index.js";
-import { expect, test, vi, onTestFinished } from "vitest";
+import { describe, expect, test, vi, onTestFinished } from "vitest";
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -29,6 +29,8 @@ import {
 } from "./providers/codex-app-server-agent.js";
 import { spawnProcess } from "../../utils/spawn.js";
 import { createFakeCodexAppServer } from "./providers/codex/test-utils/fake-app-server.js";
+import { PiRpcAgentClient } from "./providers/pi/agent.js";
+import { FakePi } from "./providers/pi/test-utils/fake-pi.js";
 import { InMemoryAgentTimelineStore } from "./agent-timeline-store.js";
 import { limitAgentTimelineItemContent } from "./agent-timeline-content.js";
 import {
@@ -16597,6 +16599,76 @@ test("images in a steered prompt the provider never echoes are recovered by its 
     await restarted.closeAgent(agent.id);
     await restarted.flushForShutdown();
   } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("Pi provider replay recovers native images and prefers existing submitted attachments", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "pi-replay-images-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  const pi = new FakePi();
+  const client = new PiRpcAgentClient({ logger, runtime: pi });
+  vi.spyOn(client, "isAvailable").mockResolvedValue(true);
+  vi.spyOn(client, "fetchCatalog").mockResolvedValue({ models: [], modes: [] });
+  const manager = new AgentManager({
+    clients: { pi: client },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const config = { provider: "pi", cwd: workdir };
+    const agent = await manager.createAgent(config, undefined, { workspaceId: undefined });
+    const [submitted] = await imageStore.persist([{ data: "b3JpZ2luYWw=", mimeType: "image/png" }]);
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "client-id",
+      providerMessageId: "submitted",
+      images: [submitted],
+    });
+    await manager.closeAgent(agent.id);
+    const handle = (await storage.get(agent.id))?.persistence;
+    if (!handle) throw new Error("Missing Pi session handle");
+    await manager.resumeAgentFromPersistence(handle, config, agent.id);
+    pi.latestSession().entries = [
+      {
+        type: "message",
+        id: "native",
+        parentId: null,
+        message: {
+          role: "user",
+          content: [{ type: "image", data: "bmF0aXZl", mimeType: "image/png" }],
+        },
+      },
+      {
+        type: "message",
+        id: "submitted",
+        parentId: "native",
+        message: {
+          role: "user",
+          content: [{ type: "image", data: "cmVzaXplZA==", mimeType: "image/png" }],
+        },
+      },
+    ];
+    await manager.hydrateTimelineFromProvider(agent.id, { force: true, broadcast: false });
+    const [native, stored, ...extra] = manager.getTimeline(agent.id);
+    expect(extra).toEqual([]);
+    if (native?.type !== "user_message" || !native.images) throw new Error("Missing native image");
+    expect(native).toMatchObject({ messageId: "native", text: "" });
+    expect(native.images.map(({ source }) => readFileSync(source, "utf8"))).toEqual(["native"]);
+    expect(stored).toEqual({
+      type: "user_message",
+      messageId: "submitted",
+      text: "",
+      images: [submitted],
+    });
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(1);
+
+    await manager.rewind(agent.id, "native", "conversation");
+    expect(pi.latestSession().treeNavigationRequests).toEqual(["native"]);
+    expect(manager.getTimeline(agent.id)).toEqual([native, stored]);
+  } finally {
+    await manager.flushForShutdown();
     rmSync(workdir, { recursive: true, force: true });
   }
 });

@@ -11,6 +11,7 @@ import {
   type AgentCapabilityFlags,
   type AgentClient,
   type AgentDraftControls,
+  type AgentHistoryOptions,
   type AgentLaunchContext,
   type AgentMetadata,
   type AgentMode,
@@ -1485,7 +1486,7 @@ export class PiRpcAgentSession implements AgentSession {
     };
   }
 
-  async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+  async *streamHistory(options?: AgentHistoryOptions): AsyncGenerator<AgentStreamEvent> {
     try {
       await this.requestEntryCapture("history");
       const history = await this.runtimeSession.getHistory();
@@ -1499,7 +1500,10 @@ export class PiRpcAgentSession implements AgentSession {
         this.provider,
         history.entries.length > 0 ? history.entries : history.messages,
         history.userEntries,
-        {},
+        {
+          ...options,
+          onUserImageError: (err) => this.logger.warn({ err }, "Failed to recover Pi user image"),
+        },
         // At most eight 2 MiB child files per replay; later cards retain their summaries.
         createPiExtensionHost(this.logger, undefined, 16 * 1024 * 1024),
         this.closeController.signal,

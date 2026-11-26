@@ -291,8 +291,12 @@ footer. Non-image composer attachments are local presentation and are not echoed
 A submitted prompt is one `UserMessageItem` row. Its stable identity, timestamp, and local
 attachments survive canonical acknowledgement. The daemon persists user image bytes and includes
 small image references in canonical `user_message` rows, so provider-history replay restores images
-after a daemon or app restart without putting base64 data on the timeline wire. Submission lifecycle
-is a separate record keyed by agent, not another row shape.
+after a daemon or app restart without putting base64 data on the timeline wire. Pi replay uses
+the daemon's submitted attachments when the native entry ID matches: Pi can hold a resized
+copy. Otherwise it reconstructs private preview files from the native transcript, which remains
+the source of truth for those images. Replay only covers the active branch, so do not use it to
+prune attachments for other rewind targets. Submission lifecycle is a separate record keyed by
+agent, not another row shape.
 The transaction registry records two independent settlement facts: canonical acknowledgement and RPC
 settlement. Canonical acknowledgement retires optimistic activity immediately. When both facts are
 known, whichever arrives second deletes the record. A canonical acknowledgement that arrives first

@@ -4453,9 +4453,8 @@ export class AgentManager {
           broadcast: true,
           broadcastTimeline: false,
         });
-        // No rewind-time image prune/GC: without an independent authoritative
-        // completeness proof of the provider replay (Pi drops image-only rows),
-        // deleting refs or files could destroy images that are still needed.
+        // Replay selects the active branch, not every entry a future rewind may reach.
+        // Do not prune image references or collect files from that projection.
         this.dispatch({
           type: "timeline_replacement",
           agentId,
@@ -4822,7 +4821,7 @@ export class AgentManager {
       // session unregistered so the registration catch closes it.
       const startupHistory: AgentStreamEvent[] = [];
       if (session.initialTimeline?.length && !managed.historyPrimed) {
-        for await (const event of session.streamHistory()) {
+        for await (const event of this.streamProviderHistory(resolvedAgentId, session)) {
           startupHistory.push(limitAgentStreamEventContent(event));
         }
       }
@@ -5379,6 +5378,12 @@ export class AgentManager {
     await this.primeTimelineFromLegacyProviderHistory(agent, broadcast);
   }
 
+  private streamProviderHistory(agentId: string, session: AgentSession) {
+    return session.streamHistory({
+      findSubmittedUserImages: (id) => this.findSubmittedMessageImages(agentId, id).images,
+    });
+  }
+
   private async forceHydrateTimelineFromLegacyProviderHistory(
     agent: ActiveManagedAgent,
     broadcast: boolean,
@@ -5386,7 +5391,7 @@ export class AgentManager {
   ): Promise<void> {
     const historyEntries: ProviderHistoryEntry[] = [];
     const providerSubagentEvents: Extract<AgentStreamEvent, { type: "provider_subagent" }>[] = [];
-    for await (const rawEvent of agent.session.streamHistory()) {
+    for await (const rawEvent of this.streamProviderHistory(agent.id, agent.session)) {
       const event = limitAgentStreamEventContent(rawEvent);
       if (event.type === "provider_subagent") {
         providerSubagentEvents.push(event);
@@ -5456,7 +5461,7 @@ export class AgentManager {
     broadcast: boolean | (() => boolean),
     history:
       | AsyncIterable<AgentStreamEvent>
-      | Iterable<AgentStreamEvent> = agent.session.streamHistory(),
+      | Iterable<AgentStreamEvent> = this.streamProviderHistory(agent.id, agent.session),
   ): Promise<void> {
     const deferredBroadcast = typeof broadcast === "function";
     const historyEntries: ProviderHistoryEntry[] = [];

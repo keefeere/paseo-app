@@ -735,6 +735,11 @@ export interface AgentUsageSession {
   sessionKey: string;
 }
 
+export interface AgentHistoryOptions {
+  /** Daemon-owned attachments take precedence over native transcript image data. */
+  findSubmittedUserImages?: (messageId: string) => AgentTimelineImage[] | undefined;
+}
+
 export interface AgentSession {
   /** Persist the session's current handle immediately after an interactive resume. */
   readonly persistenceUpdatedOnResume?: boolean;
@@ -758,7 +763,7 @@ export interface AgentSession {
   startTurn(prompt: AgentPromptInput, options?: AgentRunOptions): Promise<{ turnId: string }>;
   steerActiveTurn?(prompt: AgentPromptInput, options: SteerActiveTurnOptions): Promise<SteerResult>;
   subscribe(callback: (event: AgentStreamEvent) => void): () => void;
-  streamHistory(): AsyncGenerator<AgentStreamEvent>;
+  streamHistory(options?: AgentHistoryOptions): AsyncGenerator<AgentStreamEvent>;
   getRuntimeInfo(): Promise<AgentRuntimeInfo>;
   getAvailableModes(): Promise<AgentMode[]>;
   getCurrentMode(): Promise<string | null>;
