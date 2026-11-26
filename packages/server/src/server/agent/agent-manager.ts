@@ -4318,6 +4318,9 @@ export class AgentManager {
           broadcast: true,
           broadcastTimeline: false,
         });
+        // No rewind-time image prune/GC: without an independent authoritative
+        // completeness proof of the provider replay (Pi drops image-only rows),
+        // deleting refs or files could destroy images that are still needed.
         this.dispatch({
           type: "timeline_replacement",
           agentId,
@@ -6008,6 +6011,12 @@ export class AgentManager {
       // Human attempts stay in history on rejection; delivery notifications require acceptance.
       if (outcome === "rejected" && item.type !== "user_message") continue;
       this.recordSubmittedPromptItem(agent, item, options);
+    }
+    // A steered prompt the provider accepts without echoing a user message never reaches
+    // reconcileSubmittedPromptEcho. Link the provider id here, or the saved images stay
+    // reachable only by client message id and history replay cannot find them.
+    if (options?.providerMessageId) {
+      this.linkSubmittedMessageProviderId(agent.id, clientMessageId, options.providerMessageId);
     }
   }
 

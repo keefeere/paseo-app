@@ -6,7 +6,7 @@ import {
 } from "./agent-messages/index.js";
 import { expect, test, vi, onTestFinished } from "vitest";
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
@@ -26,7 +26,10 @@ import { CodexAppServerAgentSession } from "./providers/codex-app-server-agent.j
 import { createFakeCodexAppServer } from "./providers/codex/test-utils/fake-app-server.js";
 import { InMemoryAgentTimelineStore } from "./agent-timeline-store.js";
 import { limitAgentTimelineItemContent } from "./agent-timeline-content.js";
-import type { ConversationImageStore } from "./conversation-image-store.js";
+import {
+  createConversationImageStore,
+  type ConversationImageStore,
+} from "./conversation-image-store.js";
 import { buildStoredAgentPayload, toAgentPayload } from "./agent-projections.js";
 import type { ProviderOptions } from "@getpaseo/protocol/agent-types";
 import { projectTimelineRows } from "./timeline-projection.js";
@@ -16347,4 +16350,384 @@ test("importProviderSession keeps the stats the provider reported with its histo
     ["user_message", null],
     ["assistant_message", null],
   ]);
+});
+
+test("conversation rewind keeps all image refs and files (cleanup left open)", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  const retained: AgentTimelineItem = { type: "user_message", messageId: "retained", text: "keep" };
+  class RewindSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+      supportsRewindFiles: true,
+    };
+    async revertConversation(): Promise<void> {}
+    async revertFiles(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: retained };
+    }
+  }
+  class RewindClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new RewindSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new RewindClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const other = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, removed, shared] = await imageStore.persist(
+      ["keep", "remove", "share"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    for (const [messageId, image] of [
+      ["retained", kept],
+      ["removed", removed],
+      ["shared", shared],
+    ] as const) {
+      await storage.setSubmittedMessageImages(agent.id, {
+        clientMessageId: messageId,
+        images: [image],
+      });
+    }
+    await storage.setSubmittedMessageImages(other.id, {
+      clientMessageId: "other",
+      images: [shared],
+    });
+    // Reload the references written above, as on a real resume.
+    await manager.closeAgent(agent.id);
+    await manager.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await manager.rewind(agent.id, "retained", "files");
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(3);
+    expect(existsSync(removed.source)).toBe(true);
+    await manager.rewind(agent.id, "retained", "conversation");
+    // No destructive prune/GC: every ref and file survives the rewind.
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(3);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(removed.source)).toBe(true);
+    expect(existsSync(shared.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.closeAgent(other.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("rewind keeps an early image-only record absent from the provider replay", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-image-only-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  class PartialReplaySession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      // Provider replays only a later, valid user message; the early image-only
+      // record never appears (e.g. Pi drops image-only rows entirely).
+      yield {
+        type: "timeline",
+        provider: "codex",
+        item: { type: "user_message", messageId: "later", text: "later" },
+      };
+    }
+  }
+  class PartialReplayClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new PartialReplaySession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new PartialReplayClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [early, later] = await imageStore.persist(
+      ["early image-only", "later image"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "early-image-only",
+      images: [early],
+    });
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "later",
+      images: [later],
+    });
+    await manager.closeAgent(agent.id);
+    await manager.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await manager.rewind(agent.id, "later", "conversation");
+    const record = await storage.get(agent.id);
+    expect(record?.submittedMessageImages).toHaveLength(2);
+    expect(existsSync(early.source)).toBe(true);
+    expect(existsSync(later.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("images in a steered prompt the provider never echoes are recovered by its provider id", async () => {
+  class SilentSteerImageSession extends SteeringTestSession {
+    override async steerActiveTurn(
+      _prompt: AgentPromptInput,
+      options: import("./agent-sdk-types.js").SteerActiveTurnOptions,
+    ): Promise<import("./agent-sdk-types.js").SteerResult> {
+      if (options.expectedTurnId !== `active-turn-${this.startCount}`) {
+        return { status: "unavailable" };
+      }
+      return { status: "accepted", providerMessageId: "provider-steer-image" };
+    }
+
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield {
+        type: "timeline",
+        provider: "codex",
+        item: {
+          type: "user_message",
+          messageId: "provider-steer-image",
+          text: "steered image",
+        },
+      };
+    }
+  }
+  class SilentSteerImageClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new SilentSteerImageSession(config);
+    }
+  }
+
+  const workdir = mkdtempSync(join(tmpdir(), "agent-manager-steered-images-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  const makeManager = () =>
+    new AgentManager({
+      clients: { codex: new SilentSteerImageClient() },
+      registry: storage,
+      conversationImageStore: imageStore,
+      logger,
+    });
+  const manager = makeManager();
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const run = manager.streamAgent(agent.id, "initial");
+    void (async () => {
+      for await (const _event of run) {
+        // Drain the running turn so the steer below is admitted.
+      }
+    })();
+    await manager.waitForAgentRunStart(agent.id);
+
+    await manager.persistSubmittedPromptImages(
+      agent.id,
+      [
+        { type: "text", text: "steered image" },
+        {
+          type: "image",
+          data: Buffer.from("steered image bytes").toString("base64"),
+          mimeType: "image/png",
+        },
+      ],
+      "steer-image",
+    );
+    await expect(
+      manager.steerAgentRun(agent.id, [{ type: "text", text: "steered image" }], {
+        clientMessageId: "steer-image",
+      }),
+    ).resolves.toMatchObject({ status: "accepted" });
+
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+
+    const restarted = makeManager();
+    await restarted.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await restarted.hydrateTimelineFromProvider(agent.id, { force: true, broadcast: false });
+    const recovered = restarted
+      .getTimeline(agent.id)
+      .find((item) => item.type === "user_message" && item.messageId === "provider-steer-image");
+    if (recovered?.type !== "user_message" || !recovered.images) {
+      throw new Error("Steered prompt image was not recovered");
+    }
+    expect(readFileSync(recovered.images[0].source, "utf8")).toBe("steered image bytes");
+
+    await restarted.closeAgent(agent.id);
+    await restarted.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps refs when the replay is anonymous or incomplete", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-anonymous-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  class AnonymousSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: { type: "user_message", text: "keep" } };
+    }
+  }
+  class AnonymousClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new AnonymousSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new AnonymousClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, removed] = await imageStore.persist(
+      ["keep", "remove"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "removed",
+      images: [removed],
+    });
+    await manager.closeAgent(agent.id);
+    await manager.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await manager.rewind(agent.id, "retained", "conversation");
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(2);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(removed.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps early refs and concurrent writes from other agents", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-concurrent-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  const retained: AgentTimelineItem = { type: "user_message", messageId: "retained", text: "keep" };
+  class ConcurrentSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: retained };
+    }
+  }
+  class ConcurrentClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new ConcurrentSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new ConcurrentClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const other = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, removed] = await imageStore.persist(
+      ["keep", "remove", "concurrent"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "removed",
+      images: [removed],
+    });
+    await manager.closeAgent(agent.id);
+    await manager.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await Promise.all([
+      manager.rewind(agent.id, "retained", "conversation"),
+      manager.persistSubmittedPromptImages(
+        other.id,
+        [
+          { type: "text", text: "concurrent" },
+          {
+            type: "image",
+            data: Buffer.from("concurrent").toString("base64"),
+            mimeType: "image/png",
+          },
+        ],
+        "concurrent-message",
+      ),
+    ]);
+    const otherRecord = await storage.get(other.id);
+    expect(otherRecord?.submittedMessageImages).toHaveLength(1);
+    expect(otherRecord?.submittedMessageImages?.[0]?.images[0]?.source).toBeDefined();
+    // The concurrent image is shared with no other agent; it must survive GC.
+    const concurrentEntry = otherRecord?.submittedMessageImages?.[0];
+    expect(concurrentEntry).toBeDefined();
+    if (!concurrentEntry) throw new Error("Missing concurrent image entry");
+    expect(existsSync(concurrentEntry.images[0].source)).toBe(true);
+    const agentRecord = await storage.get(agent.id);
+    expect(agentRecord?.submittedMessageImages).toHaveLength(2);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(removed.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.closeAgent(other.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
 });
