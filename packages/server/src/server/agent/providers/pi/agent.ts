@@ -561,6 +561,26 @@ function resolvePiAgentDir(env: Record<string, string> | undefined): string {
   return resolvePath(configured);
 }
 
+/** Pi's per-model thinking levels (settings.json `modelThinkingLevels`, keyed "provider/model"); {} when unreadable. */
+function readPiModelThinkingLevels(
+  env: Record<string, string> | undefined,
+): Record<string, string> {
+  try {
+    const settings = JSON.parse(
+      readFileSync(join(resolvePiAgentDir(env), "settings.json"), "utf8"),
+    ) as unknown;
+    const levels = isRecord(settings) ? settings.modelThinkingLevels : undefined;
+    if (!isRecord(levels)) return {};
+    return Object.fromEntries(
+      Object.entries(levels).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string",
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
 function readPiGlobalMcpConfig(env: Record<string, string> | undefined): Record<string, unknown> {
   const globalConfigPath = join(resolvePiAgentDir(env), "mcp.json");
   if (!existsSync(globalConfigPath)) {
@@ -1110,6 +1130,7 @@ function buildExtensionUiResponse(
 
 function resolvePiThinkingConfig(
   model: PiModel,
+  preferredLevel?: string,
 ): Pick<AgentModelDefinition, "thinkingOptions" | "defaultThinkingOptionId"> {
   if (!model.reasoning) {
     return { thinkingOptions: undefined, defaultThinkingOptionId: undefined };
@@ -1132,7 +1153,9 @@ function resolvePiThinkingConfig(
   const higherDefault = supportedOptions.find(
     (option) => PI_THINKING_OPTIONS.indexOf(option) >= defaultIndex,
   );
-  const defaultOption = higherDefault ?? supportedOptions.at(-1);
+  // Pi's own per-model level (settings.json modelThinkingLevels) wins when this model supports it.
+  const preferred = supportedOptions.find((option) => option.id === preferredLevel);
+  const defaultOption = preferred ?? higherDefault ?? supportedOptions.at(-1);
   const defaultThinkingOptionId = defaultOption?.id ?? "off";
   return {
     thinkingOptions: supportedOptions.map((option) => {
@@ -1150,8 +1173,15 @@ function resolvePiThinkingConfig(
   };
 }
 
-function mapPiModel(model: PiModel, provider: AgentProvider): AgentModelDefinition {
-  const { thinkingOptions, defaultThinkingOptionId } = resolvePiThinkingConfig(model);
+function mapPiModel(
+  model: PiModel,
+  provider: AgentProvider,
+  preferredThinkingLevel?: string,
+): AgentModelDefinition {
+  const { thinkingOptions, defaultThinkingOptionId } = resolvePiThinkingConfig(
+    model,
+    preferredThinkingLevel,
+  );
   return {
     provider,
     id: `${model.provider}/${model.id}`,
@@ -2857,8 +2887,13 @@ export class PiRpcAgentClient implements AgentClient {
         "get_state",
         () => catalogSession.getState(),
       );
+      const thinkingLevels = readPiModelThinkingLevels(this.runtimeSettings?.env);
       const models = piModels.map((model) => {
-        const mapped = mapPiModel(model, PI_PROVIDER);
+        const mapped = mapPiModel(
+          model,
+          PI_PROVIDER,
+          thinkingLevels[`${model.provider}/${model.id}`],
+        );
         const isConfigured =
           model.provider === configuredModel?.provider && model.id === configuredModel?.id;
         if (isConfigured) mapped.isDefault = true;
