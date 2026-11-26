@@ -42,7 +42,9 @@ export function ProviderDetailSheet({
       visible={visible}
       onClose={onClose}
       snapPoints={frame.snapPoints}
-      desktopMaxWidth={Math.min(frame.desktopMaxWidth ?? 780, 780)}
+      desktopMaxWidth={
+        frame.returns ? (frame.desktopMaxWidth ?? 780) : Math.min(frame.desktopMaxWidth ?? 780, 780)
+      }
       desktopHeight={frame.desktopHeight}
       testID="provider-settings-sheet"
     >

@@ -2,6 +2,7 @@
  * @vitest-environment jsdom
  */
 import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act } from "@testing-library/react";
 import type { DaemonClient } from "@getpaseo/client/internal/daemon-client";
 import { createRoot, type Root } from "react-dom/client";
@@ -15,7 +16,7 @@ import { useSidebarOrderStore } from "@/stores/sidebar-order-store";
 import { useSidebarViewStore } from "@/stores/sidebar-view-store";
 import type { HostProfile } from "@/types/host-connection";
 import { WorkspaceShortcutTargetsSubscriber } from "./workspace-shortcut-targets-subscriber";
-import { SidebarModelProvider } from "./sidebar/sidebar-model";
+import { SidebarModelProvider as AppSidebarModelProvider } from "./sidebar/sidebar-model";
 import { defaultHostAppearance } from "@/hosts/appearance";
 
 vi.hoisted(() => {
@@ -74,8 +75,18 @@ function setHostProfiles(hosts: HostProfile[]): void {
 describe("WorkspaceShortcutTargetsSubscriber", () => {
   let root: Root | null = null;
   let container: HTMLElement | null = null;
+  let queryClient: QueryClient;
+
+  function SidebarModelProvider(props: React.ComponentProps<typeof AppSidebarModelProvider>) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <AppSidebarModelProvider {...props} />
+      </QueryClientProvider>
+    );
+  }
 
   beforeEach(() => {
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -115,6 +126,7 @@ describe("WorkspaceShortcutTargetsSubscriber", () => {
       });
     }
     root = null;
+    queryClient.clear();
     container?.remove();
     container = null;
     act(() => {
