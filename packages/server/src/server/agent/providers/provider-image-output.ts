@@ -81,6 +81,7 @@ async function refillDecodeBudget(): Promise<void> {
 export async function materializeProviderImage(image: {
   data: string;
   mimeType: string | null;
+  reusePath?: (id: string) => string | undefined;
 }): Promise<MaterializedProviderImage & { id: string; mimeType: string; byteSize: number }> {
   const maxEncodedCharacters = Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4;
   // Check length before inspecting/copying the payload, including a bounded data URI header.
@@ -106,8 +107,10 @@ export async function materializeProviderImage(image: {
     byteSize += bytes.byteLength;
   }
   const id = hash.digest("hex");
-  const filename = `${id}.${getImageExtension(mimeType)}`;
   const metadata = { id, mimeType, byteSize };
+  const existingPath = image.reusePath?.(id);
+  if (existingPath) return { path: existingPath, ...metadata };
+  const filename = `${id}.${getImageExtension(mimeType)}`;
   const directory = getMaterializedImageAttachmentDir();
   const dir = await directory;
   try {

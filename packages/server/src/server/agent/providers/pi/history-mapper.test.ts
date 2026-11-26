@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, unlink } from "node:fs/promises";
 import { buildAgentForkContextAttachment } from "../../activity-curator.js";
 import { readPiTranscript } from "./transcript.js";
+import { MAX_PROVIDER_IMAGE_BYTES } from "../provider-image-output.js";
 import { describe, expect, test, vi } from "vitest";
 
 import type { AgentStreamEvent } from "../../agent-sdk-types.js";
@@ -124,6 +125,97 @@ describe("Pi history mapper", () => {
     ]);
     expect(onUserImageError).not.toHaveBeenCalled();
     expect(readImageData).not.toHaveBeenCalled();
+  });
+
+  test("recovers missing Pi images without duplicating exact matches from a partial store", async () => {
+    const native = Buffer.from("missing native attachment");
+    const persisted = Buffer.from("already stored attachment");
+    const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+    const submitted = { id: hash(persisted), source: "/store/image.png", mimeType: "image/png" };
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          {
+            role: "user",
+            content: [native, persisted].map((bytes) => ({
+              type: "image",
+              data: bytes.toString("base64"),
+              mimeType: "image/png",
+            })),
+          },
+        ],
+        [{ id: "partial", text: "" }],
+        { findSubmittedUserImages: () => [submitted] },
+      ),
+    );
+    const [event] = events;
+    if (event?.type !== "timeline" || event.item.type !== "user_message" || !event.item.images)
+      throw new Error("Missing image row");
+    expect(event.item.images.map(({ id }) => id)).toEqual([hash(native), hash(persisted)]);
+    expect(event.item.images[1]).toEqual(submitted);
+    expect(await readFile(event.item.images[0].source)).toEqual(native);
+  });
+
+  test("bounds image work across a replay while preserving subsequent text rows", async () => {
+    const readData = vi.fn(() => "YQ==");
+    const onUserImageError = vi.fn();
+    const image = {
+      type: "image" as const,
+      mimeType: "image/png",
+      get data() {
+        return readData();
+      },
+    };
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          { role: "user", content: Array(256).fill(image) },
+          { role: "user", content: [image, { type: "text", text: "keep text" }] },
+          { role: "user", content: [image, { type: "text", text: "also keep this" }] },
+        ],
+        [],
+        { onUserImageError },
+      ),
+    );
+    expect(readData).toHaveBeenCalledTimes(256);
+    expect(onUserImageError).toHaveBeenCalledTimes(1);
+    expect(events.slice(1)).toEqual(
+      ["keep text", "also keep this"].map((text) => ({
+        type: "timeline",
+        provider: "pi",
+        item: { type: "user_message", text },
+      })),
+    );
+  });
+
+  test("skips over-budget image data without spending the budget on decoding it", async () => {
+    const onUserImageError = vi.fn();
+    const oversized = "A".repeat(Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4 + 257);
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          {
+            role: "user",
+            content: [
+              { type: "image", mimeType: "image/png", data: oversized },
+              { type: "image", mimeType: "image/png", data: "YQ==" },
+            ],
+          },
+        ],
+        [],
+        { onUserImageError },
+      ),
+    );
+    expect(onUserImageError.mock.calls.map(([error]) => error.message)).toEqual([
+      "Pi history user image replay budget exceeded",
+    ]);
+    const [event] = events;
+    if (event?.type !== "timeline" || event.item.type !== "user_message" || !event.item.images)
+      throw new Error("Missing in-budget attachment");
+    expect(event.item.images.map(({ byteSize }) => byteSize)).toEqual([1]);
   });
 
   test("renders visible custom messages as completed tools and hides private context", async () => {
