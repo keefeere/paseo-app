@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { chmod, mkdir, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { AgentTimelineImage } from "./agent-sdk-types.js";
@@ -15,7 +15,6 @@ export interface ConversationImageInput {
 
 export interface ConversationImageStore {
   persist(images: readonly ConversationImageInput[]): Promise<AgentTimelineImage[]>;
-  garbageCollect(referencedIds: ReadonlySet<string>): Promise<void>;
 }
 
 function extensionForMimeType(mimeType: string): string {
@@ -98,17 +97,6 @@ export function createConversationImageStore(paseoHome: string): ConversationIma
           };
         }),
       );
-    },
-
-    async garbageCollect(referencedIds) {
-      await ensureDirectory();
-      const entries = await readdir(directory, { withFileTypes: true });
-      const unreferenced = entries.filter((entry) => {
-        if (!entry.isFile()) return false;
-        const id = entry.name.split(".")[0];
-        return !referencedIds.has(id);
-      });
-      await Promise.all(unreferenced.map((entry) => rm(path.join(directory, entry.name))));
     },
   };
 }

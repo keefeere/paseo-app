@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, readdir, stat } from "node:fs/promises";
+import { mkdtemp, readFile, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -29,19 +29,5 @@ describe("conversation image store", () => {
     if (process.platform !== "win32") {
       expect((await stat(image.source)).mode & 0o777).toBe(0o600);
     }
-  });
-
-  it("deletes only files no persisted message references", async () => {
-    const paseoHome = await mkdtemp(path.join(os.tmpdir(), "paseo-conversation-images-gc-"));
-    const store = createConversationImageStore(paseoHome);
-    const [kept, removed] = await store.persist([
-      { data: Buffer.from("kept").toString("base64"), mimeType: "image/jpeg" },
-      { data: Buffer.from("removed").toString("base64"), mimeType: "image/png" },
-    ]);
-
-    await store.garbageCollect(new Set([kept.id]));
-
-    expect(await readdir(path.join(paseoHome, "conversation-images"))).toEqual([`${kept.id}.jpg`]);
-    await expect(readFile(removed.source)).rejects.toMatchObject({ code: "ENOENT" });
   });
 });
