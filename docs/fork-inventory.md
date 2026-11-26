@@ -8,6 +8,8 @@ Sources reconciled: full tree diff (`v0.17.4..72d5f4ffb`), the 88 first-parent n
 
 **Evidence boundary:** **Reconciled** means source diff, Git history, branches, PRs, vault records, and targeted automated tests have been reconciled against `v0.17.4` and `72d5f4ffb`. Passing unit or mock-provider tests do not establish live multi-platform UI acceptance, real-provider replay, or published release verification; run the manual checks below after an upstream merge.
 
+**Changes since the snapshot:** `13dcca16b` corrected the CI workflow test, and `94e8e1315` synchronized the Ukrainian resource (the implementing agent reported locale tests passing). Subsequent fixes address the two flatten model discrepancies, daemon image projection, Pi history event assertions, and no-echo steer image identity. The findings and test counts below describe the original snapshot, not the current working tree. Rewind-time image cleanup remains open: do not delete references or files until provider replay completeness can be established; Pi image-only provider replay and live acceptance also remain open.
+
 ## Summary by feature group
 
 | #   | Feature group                                                                                                   | Audit status | Code / test status    | Files | Upstream PR  | Primary open gaps                                                            |

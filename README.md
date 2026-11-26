@@ -3,7 +3,7 @@
 This is the personal [keefeere/paseo-app](https://github.com/keefeere/paseo-app) fork of [Paseo](https://github.com/getpaseo/paseo) (reconciled against upstream `v0.17.4` at `72d5f4ffb`). Differences from upstream:
 
 - **Cross-chat message search:** Command Center **Messages** tab and `search_messages` MCP tool (`paseo-search` skill) with exact and language-tolerant modes, background index warming, strict short/numeric token matching, and scan-budget `partial` hints.
-- **Ukrainian UI localization (`uk`):** language selector entry, relative-time/duration formatting, and fork UI copy (some newer upstream keys still fall back to English).
+- **Ukrainian UI localization (`uk`):** language selector entry, relative-time/duration formatting, and fork UI copy.
 - **Appearance and sidebar layout:** independent sliders for interface spacing, paragraph/block spacing, prose line height, and sidebar row spacing, plus optional single-workspace project flattening.
 - **Plugin code-block actions:** `client.addCodeBlockActions` API for inline actions below assistant code blocks on web and native.
 - **Link routing and terminal placement:** preferences for HTTP chat links (`chatLinkBehavior`), custom system URI schemes (`systemLinkBehavior`, e.g., `obsidian://`), unavailable file-preview preflight metadata, and terminal open location (`openInSidePane.terminals`).
