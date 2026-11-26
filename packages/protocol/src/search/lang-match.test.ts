@@ -91,3 +91,21 @@ describe("strict tokens", () => {
     expect(scoreLangToken("render", "rendered")?.tier).toBe(2);
   });
 });
+
+describe("stem prefix tightening", () => {
+  it("does not match a short preposition against a long word", () => {
+    expect(scoreLangToken("запах", "за запахом")).not.toBeNull();
+    expect(scoreLangToken("запах", "за")).toBeNull();
+  });
+
+  it("still matches an inflected form against its stem", () => {
+    expect(scoreLangToken("додавання", "додав")?.tier).toBe(5);
+    // The stem as a prefix of the inflected form is a prefix hit, which outranks the stem tier.
+    expect(scoreLangToken("додав", "додавання")?.tier).toBeLessThan(5);
+  });
+
+  it("rejects a two-letter stem prefix", () => {
+    expect(scoreLangToken("запах", "за")).toBeNull();
+    expect(scoreLangToken("запах", "зараз")?.tier).not.toBe(5);
+  });
+});

@@ -204,7 +204,15 @@ function stemScore(token: string, word: string, start: number): WordHit | null {
     return { score: { tier: TIER_STEM, offset: start }, start, length: word.length };
   }
   if (wordStem.startsWith(tokenStem) || tokenStem.startsWith(wordStem)) {
-    return { score: { tier: TIER_STEM_PREFIX, offset: start }, start, length: word.length };
+    // A prefix stem only earns its tier when the two sides are close: an inflected form
+    // (`додавання`) against its stem (`додав`), not a short preposition swallowed by a long
+    // word (`за` against `запах`). The shorter side must be at least three characters and the
+    // gap small, or the tier matches everything that starts with a two-letter stem.
+    const shorter = Math.min(tokenStem.length, wordStem.length);
+    const gap = Math.abs(tokenStem.length - wordStem.length);
+    if (shorter >= 3 && gap <= 3) {
+      return { score: { tier: TIER_STEM_PREFIX, offset: start }, start, length: word.length };
+    }
   }
   return null;
 }

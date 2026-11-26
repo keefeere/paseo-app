@@ -618,7 +618,7 @@ test("Windows units and integration run independently with complete routed cover
 test("desktop release creates release-manifests before entering it and uses the xcrun retry script", () => {
   const workflow = readFileSync(new URL(".github/workflows/desktop-release.yml", repoRoot), "utf8");
   assert.match(workflow, /scripts\/macos-xcrun-retry\.sh/);
-  assert.match(workflow, /mkdir -p release-manifests\s*\n\s+cd release-manifests/);
+  assert.match(workflow, /mkdir -p release-manifests(\/final)?\s*\n\s+cd release-manifests/);
 });
 
 test("macOS release xcrun wrapper retries transient stapling and notarization failures without rebuilding", async (t) => {
