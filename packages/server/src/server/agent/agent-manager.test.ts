@@ -7215,7 +7215,6 @@ test("canonical user messages retain durable submitted image references", async 
         byteSize: Buffer.from(image.data, "base64").byteLength,
       }));
     },
-    async garbageCollect() {},
   };
   const manager = new AgentManager({
     clients: { codex: new TestAgentClient() },
@@ -16444,6 +16443,255 @@ test("conversation rewind keeps all image refs and files (cleanup left open)", a
   }
 });
 
+test("conversation rewind keeps refs and files for a mixed identifiable and anonymous replay", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-mixed-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  class MixedSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      // One identifiable user message and one anonymous row: the replay proves
+      // nothing about the anonymous row, so nothing may be pruned.
+      yield {
+        type: "timeline",
+        provider: "codex",
+        item: { type: "user_message", messageId: "retained", text: "keep" },
+      };
+      yield {
+        type: "timeline",
+        provider: "codex",
+        item: { type: "user_message", text: "anonymous" },
+      };
+    }
+  }
+  class MixedClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new MixedSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new MixedClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, removed] = await imageStore.persist(
+      ["keep", "remove"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "removed",
+      images: [removed],
+    });
+    await manager.closeAgent(agent.id);
+    await manager.createAgent({ provider: "codex", cwd: workdir }, agent.id, {
+      workspaceId: undefined,
+    });
+    await manager.rewind(agent.id, "retained", "conversation");
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(2);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(removed.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps orphaned, referenced and shared files (no destructive GC)", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-sweep-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  const retained: AgentTimelineItem = { type: "user_message", messageId: "retained", text: "keep" };
+  class RewindSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: retained };
+    }
+  }
+  class RewindClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new RewindSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new RewindClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const other = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, shared, orphan] = await imageStore.persist(
+      ["keep", "share", "orphan"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept, shared],
+    });
+    await storage.setSubmittedMessageImages(other.id, {
+      clientMessageId: "other",
+      images: [shared],
+    });
+    // The orphan file is written but never registered — the crash window between
+    // persist and register.
+    expect(existsSync(orphan.source)).toBe(true);
+    // No close/re-create: the production deleteAgentState GC (unchanged) must
+    // not run during this test, so only the rewind itself is under test.
+    await manager.rewind(agent.id, "retained", "conversation");
+    // Refs survive (never pruned on rewind) and no file is ever deleted.
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(1);
+    expect((await storage.get(other.id))?.submittedMessageImages).toHaveLength(1);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(shared.source)).toBe(true);
+    expect(existsSync(orphan.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.closeAgent(other.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps orphaned files even when the replay is anonymous", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-sweep-anonymous-"));
+  const storage = new AgentStorage(join(workdir, "agents"), logger);
+  const imageStore = createConversationImageStore(workdir);
+  class AnonymousSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: { type: "user_message", text: "keep" } };
+    }
+  }
+  class AnonymousClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new AnonymousSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new AnonymousClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, orphan] = await imageStore.persist(
+      ["keep", "orphan"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+    expect(existsSync(orphan.source)).toBe(true);
+    // No close/re-create: the production deleteAgentState GC (unchanged) must
+    // not run during this test, so only the rewind itself is under test.
+    await manager.rewind(agent.id, "retained", "conversation");
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(1);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(orphan.source)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps refs and files when another record file is invalid", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-invalid-"));
+  const agentsDir = join(workdir, "agents");
+  const storage = new AgentStorage(agentsDir, logger);
+  const imageStore = createConversationImageStore(workdir);
+  const retained: AgentTimelineItem = { type: "user_message", messageId: "retained", text: "keep" };
+  class RewindSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: retained };
+    }
+  }
+  class RewindClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new RewindSession(config);
+    }
+  }
+  const manager = new AgentManager({
+    clients: { codex: new RewindClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept, orphan] = await imageStore.persist(
+      ["keep", "orphan"].map((value) => ({
+        data: Buffer.from(value).toString("base64"),
+        mimeType: "image/png",
+      })),
+    );
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+    // A torn/unparseable record in an unrelated project directory. Refs are
+    // never deleted on rewind, so nothing in the home is touched here.
+    mkdirSync(join(agentsDir, "broken-project"), { recursive: true });
+    writeFileSync(join(agentsDir, "broken-project", "broken.json"), "not json {{{");
+    expect(existsSync(orphan.source)).toBe(true);
+    // No close/re-create: the production deleteAgentState GC (unchanged) must
+    // not run during this test, so only the rewind itself is under test.
+    await manager.rewind(agent.id, "retained", "conversation");
+    expect((await storage.get(agent.id))?.submittedMessageImages).toHaveLength(1);
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(orphan.source)).toBe(true);
+    expect(existsSync(join(agentsDir, "broken-project", "broken.json"))).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
 test("rewind keeps an early image-only record absent from the provider replay", async () => {
   const workdir = mkdtempSync(join(tmpdir(), "rewind-images-image-only-"));
   const storage = new AgentStorage(join(workdir, "agents"), logger);
@@ -16669,6 +16917,117 @@ test("Pi provider replay recovers native images and prefers existing submitted a
     expect(manager.getTimeline(agent.id)).toEqual([native, stored]);
   } finally {
     await manager.flushForShutdown();
+    rmSync(workdir, { recursive: true, force: true });
+  }
+});
+
+test("conversation rewind keeps files when another writer writes the home concurrently", async () => {
+  const workdir = mkdtempSync(join(tmpdir(), "rewind-images-two-process-"));
+  const agentsDir = join(workdir, "agents");
+  const imageStore = createConversationImageStore(workdir);
+  const retained: AgentTimelineItem = { type: "user_message", messageId: "retained", text: "keep" };
+  class RewindSession extends TestAgentSession {
+    override readonly capabilities = {
+      ...TEST_CAPABILITIES,
+      supportsRewindConversation: true,
+    };
+    async revertConversation(): Promise<void> {}
+    override async *streamHistory(): AsyncGenerator<AgentStreamEvent> {
+      yield { type: "timeline", provider: "codex", item: retained };
+    }
+  }
+  class RewindClient extends TestAgentClient {
+    override async createSession(config: AgentSessionConfig): Promise<AgentSession> {
+      return new RewindSession(config);
+    }
+  }
+  const storage = new AgentStorage(agentsDir, logger);
+  const manager = new AgentManager({
+    clients: { codex: new RewindClient() },
+    registry: storage,
+    conversationImageStore: imageStore,
+    logger,
+  });
+  try {
+    const agent = await manager.createAgent({ provider: "codex", cwd: workdir }, undefined, {
+      workspaceId: undefined,
+    });
+    const [kept] = await imageStore.persist([
+      { data: Buffer.from("keep").toString("base64"), mimeType: "image/png" },
+    ]);
+    await storage.setSubmittedMessageImages(agent.id, {
+      clientMessageId: "retained",
+      images: [kept],
+    });
+
+    // A concurrent third-party writer: another process writing a record and an
+    // image into the home directly (as a tool or a second daemon would). The
+    // daemon holds no exclusive lock over the home — the PID lock is a
+    // boot-time identity check, not a write exclusion — so this write is not
+    // prevented. Fail-closed: every file survives, whatever the writer did.
+    const childScript = `
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const home = process.env.THIRD_PARTY_HOME;
+      const projectDir = path.join(home, "agents", "third-party-project");
+      fs.mkdirSync(projectDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(projectDir, "third-party-agent.json"),
+        JSON.stringify({
+          id: "third-party-agent",
+          provider: "codex",
+          cwd: "/tmp",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          labels: {},
+          metadata: {},
+          lastStatus: "closed",
+          submittedMessageImages: [
+            {
+              clientMessageId: "third-party-message",
+              images: [
+                {
+                  id: "third-party-image-id",
+                  mimeType: "image/png",
+                  source: path.join(process.env.THIRD_PARTY_HOME, "conversation-images", "third-party-image-id.png"),
+                },
+              ],
+            },
+          ],
+        }),
+      );
+      fs.mkdirSync(path.join(process.env.THIRD_PARTY_HOME, "conversation-images"), { recursive: true });
+      fs.writeFileSync(
+        path.join(process.env.THIRD_PARTY_HOME, "conversation-images", "third-party-image-id.png"),
+        Buffer.from("third party bytes"),
+      );
+    `;
+    const child = spawn(process.execPath, ["-e", childScript], {
+      env: { ...process.env, THIRD_PARTY_HOME: workdir },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    const childExit = await new Promise<{ code: number | null; stderr: string }>(
+      (resolve, reject) => {
+        let stderr = "";
+        child.stderr.on("data", (chunk: Buffer) => {
+          stderr += chunk.toString();
+        });
+        child.on("error", reject);
+        child.on("close", (code) => resolve({ code, stderr }));
+      },
+    );
+    expect(childExit.code).toBe(0);
+    const thirdPartyImage = join(workdir, "conversation-images", "third-party-image-id.png");
+    expect(existsSync(thirdPartyImage)).toBe(true);
+
+    // No close/re-create: the production deleteAgentState GC (unchanged) must
+    // not run during this test, so only the rewind itself is under test.
+    await manager.rewind(agent.id, "retained", "conversation");
+    expect(existsSync(kept.source)).toBe(true);
+    expect(existsSync(thirdPartyImage)).toBe(true);
+    await manager.closeAgent(agent.id);
+    await manager.flushForShutdown();
+  } finally {
     rmSync(workdir, { recursive: true, force: true });
   }
 });

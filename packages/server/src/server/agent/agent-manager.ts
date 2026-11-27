@@ -4460,8 +4460,9 @@ export class AgentManager {
           broadcast: true,
           broadcastTimeline: false,
         });
-        // Replay selects the active branch, not every entry a future rewind may reach.
-        // Do not prune image references or collect files from that projection.
+        // Active-branch replay cannot prove images from other branches are dead.
+        // No exclusive home lock protects against writers in other processes.
+        // Keep refs and files on rewind; deleteAgentState GC remains unchanged.
         this.dispatch({
           type: "timeline_replacement",
           agentId,
