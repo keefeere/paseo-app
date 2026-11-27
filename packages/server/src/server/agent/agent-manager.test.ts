@@ -7215,6 +7215,7 @@ test("canonical user messages retain durable submitted image references", async 
         byteSize: Buffer.from(image.data, "base64").byteLength,
       }));
     },
+    garbageCollect: vi.fn().mockResolvedValue(undefined),
   };
   const manager = new AgentManager({
     clients: { codex: new TestAgentClient() },

@@ -44,6 +44,7 @@ import {
 import { OWNER_PERMISSIONS, type DaemonPermission } from "./authorization/index.js";
 import { DownloadTokenStore } from "./file-download/token-store.js";
 import { StructuredAgentFallbackError } from "./agent/agent-response-loop.js";
+import { ProviderImageRecovery } from "./agent/provider-image-recovery.js";
 import type { StoredAgentRecord } from "./agent/agent-storage.js";
 import type { AgentManagerEvent } from "./agent/agent-manager.js";
 import type { ProviderSnapshotManager } from "./agent/provider-snapshot-manager.js";
@@ -412,6 +413,7 @@ function createSessionForTest(options: SessionForTestOptions = {}): Session {
     pushNotifications: options.pushNotifications ?? asPushNotifications(),
     paseoHome: options.paseoHome ?? "/tmp/paseo-home",
     agentManager: asAgentManager({
+      providerImageRecovery: new ProviderImageRecovery(),
       listAgents: vi.fn(() => []),
       listProviderSubagentActivity: vi.fn(() => []),
       getAgentBackgroundWorkSummary: () => undefined,
