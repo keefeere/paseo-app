@@ -21,10 +21,14 @@ import type {
   SessionInboundMessage,
   SessionOutboundMessage,
 } from "../../messages.js";
+import type { ProviderImageRecovery } from "../../agent/provider-image-recovery.js";
 import { FileUploadStore } from "../../file-upload/index.js";
 import type { DownloadTokenStore } from "../../file-download/token-store.js";
 import {
   createExplorerEntry,
+  FILE_EXPLORER_STREAM_CHUNK_BYTES,
+  isMissingScopedFile,
+  type FileExplorerFileStream,
   deleteExplorerEntry,
   duplicateExplorerEntry,
   getDownloadableFileInfo,
@@ -56,6 +60,7 @@ export interface WorkspaceFilesSessionOptions {
   paseoHome: string;
   logger: pino.Logger;
   fileObserver?: FileObserver;
+  providerImageRecovery?: ProviderImageRecovery;
 }
 
 /**
@@ -71,6 +76,7 @@ export class WorkspaceFilesSession {
   private readonly logger: pino.Logger;
   private readonly fileUploads: FileUploadStore;
   private readonly fileObserver: FileObserver;
+  private readonly providerImageRecovery?: ProviderImageRecovery;
 
   constructor(options: WorkspaceFilesSessionOptions) {
     this.host = options.host;
@@ -78,6 +84,7 @@ export class WorkspaceFilesSession {
     this.logger = options.logger;
     this.fileUploads = new FileUploadStore({ paseoHome: options.paseoHome });
     this.fileObserver = options.fileObserver ?? workspaceFileObserver;
+    this.providerImageRecovery = options.providerImageRecovery;
   }
 
   async handleFileSubscribeRequest(
@@ -290,6 +297,8 @@ export class WorkspaceFilesSession {
           source,
         );
       } else {
+        const binary = request.acceptBinary && this.host.hasBinaryChannel();
+        if (binary && (await this.tryReadReplayImage(cwd, requestedPath, request, source))) return;
         if (request.maxBytes) {
           const previewUnavailable = await getUnavailableFilePreview({
             root: cwd,
@@ -321,40 +330,10 @@ export class WorkspaceFilesSession {
             return;
           }
         }
-        if (request.acceptBinary && this.host.hasBinaryChannel()) {
-          await streamExplorerFile({ root: cwd, relativePath: requestedPath }, async (file) => {
-            await this.host.emitBinary(
-              encodeFileTransferFrame({
-                opcode: FileTransferOpcode.FileBegin,
-                requestId,
-                metadata: {
-                  mime: file.mimeType,
-                  size: file.size,
-                  encoding: file.encoding,
-                  modifiedAt: file.modifiedAt,
-                  revision: file.revision,
-                },
-              }),
-              source,
-            );
-            for await (const chunk of file.chunks) {
-              await this.host.emitBinary(
-                encodeFileTransferFrame({
-                  opcode: FileTransferOpcode.FileChunk,
-                  requestId,
-                  payload: chunk,
-                }),
-                source,
-              );
-            }
-            await this.host.emitBinary(
-              encodeFileTransferFrame({
-                opcode: FileTransferOpcode.FileEnd,
-                requestId,
-              }),
-              source,
-            );
-          });
+        if (binary) {
+          await streamExplorerFile({ root: cwd, relativePath: requestedPath }, (file) =>
+            this.sendFileStream(file, requestId, source),
+          );
         } else {
           const file = await readExplorerFile({
             root: cwd,
@@ -399,6 +378,80 @@ export class WorkspaceFilesSession {
         source,
       );
     }
+  }
+
+  private async tryReadReplayImage(
+    cwd: string,
+    path: string,
+    request: FileExplorerRequest,
+    source?: object,
+  ): Promise<boolean> {
+    const recovery = this.providerImageRecovery;
+    const size = recovery?.getSize(path);
+    if (size === undefined || !recovery) return false;
+    if (!(await isMissingScopedFile({ root: cwd, relativePath: path }))) return false;
+    if (request.maxBytes && size > request.maxBytes)
+      throw new Error("File is too large to display");
+
+    return recovery.read(path, (image, bytes) =>
+      this.sendFileStream(
+        {
+          path,
+          mimeType: image.mimeType,
+          size: bytes.length,
+          encoding: "binary",
+          kind: "image",
+          modifiedAt: new Date(0).toISOString(),
+          revision: image.id,
+          chunks: (async function* () {
+            for (
+              let offset = 0;
+              offset < bytes.length;
+              offset += FILE_EXPLORER_STREAM_CHUNK_BYTES
+            ) {
+              yield bytes.subarray(offset, offset + FILE_EXPLORER_STREAM_CHUNK_BYTES);
+            }
+          })(),
+        },
+        request.requestId,
+        source,
+      ),
+    );
+  }
+
+  private async sendFileStream(
+    file: FileExplorerFileStream,
+    requestId: string,
+    source?: object,
+  ): Promise<void> {
+    await this.host.emitBinary(
+      encodeFileTransferFrame({
+        opcode: FileTransferOpcode.FileBegin,
+        requestId,
+        metadata: {
+          mime: file.mimeType,
+          size: file.size,
+          encoding: file.encoding,
+          modifiedAt: file.modifiedAt,
+          revision: file.revision,
+        },
+      }),
+      source,
+    );
+    for await (const chunk of file.chunks) {
+      await this.host.emitBinary(
+        encodeFileTransferFrame({
+          opcode: FileTransferOpcode.FileChunk,
+          requestId,
+          payload: chunk,
+        }),
+        source,
+      );
+    }
+    await this.host.emitBinary(
+      encodeFileTransferFrame({ opcode: FileTransferOpcode.FileEnd, requestId }),
+      source,
+    );
   }
 
   handleFileUploadRequest(request: FileUploadRequest, ownership: SessionDelivery): void {

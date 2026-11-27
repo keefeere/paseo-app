@@ -1,8 +1,15 @@
 import { z } from "zod";
+import { constants } from "node:fs";
+import { open, readFile } from "node:fs/promises";
+import { MAX_RECOVERED_IMAGE_BYTES } from "../../provider-image-recovery.js";
 import { getUserMessageText, type PiCapturedUserMessageEntry } from "./history-mapper.js";
 import type { PiAgentMessage, PiSessionEntry } from "./rpc-types.js";
 
 export interface PiTranscript {
+  recoverImage?: (
+    entryId: string,
+    index: number,
+  ) => (() => Promise<{ data: string; mimeType: string }>) | undefined;
   messages: PiAgentMessage[];
   userEntries: PiCapturedUserMessageEntry[];
   /**
@@ -88,12 +95,38 @@ const record = z
   })
   .passthrough();
 
+const MAX_RECOVERY_LINE_BYTES = Math.ceil(MAX_RECOVERED_IMAGE_BYTES / 3) * 4 + 1024 * 1024;
+
+export async function readPiTranscriptFile(file: string): Promise<PiTranscript> {
+  return readPiTranscript(await readFile(file, "utf8"), file);
+}
+
+function parseRecords(contents: string, indexLocations: boolean) {
+  const records: z.infer<typeof record>[] = [];
+  const locations = new Map<string, { offset: number; length: number }>();
+  let offset = 0;
+  for (const line of contents.split("\n")) {
+    const length = indexLocations ? Buffer.byteLength(line) : 0;
+    if (line.trim()) {
+      const entry = record.parse(JSON.parse(line));
+      records.push(entry);
+      if (
+        indexLocations &&
+        entry.type === "message" &&
+        entry.id &&
+        length <= MAX_RECOVERY_LINE_BYTES
+      ) {
+        locations.set(entry.id, { offset, length });
+      }
+    }
+    offset += length + 1;
+  }
+  return { records, locations };
+}
+
 /** Select the persisted active ancestry, retaining structural links across compaction. */
-export function readPiTranscript(contents: string): PiTranscript {
-  const records = contents
-    .split("\n")
-    .filter((line) => line.trim())
-    .map((line) => record.parse(JSON.parse(line)));
+export function readPiTranscript(contents: string, file?: string): PiTranscript {
+  const { records, locations } = parseRecords(contents, file !== undefined);
   const header = records.shift();
   if (header?.type !== "session") throw new Error("Pi transcript is missing its session header");
   const legacy = header.version === 1;
@@ -135,7 +168,43 @@ export function readPiTranscript(contents: string): PiTranscript {
         text: getUserMessageText(parsed.content),
       });
   }
+  if (file) {
+    result.recoverImage = (entryId, index) => {
+      const location = locations.get(entryId);
+      return location ? () => readImageBlock(file, location, entryId, index) : undefined;
+    };
+  }
   return result;
+}
+
+async function readImageBlock(
+  file: string,
+  { offset, length }: { offset: number; length: number },
+  entryId: string,
+  index: number,
+) {
+  const handle = await open(
+    file,
+    constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+  );
+  try {
+    const stat = await handle.stat();
+    if (!stat.isFile() || offset + length > stat.size)
+      throw new Error("Pi transcript entry is unavailable");
+    const { buffer, bytesRead } = await handle.read({
+      buffer: Buffer.allocUnsafe(length),
+      position: offset,
+    });
+    if (bytesRead !== length) throw new Error("Pi transcript entry is incomplete");
+    const entry = record.parse(JSON.parse(buffer.toString("utf8")));
+    const user = userMessage.parse(entry.message);
+    if (entry.type !== "message" || entry.id !== entryId || !Array.isArray(user.content)) {
+      throw new Error("Pi transcript entry changed since replay");
+    }
+    return image.parse(user.content[index]);
+  } finally {
+    await handle.close();
+  }
 }
 
 function activeBranch(records: z.infer<typeof record>[]): z.infer<typeof record>[] {

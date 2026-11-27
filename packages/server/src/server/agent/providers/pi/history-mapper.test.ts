@@ -1,9 +1,16 @@
+import { createHash } from "node:crypto";
+import { readFile, unlink } from "node:fs/promises";
 import { buildAgentForkContextAttachment } from "../../activity-curator.js";
 import { readPiTranscript } from "./transcript.js";
-import { describe, expect, test } from "vitest";
+import { MAX_PROVIDER_IMAGE_BYTES } from "../provider-image-output.js";
+import { describe, expect, test, vi } from "vitest";
 
 import type { AgentStreamEvent } from "../../agent-sdk-types.js";
-import { streamPiHistory, type PiCapturedUserMessageEntry } from "./history-mapper.js";
+import {
+  buildPiSessionPath,
+  streamPiHistory,
+  type PiCapturedUserMessageEntry,
+} from "./history-mapper.js";
 import type { PiAgentMessage } from "./rpc-types.js";
 
 async function collectHistory(
@@ -18,6 +25,205 @@ async function collectHistory(
 }
 
 describe("Pi history mapper", () => {
+  test("recovers image-only user rows from the active branch across compaction", async () => {
+    const image = (data: string) => ({ type: "image", data, mimeType: "image/png" });
+    const first = Buffer.from("first image");
+    const second = Buffer.from("second image");
+    const onlyImages = [image(first.toString("base64")), image(second.toString("base64"))];
+    const transcript = readPiTranscript(
+      [
+        { type: "session", version: 3 },
+        {
+          type: "message",
+          id: "images",
+          parentId: null,
+          message: { role: "user", content: onlyImages },
+        },
+        {
+          type: "message",
+          id: "abandoned",
+          parentId: "images",
+          message: { role: "user", content: [image("YWJhbmRvbmVk")] },
+        },
+        {
+          type: "compaction",
+          id: "compact",
+          parentId: "images",
+          firstKeptEntryId: "compact",
+          tokensBefore: 42,
+        },
+        {
+          type: "message",
+          id: "mixed",
+          parentId: "compact",
+          message: { role: "user", content: [{ type: "text", text: "inspect" }, onlyImages[1]] },
+        },
+      ]
+        .map((entry) => JSON.stringify(entry))
+        .join("\n"),
+    );
+    const items = (await Array.fromAsync(streamPiHistory("pi", transcript.entries))).flatMap(
+      (event) => (event.type === "timeline" ? [event.item] : []),
+    );
+    expect(items.map((item) => item.type)).toEqual(["user_message", "compaction", "user_message"]);
+    const [imageOnly, , mixed] = items;
+    if (imageOnly.type !== "user_message" || !imageOnly.images || mixed.type !== "user_message")
+      throw new Error("Missing user images");
+    const ids = [first, second].map((bytes) => createHash("sha256").update(bytes).digest("hex"));
+    expect(imageOnly).toMatchObject({ text: "", messageId: "images" });
+    expect(mixed).toMatchObject({ text: "inspect", messageId: "mixed" });
+    expect(imageOnly.images?.map((entry) => entry.id)).toEqual(ids);
+    expect(mixed.images).toEqual(imageOnly.images?.slice(1));
+    expect(await Promise.all(imageOnly.images.map((entry) => readFile(entry.source)))).toEqual([
+      first,
+      second,
+    ]);
+    const rewound = buildPiSessionPath(transcript.entries, "images");
+    expect(await Array.fromAsync(streamPiHistory("pi", rewound))).toEqual([
+      { type: "timeline", provider: "pi", item: imageOnly },
+    ]);
+  });
+
+  test("prefers daemon image references by native message id without decoding Pi copies", async () => {
+    const images = [{ id: "store-id", source: "/store/image.png", mimeType: "image/png" }];
+    const onUserImageError = vi.fn();
+    const readImageData = vi.fn(() => "YQ==");
+    const content = [
+      {
+        type: "image" as const,
+        mimeType: "image/png",
+        get data() {
+          return readImageData();
+        },
+      },
+    ];
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          { type: "message", id: "native-id", parentId: null, message: { role: "user", content } },
+          {
+            type: "message",
+            id: "other",
+            parentId: "native-id",
+            message: { role: "user", content: "" },
+          },
+        ],
+        [{ id: "not-native-id", text: "" }],
+        {
+          findSubmittedUserImages: (id) => (id === "native-id" ? images : undefined),
+          onUserImageError,
+        },
+      ),
+    );
+    expect(events).toEqual([
+      {
+        type: "timeline",
+        provider: "pi",
+        item: { type: "user_message", text: "", messageId: "native-id", images },
+      },
+    ]);
+    expect(onUserImageError).not.toHaveBeenCalled();
+    expect(readImageData).not.toHaveBeenCalled();
+  });
+
+  test("recovers missing Pi images without duplicating exact matches from a partial store", async () => {
+    const native = Buffer.from("missing native attachment");
+    const persisted = Buffer.from("already stored attachment");
+    const hash = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+    const submitted = { id: hash(persisted), source: "/store/image.png", mimeType: "image/png" };
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          {
+            role: "user",
+            content: [native, persisted].map((bytes) => ({
+              type: "image",
+              data: bytes.toString("base64"),
+              mimeType: "image/png",
+            })),
+          },
+        ],
+        [{ id: "partial", text: "" }],
+        { findSubmittedUserImages: () => [submitted] },
+      ),
+    );
+    const [event] = events;
+    if (event?.type !== "timeline" || event.item.type !== "user_message" || !event.item.images)
+      throw new Error("Missing image row");
+    expect(event.item.images.map(({ id }) => id)).toEqual([hash(native), hash(persisted)]);
+    expect(event.item.images[1]).toEqual(submitted);
+    expect(await readFile(event.item.images[0].source)).toEqual(native);
+  });
+
+  test("bounds image work across a replay while preserving subsequent text rows", async () => {
+    const readData = vi.fn(() => "YQ==");
+    const onUserImageError = vi.fn();
+    const image = {
+      type: "image" as const,
+      mimeType: "image/png",
+      get data() {
+        return readData();
+      },
+    };
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          { role: "user", content: Array(256).fill(image) },
+          { role: "user", content: [image, { type: "text", text: "keep text" }] },
+          { role: "user", content: [image, { type: "text", text: "also keep this" }] },
+        ],
+        [],
+        { onUserImageError },
+      ),
+    );
+    expect(readData).toHaveBeenCalledTimes(256);
+    expect(onUserImageError).toHaveBeenCalledTimes(1);
+    expect(events.slice(1)).toEqual([
+      { type: "timeline", provider: "pi", item: { type: "user_message", text: "keep text" } },
+      {
+        type: "timeline",
+        provider: "pi",
+        item: {
+          type: "notification",
+          level: "warning",
+          message: "Some Pi history images were omitted because replay reached its image limit.",
+        },
+      },
+      { type: "timeline", provider: "pi", item: { type: "user_message", text: "also keep this" } },
+    ]);
+  });
+
+  test("skips over-budget image data without spending the budget on decoding it", async () => {
+    const onUserImageError = vi.fn();
+    const oversized = "A".repeat(Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4 + 257);
+    const events = await Array.fromAsync(
+      streamPiHistory(
+        "pi",
+        [
+          {
+            role: "user",
+            content: [
+              { type: "image", mimeType: "image/png", data: oversized },
+              { type: "image", mimeType: "image/png", data: "YQ==" },
+            ],
+          },
+        ],
+        [],
+        { onUserImageError },
+      ),
+    );
+    expect(onUserImageError.mock.calls.map(([error]) => error.message)).toEqual([
+      "Pi history user image replay budget exceeded",
+    ]);
+    const [event] = events;
+    if (event?.type !== "timeline" || event.item.type !== "user_message" || !event.item.images)
+      throw new Error("Missing in-budget attachment");
+    expect(event.item.images.map(({ byteSize }) => byteSize)).toEqual([1]);
+  });
+
   test("renders visible custom messages as completed tools and hides private context", async () => {
     const events = await collectHistory([
       {
@@ -54,7 +260,6 @@ describe("Pi history mapper", () => {
           role: "user",
           content: [
             { type: "text", text: "read this" },
-            { type: "image", data: "base64", mimeType: "image/png" },
             { type: "text", text: "then answer" },
           ],
         },
@@ -263,7 +468,6 @@ describe("Pi tool-result image replay", () => {
     if (image?.type !== "timeline" || image.item.type !== "assistant_message")
       throw new Error("Missing image");
     const url = image.item.text.match(/\((file:[^)]+)\)/)![1];
-    const { readFile, unlink } = await import("node:fs/promises");
     expect(await readFile(new URL(url))).toEqual(Buffer.from("hello"));
     await unlink(new URL(url));
     const replay = await collectHistory([

@@ -6,7 +6,11 @@ import { SessionInboundMessageSchema, WSOutboundMessageSchema } from "@getpaseo/
 import { randomUUID } from "node:crypto";
 import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, parse } from "node:path";
+import { createHash } from "node:crypto";
+import { PiRpcAgentClient } from "../agent/providers/pi/agent.js";
+import { FakePi } from "../agent/providers/pi/test-utils/fake-pi.js";
+import { readPiTranscriptFile } from "../agent/providers/pi/transcript.js";
 import { expect, test, vi } from "vitest";
 import pino from "pino";
 import type { CreationSnapshot, SessionOutboundMessage } from "@getpaseo/protocol/messages";
@@ -26,6 +30,134 @@ function createCreationDaemon(options: Parameters<typeof createTestPaseoDaemon>[
     ),
   });
 }
+
+test("reads provider-only Pi images over daemon RPC after losing the warm preview", async () => {
+  const root = await mkdtemp(join(tmpdir(), "pi-image-rpc-"));
+  const file = join(root, "session.jsonl");
+  const data =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=";
+  const bytes = Buffer.from(data, "base64");
+  const id = createHash("sha256").update(bytes).digest("hex");
+  try {
+    await writeFile(
+      file,
+      [
+        { type: "session", version: 3, id: "pi-image-session", cwd: root, title: "Зображення 🖼" },
+        ...["first", "second"].map((entryId, index) => ({
+          type: "message",
+          id: entryId,
+          parentId: index ? "first" : null,
+          message: { role: "user", content: [{ type: "image", data, mimeType: "image/png" }] },
+        })),
+      ]
+        .map((row) => JSON.stringify(row))
+        .join("\n"),
+    );
+    const start = async (paseoHomeRoot = root) => {
+      const runtime = new FakePi();
+      const startSession = runtime.startSession.bind(runtime);
+      vi.spyOn(runtime, "startSession").mockImplementation(async (input) => {
+        const session = await startSession(input);
+        vi.spyOn(session, "getHistory").mockImplementation(async () => readPiTranscriptFile(file));
+        return session;
+      });
+      const pi = new PiRpcAgentClient({ logger: pino({ level: "silent" }), runtime });
+      vi.spyOn(pi, "isAvailable").mockResolvedValue(true);
+      vi.spyOn(pi, "fetchCatalog").mockResolvedValue({ models: [], modes: [] });
+      const daemon = await createCreationDaemon({
+        agentClients: { pi },
+        paseoHomeRoot,
+        cleanup: false,
+        staticDir: paseoHomeRoot,
+        pluginsEnabled: false,
+      });
+      const client = new DaemonClient({
+        url: `ws://127.0.0.1:${daemon.port}/ws`,
+        appVersion: "0.7.2",
+      });
+      const close = async () => {
+        await client.close();
+        await daemon.close();
+      };
+      try {
+        await client.connect();
+        return { client, close, storage: daemon.daemon.agentStorage };
+      } catch (error) {
+        await close();
+        throw error;
+      }
+    };
+    async function readImage(client: DaemonClient, agentId: string) {
+      const page = await client.fetchAgentTimeline(agentId);
+      const rows = page.entries.map((entry) => entry.item);
+      expect(rows).toHaveLength(2);
+      const [first, second] = rows;
+      if (first.type !== "user_message" || second.type !== "user_message" || !first.images?.length)
+        throw new Error("Missing Pi image rows");
+      expect([first.messageId, second.messageId]).toEqual(["first", "second"]);
+      expect(first.images).toEqual(second.images);
+      const [image] = first.images;
+      expect(image).toMatchObject({ id, mimeType: "image/png", byteSize: bytes.length });
+      expect(image.source).toMatch(/[\\/]paseo-attachments-/);
+      expect(
+        Buffer.from((await client.readFile(parse(image.source).root, image.source)).bytes),
+      ).toEqual(bytes);
+      return image.source;
+    }
+    const first = await start();
+    let agentId: string;
+    let source: string;
+    try {
+      const agent = await first.client.importAgent({ provider: "pi", sessionId: file, cwd: root });
+      agentId = agent.id;
+      expect((await first.storage.get(agentId))?.submittedMessageImages ?? []).toEqual([]);
+      source = await readImage(first.client, agentId);
+      const warm = await first.client.fetchAgentTimeline(agentId);
+      await rm(source);
+      await expect(first.client.readFile(root, source)).rejects.toThrow("outside");
+      await expect(first.client.readFile(parse(source).root, source, undefined, 1)).rejects.toThrow(
+        "File is too large to display",
+      );
+      const unrelatedDaemon = await start(join(root, "unrelated-daemon"));
+      try {
+        await expect(unrelatedDaemon.client.readFile(parse(source).root, source)).rejects.toThrow(
+          "ENOENT",
+        );
+      } finally {
+        await unrelatedDaemon.close();
+      }
+      expect((await first.client.fetchAgentTimeline(agentId)).entries).toEqual(warm.entries);
+      const restored = await Promise.all([
+        first.client.readFile(parse(source).root, source, undefined, 1024),
+        first.client.readFile(parse(source).root, source),
+      ]);
+      expect(restored.map((read) => Buffer.from(read.bytes))).toEqual([bytes, bytes]);
+      await expect(readFile(source)).rejects.toMatchObject({ code: "ENOENT" });
+      const originalTranscript = await readFile(file, "utf8");
+      try {
+        // Change bytes without changing the record offsets or identity.
+        await writeFile(file, originalTranscript.replaceAll(data, "A" + data.slice(1)));
+        await expect(first.client.readFile(parse(source).root, source)).rejects.toThrow(
+          "Provider image bytes changed since replay",
+        );
+        await expect(readFile(source)).rejects.toMatchObject({ code: "ENOENT" });
+      } finally {
+        await writeFile(file, originalTranscript);
+      }
+    } finally {
+      await first.close();
+    }
+    const restarted = await start();
+    try {
+      const regenerated = await readImage(restarted.client, agentId);
+      await rm(regenerated);
+    } finally {
+      await restarted.close();
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+}, 60_000);
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

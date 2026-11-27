@@ -853,6 +853,33 @@ async function isCaseOnlyRename(
   return isSameEntry && source.requestedPath.toLowerCase() === targetPath.toLowerCase();
 }
 
+/** A recovery may serve a registered absolute path only within the caller's file scope. */
+export async function isMissingScopedFile(input: ReadFileParams): Promise<boolean> {
+  const { requestedPath, resolvedPath } = await resolveScopedPath(input);
+  if (input.relativePath !== requestedPath || requestedPath !== resolvedPath) return false;
+  try {
+    await fs.lstat(requestedPath);
+    return false;
+  } catch (error) {
+    if (!isMissingEntryError(error)) throw error;
+  }
+  const root = await fs.realpath(expandUserPath(input.root));
+  // realpath of the missing file cannot tell us where its existing parent resolves.
+  let parent = path.dirname(requestedPath);
+  while (true) {
+    let canonicalParent: string;
+    try {
+      canonicalParent = await fs.realpath(parent);
+    } catch (error) {
+      if (!isMissingEntryError(error) || path.dirname(parent) === parent) throw error;
+      parent = path.dirname(parent);
+      continue;
+    }
+    assertWithinWorkspace(root, canonicalParent);
+    return true;
+  }
+}
+
 async function resolveScopedPath({
   root,
   relativePath = ".",

@@ -1,5 +1,4 @@
-import { readFile } from "node:fs/promises";
-import { readPiTranscript, type PiTranscript } from "./transcript.js";
+import { readPiTranscriptFile, type PiTranscript } from "./transcript.js";
 import { createExternalProcessEnv } from "../../../paseo-env.js";
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import type { Logger } from "pino";
@@ -179,7 +178,7 @@ class PiCliRuntimeSession implements PiRuntimeSession {
     const state = await this.getState();
     if (!state.sessionFile) throw new Error("Pi history requires a persisted session file");
     try {
-      return readPiTranscript(await readFile(state.sessionFile, "utf8"));
+      return await readPiTranscriptFile(state.sessionFile);
     } catch (error) {
       // Pi does not create the file until the first conversation message is saved.
       if (

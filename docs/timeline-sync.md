@@ -291,8 +291,23 @@ footer. Non-image composer attachments are local presentation and are not echoed
 A submitted prompt is one `UserMessageItem` row. Its stable identity, timestamp, and local
 attachments survive canonical acknowledgement. The daemon persists user image bytes and includes
 small image references in canonical `user_message` rows, so provider-history replay restores images
-after a daemon or app restart without putting base64 data on the timeline wire. Submission lifecycle
-is a separate record keyed by agent, not another row shape.
+after a daemon or app restart without putting base64 data on the timeline wire. Pi replay uses
+the daemon's submitted attachments when the native entry ID matches: Pi can hold a resized
+copy. When Pi has more images than the daemon recorded, replay matches exact content hashes
+and preserves unmatched images from both sources. Resized copies cannot be matched safely in
+that case. Reconstructed previews are temporary. On a binary file RPC miss, the destination
+daemon can serve verified bytes for an exact preview path in its own replay index after the
+normal file authorization and scope checks. It never recreates the path or its directory.
+The index retains at most 4,096 locations for images up to 16 MiB. It admits up to 16 reads at
+a time, coalesces concurrent reads of the same preview during decoding, and serves one decoded
+image at a time. If the location is gone, evicted, too large, or no longer matches, reload the
+agent to replay the current transcript. See [daemon permissions](permissions.md#resources) for
+the current daemon-wide file authority.
+
+Preview work per replay is capped at 256 native blocks and about 128 MiB of decoded data. Replay
+adds a timeline warning when it hits the cap and continues with text and submitted attachments.
+Do not prune attachments based on replay: it only covers the active branch. Submission lifecycle
+is a separate record keyed by agent.
 The transaction registry records two independent settlement facts: canonical acknowledgement and RPC
 settlement. Canonical acknowledgement retires optimistic activity immediately. When both facts are
 known, whichever arrives second deletes the record. A canonical acknowledgement that arrives first
