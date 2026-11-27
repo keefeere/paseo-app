@@ -34,6 +34,12 @@ bundle="$build_root/DerivedData/Build/Products/Release-iphoneos/PaseoFork.app"
 plist="$bundle/Info.plist"
 test -d "$bundle"
 test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist")" = "com.keefeere.paseo"
+schemes="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes' "$plist")"
+grep -Fq 'exp+paseo-fork' <<< "$schemes"
+if grep -Fq 'exp+voice-mobile' <<< "$schemes"; then
+  echo "App Store Expo URL scheme leaked into the SideStore build" >&2
+  exit 1
+fi
 executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$plist")"
 test -f "$bundle/$executable"
 ldid -S "$bundle/$executable"

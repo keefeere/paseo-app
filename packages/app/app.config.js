@@ -73,6 +73,7 @@ const variants = {
     name: "Paseo Fork",
     packageId: "com.keefeere.paseo",
     scheme: "paseo-fork",
+    slug: "paseo-fork",
   },
   production: {
     name: "Paseo",
@@ -106,7 +107,7 @@ const nativeReleaseVersion = getNativeReleaseVersion(pkg.version);
 export default {
   expo: {
     name: variant.name,
-    slug: "voice-mobile",
+    slug: variant.slug ?? "voice-mobile",
     version: nativeReleaseVersion.appVersion,
     orientation: "default",
     icon: "./assets/images/icon.png",

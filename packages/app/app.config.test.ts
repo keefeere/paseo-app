@@ -108,6 +108,7 @@ it("keeps the SideStore fork separate from the App Store app", () => {
   );
   const exp = JSON.parse(output);
   expect(exp.name).toBe("Paseo Fork");
+  expect(exp.slug).toBe("paseo-fork");
   expect(exp.ios.bundleIdentifier).toBe("com.keefeere.paseo");
   expect(exp.scheme).toBe("paseo-fork");
   expect(exp.ios.googleServicesFile).toBeUndefined();
