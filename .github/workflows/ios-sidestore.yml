@@ -48,4 +48,4 @@ jobs:
           name: paseo-ios-sidestore
           path: artifacts/ios-sidestore/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 3
