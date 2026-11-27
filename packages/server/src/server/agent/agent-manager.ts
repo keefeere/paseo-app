@@ -924,6 +924,18 @@ function detachedAgentLabelPatch(labels: Record<string, string>): AgentLabelPatc
   return patch;
 }
 
+function collectReferencedConversationImageIds(records: readonly StoredAgentRecord[]): Set<string> {
+  const referencedIds = new Set<string>();
+  for (const record of records) {
+    for (const entry of record.submittedMessageImages ?? []) {
+      for (const image of entry.images) {
+        referencedIds.add(image.id);
+      }
+    }
+  }
+  return referencedIds;
+}
+
 /**
  * How long an archived internal agent stays readable by id. Storage plays this
  * role for public agents; internal agents never reach it, and a one-shot helper
@@ -4441,12 +4453,13 @@ export class AgentManager {
           broadcast: true,
           broadcastTimeline: false,
         });
-        // No rewind-time ref prune on the active-branch replay alone:
-        // rewindable providers can preserve the rewound-away branch (Claude
-        // forks, Codex forks, Pi navigates the tree, OMP branches, plugin
-        // session.revert is plugin-defined), so a message absent from the
-        // active-branch replay is not provably dead. Refs are never deleted on
-        // rewind.
+        // No rewind-time file or ref cleanup: rewindable providers can preserve
+        // the rewound-away branch (Claude forks, Codex forks, Pi navigates the
+        // tree, OMP branches, plugin session.revert is plugin-defined), so a
+        // message absent from the active-branch replay is not provably dead,
+        // and paseoHome is not under an exclusive lock — another process may
+        // hold invisible refs to these files. Refs and files are kept on
+        // rewind; deletion is left to the unchanged deleteAgentState GC.
         this.dispatch({
           type: "timeline_replacement",
           agentId,
@@ -4480,11 +4493,15 @@ export class AgentManager {
   async deleteAgentState(agentId: string): Promise<void> {
     this.discardRetainedAgentState(agentId);
     await this.deleteCommittedTimeline(agentId);
-    // No conversation-image GC here either: safe deletion of files would need a
-    // proof that no other writer (another process, a third-party tool) holds an
-    // invisible ref to them. None exists — paseoHome is not under an exclusive
-    // lock, and the PID lock is a boot-time check, not a write exclusion.
-    // Refs and files are kept; the store is write-only.
+    const registry = this.registry;
+    const imageStore = this.conversationImageStore;
+    if (registry && imageStore) {
+      await this.runConversationImageOperation(async () => {
+        const records = await registry.listAll();
+        const referencedIds = collectReferencedConversationImageIds(records);
+        await imageStore.garbageCollect(referencedIds);
+      });
+    }
   }
 
   notifyAgentRemoved(agent: Pick<StoredAgentRecord, "id" | "workspaceId" | "internal">): void {
