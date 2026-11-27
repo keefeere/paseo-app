@@ -1,4 +1,5 @@
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 
 // Load the copies the Expo CLI uses for prebuild, not older hoisted ones.
@@ -93,6 +94,23 @@ it("allows all orientations on iPhone and iPad", async () => {
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+}, 30_000);
+
+it("keeps the SideStore fork separate from the App Store app", () => {
+  const output = execFileSync(
+    process.execPath,
+    [require.resolve("expo/bin/cli"), "config", "--json"],
+    {
+      cwd: __dirname,
+      env: { ...process.env, APP_VARIANT: "sidestore" },
+      encoding: "utf8",
+    },
+  );
+  const exp = JSON.parse(output);
+  expect(exp.name).toBe("Paseo Fork");
+  expect(exp.ios.bundleIdentifier).toBe("com.keefeere.paseo");
+  expect(exp.scheme).toBe("paseo-fork");
+  expect(exp.ios.googleServicesFile).toBeUndefined();
 }, 30_000);
 
 // Scene startup is the integration boundary for the iOS keyboard window.

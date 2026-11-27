@@ -69,6 +69,11 @@ function resolveSecretFile(params) {
 }
 
 const variants = {
+  sidestore: {
+    name: "Paseo Fork",
+    packageId: "com.keefeere.paseo",
+    scheme: "paseo-fork",
+  },
   production: {
     name: "Paseo",
     packageId: "sh.paseo",
@@ -105,7 +110,7 @@ export default {
     version: nativeReleaseVersion.appVersion,
     orientation: "default",
     icon: "./assets/images/icon.png",
-    scheme: "paseo",
+    scheme: variant.scheme ?? "paseo",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
     ios: {
