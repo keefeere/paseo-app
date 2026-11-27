@@ -4,6 +4,7 @@ import type { FileHandle } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { expandUserPath, resolvePathFromBase } from "../path-utils.js";
+import { recoverMissingProviderImage } from "../agent/providers/provider-image-output.js";
 import { runGitCommand } from "../../utils/run-git-command.js";
 
 export type ExplorerEntryKind = "file" | "directory";
@@ -251,7 +252,7 @@ export async function readExplorerFileBytes({
   root,
   relativePath,
 }: ReadFileParams): Promise<FileExplorerFileBytes> {
-  const filePath = await resolveScopedPath({ root, relativePath });
+  const filePath = await resolveExplorerReadPath({ root, relativePath });
   const handle = await openFileForRead(filePath.resolvedPath);
 
   try {
@@ -306,7 +307,7 @@ export async function streamExplorerFile(
   { root, relativePath }: ReadFileParams,
   consume: (file: FileExplorerFileStream) => Promise<void>,
 ): Promise<void> {
-  const filePath = await resolveScopedPath({ root, relativePath });
+  const filePath = await resolveExplorerReadPath({ root, relativePath });
   const handle = await openFileForRead(filePath.resolvedPath);
 
   try {
@@ -561,7 +562,7 @@ export async function writeExplorerFile({
 export async function getUnavailableFilePreview(
   input: ReadFileParams & { maxBytes: number },
 ): Promise<FilePreviewUnavailable | null> {
-  const scoped = await resolveScopedPath(input);
+  const scoped = await resolveExplorerReadPath(input);
   const stats = await fs.stat(scoped.resolvedPath);
   if (stats.isDirectory()) {
     return {
@@ -851,6 +852,17 @@ async function isCaseOnlyRename(
       !targetStats.isSymbolicLink() &&
       (await fs.realpath(targetPath)) === source.resolvedPath;
   return isSameEntry && source.requestedPath.toLowerCase() === targetPath.toLowerCase();
+}
+
+async function resolveExplorerReadPath(input: ReadFileParams): Promise<ScopedPath> {
+  const scoped = await resolveScopedPath(input);
+  if (
+    scoped.requestedPath === scoped.resolvedPath &&
+    (await recoverMissingProviderImage(scoped.requestedPath))
+  ) {
+    return resolveScopedPath(input);
+  }
+  return scoped;
 }
 
 async function resolveScopedPath({

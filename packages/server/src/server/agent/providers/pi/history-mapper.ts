@@ -12,6 +12,7 @@ import { piReplayedTurns } from "./metrics.js";
 import {
   MAX_PROVIDER_IMAGE_BYTES,
   materializeProviderImage,
+  registerProviderImageRecovery,
   renderProviderImageOutputAsAssistantMarkdown,
 } from "../provider-image-output.js";
 import {
@@ -48,6 +49,10 @@ export interface PiCapturedUserMessageEntry {
 }
 
 export interface PiHistoryMapperHooks extends AgentHistoryOptions {
+  recoverImage?: (
+    entryId: string,
+    index: number,
+  ) => (() => Promise<{ data: string; mimeType: string }>) | undefined;
   onUserImageError?: (error: unknown) => void;
   mapCustomMessage?: (
     text: string,
@@ -245,8 +250,25 @@ export class PiHistoryMapper {
     const userEntry = this.userEntries[this.userIndex++];
     const messageId = explicitId ?? userEntry?.id;
     const submitted = messageId ? this.hooks.findSubmittedUserImages?.(messageId) : undefined;
-    const images = await this.materializeUserImages(message.content, submitted ?? []);
-    if (!text && !images.length) return [];
+    const budgetWasExceeded = this.reportedImageBudget;
+    const images = await this.materializeUserImages(message.content, submitted ?? [], messageId);
+    const warning: AgentStreamEvent[] =
+      !budgetWasExceeded && this.reportedImageBudget
+        ? [
+            {
+              type: "timeline",
+              provider: this.provider,
+              ...(timestamp ? { timestamp } : {}),
+              item: {
+                type: "notification",
+                level: "warning",
+                message:
+                  "Some Pi history images were omitted because replay reached its image limit.",
+              },
+            },
+          ]
+        : [];
+    if (!text && !images.length) return warning;
     return [
       {
         type: "timeline",
@@ -259,12 +281,14 @@ export class PiHistoryMapper {
           ...(images.length ? { images } : {}),
         },
       },
+      ...warning,
     ];
   }
 
   private async materializeUserImages(
     content: Extract<PiAgentMessage, { role: "user" }>["content"],
     submitted: AgentTimelineImage[],
+    messageId: string | undefined,
   ): Promise<AgentTimelineImage[]> {
     if (!Array.isArray(content)) return submitted;
     if (submitted.length) {
@@ -284,7 +308,7 @@ export class PiHistoryMapper {
       if (indexes) indexes.push(index);
       else submittedById.set(image.id, [index]);
     }
-    for (const block of content) {
+    for (const [index, block] of content.entries()) {
       if (block?.type !== "image") continue;
       if (this.remainingImageBlocks === 0) {
         this.reportImageBudget();
@@ -306,6 +330,7 @@ export class PiHistoryMapper {
           images.push(submitted[matched]);
         } else if (byteSize && mimeType.startsWith("image/")) {
           images.push({ id, mimeType, source: path, byteSize });
+          this.registerUserImageRecovery(path, id, messageId, index);
         }
       } catch (error) {
         this.hooks.onUserImageError?.(error);
@@ -314,6 +339,16 @@ export class PiHistoryMapper {
     // If the daemon only saved some attachments and Pi changed the bytes, the
     // transcript carries no association for safe positional deduplication.
     return [...images, ...submitted.filter((_, index) => !used.has(index))];
+  }
+
+  private registerUserImageRecovery(
+    path: string,
+    hash: string,
+    messageId: string | undefined,
+    index: number,
+  ): void {
+    const read = messageId ? this.hooks.recoverImage?.(messageId, index) : undefined;
+    if (read) registerProviderImageRecovery(path, hash, read);
   }
 
   private claimUserImageInput(block: PiImageContent): { data: string; mimeType: string } | null {

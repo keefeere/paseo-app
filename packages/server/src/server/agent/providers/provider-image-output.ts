@@ -82,6 +82,8 @@ export async function materializeProviderImage(image: {
   data: string;
   mimeType: string | null;
   reusePath?: (id: string) => string | undefined;
+  expectedId?: string;
+  restorePath?: string;
 }): Promise<MaterializedProviderImage & { id: string; mimeType: string; byteSize: number }> {
   const maxEncodedCharacters = Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4;
   // Check length before inspecting/copying the payload, including a bounded data URI header.
@@ -107,7 +109,22 @@ export async function materializeProviderImage(image: {
     byteSize += bytes.byteLength;
   }
   const id = hash.digest("hex");
+  if (image.expectedId !== undefined && image.expectedId !== id) {
+    throw new Error("Provider image bytes changed since replay");
+  }
   const metadata = { id, mimeType, byteSize };
+  if (image.restorePath) {
+    const dir = path.dirname(image.restorePath);
+    // A temp cleaner may remove the directory, not just the file. publishImage still
+    // checks ownership and permissions before opening an exclusive staging file.
+    await fs.mkdir(dir, { mode: PRIVATE_ATTACHMENT_DIR_MODE }).catch((error: unknown) => {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    });
+    return {
+      ...(await materializeInDirectory(dir, path.basename(image.restorePath), data)),
+      ...metadata,
+    };
+  }
   const existingPath = image.reusePath?.(id);
   if (existingPath) return { path: existingPath, ...metadata };
   const filename = `${id}.${getImageExtension(mimeType)}`;
@@ -122,6 +139,65 @@ export async function materializeProviderImage(image: {
     const replacement = await getMaterializedImageAttachmentDir();
     return { ...(await materializeInDirectory(replacement, filename, data)), ...metadata };
   }
+}
+
+type ProviderImageRecipe = () => Promise<{ data: string; mimeType: string }>;
+const MAX_IMAGE_RECOVERY_RECIPES = 4096;
+const MAX_PENDING_IMAGE_RECOVERIES = 16;
+const imageRecoveryRecipes = new Map<string, { id: string; read: ProviderImageRecipe }>();
+const pendingImageRecoveries = new Map<string, Promise<void>>();
+let imageRecoveryTail = Promise.resolve();
+
+export function registerProviderImageRecovery(
+  source: string,
+  id: string,
+  read: ProviderImageRecipe,
+): void {
+  imageRecoveryRecipes.delete(source);
+  imageRecoveryRecipes.set(source, { id, read });
+  if (imageRecoveryRecipes.size > MAX_IMAGE_RECOVERY_RECIPES) {
+    const oldest = imageRecoveryRecipes.keys().next();
+    if (!oldest.done) imageRecoveryRecipes.delete(oldest.value);
+  }
+}
+
+/** A file RPC can only retry an exact source that the provider previously published. */
+export async function recoverMissingProviderImage(source: string): Promise<boolean> {
+  const recipe = imageRecoveryRecipes.get(source);
+  if (!recipe) return false;
+  try {
+    await fs.lstat(source);
+    return false;
+  } catch (error) {
+    if (!isMissingPath(error)) throw error;
+  }
+  let pending = pendingImageRecoveries.get(source);
+  if (!pending) {
+    if (pendingImageRecoveries.size >= MAX_PENDING_IMAGE_RECOVERIES) {
+      throw new Error("Too many pending provider image recoveries");
+    }
+    pending = imageRecoveryTail
+      .then(async () => {
+        try {
+          await fs.lstat(source);
+          return undefined;
+        } catch (error) {
+          if (!isMissingPath(error)) throw error;
+        }
+        const input = await recipe.read();
+        await materializeProviderImage({ ...input, expectedId: recipe.id, restorePath: source });
+        return undefined;
+      })
+      .catch((error: unknown) => {
+        if (imageRecoveryRecipes.get(source) === recipe) imageRecoveryRecipes.delete(source);
+        throw error;
+      })
+      .finally(() => pendingImageRecoveries.delete(source));
+    pendingImageRecoveries.set(source, pending);
+    imageRecoveryTail = pending.catch(() => undefined);
+  }
+  await pending;
+  return true;
 }
 
 function materializeInDirectory(

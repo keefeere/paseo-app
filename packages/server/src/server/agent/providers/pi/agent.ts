@@ -1502,6 +1502,7 @@ export class PiRpcAgentSession implements AgentSession {
         history.userEntries,
         {
           ...options,
+          recoverImage: history.recoverImage,
           onUserImageError: (err) => this.logger.warn({ err }, "Failed to recover Pi user image"),
         },
         // At most eight 2 MiB child files per replay; later cards retain their summaries.

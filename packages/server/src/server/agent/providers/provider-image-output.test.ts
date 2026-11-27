@@ -9,10 +9,34 @@ import {
   MAX_PROVIDER_IMAGE_BYTES,
   isProviderImageMarkdown,
   materializeProviderImage,
+  recoverMissingProviderImage,
+  registerProviderImageRecovery,
   renderProviderImageOutputAsAssistantMarkdown,
 } from "./provider-image-output.js";
 
 const HASH = "a".repeat(64);
+
+test("coalesces recovery of an exact published preview path", async () => {
+  const data = Buffer.from("unique registered provider preview").toString("base64");
+  const input = { data, mimeType: "image/png" };
+  const materialized = await materializeProviderImage(input);
+  let reads = 0;
+  registerProviderImageRecovery(materialized.path, materialized.id, async () => {
+    reads++;
+    return input;
+  });
+  rmSync(materialized.path);
+  try {
+    expect(await recoverMissingProviderImage(`${materialized.path}.not-registered`)).toBe(false);
+    await Promise.all(
+      Array.from({ length: 20 }, () => recoverMissingProviderImage(materialized.path)),
+    );
+    expect(reads).toBe(1);
+    expect(readFileSync(materialized.path)).toEqual(Buffer.from(data, "base64"));
+  } finally {
+    rmSync(materialized.path, { force: true });
+  }
+});
 
 async function renderImageMarkdown(imagePath: string): Promise<string> {
   const item = await renderProviderImageOutputAsAssistantMarkdown({ path: imagePath });

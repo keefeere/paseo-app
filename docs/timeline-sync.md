@@ -295,11 +295,17 @@ after a daemon or app restart without putting base64 data on the timeline wire. 
 the daemon's submitted attachments when the native entry ID matches: Pi can hold a resized
 copy. When Pi has more images than the daemon recorded, replay matches exact content hashes
 and preserves unmatched images from both sources. Resized copies cannot be matched safely in
-that case. Preview files reconstructed from the transcript are temporary. If the OS removes one,
-a warm timeline still has the old path; reload the agent to replay its transcript. Preview work
-per replay is capped at 256 native blocks and about 128 MiB of decoded data. Replay logs when it
-hits the cap and continues with text and submitted attachments. Do not prune attachments based on
-replay: it only covers the active branch. Submission lifecycle is a separate record keyed by agent.
+that case. Reconstructed previews are temporary. If one is deleted, a scoped file read can
+restore its existing path from an indexed transcript record. Recovery is registered only for
+previously projected images, verifies the content hash before writing, and coalesces concurrent
+requests for the same path. The daemon retains up to 4,096 recovery locations and queues at most
+16 misses, decoding one at a time. If the location is gone, evicted or no longer matches, reload
+the agent to replay the current transcript.
+
+Preview work per replay is capped at 256 native blocks and about 128 MiB of decoded data. Replay
+adds a timeline warning when it hits the cap and continues with text and submitted attachments.
+Do not prune attachments based on replay: it only covers the active branch. Submission lifecycle
+is a separate record keyed by agent.
 The transaction registry records two independent settlement facts: canonical acknowledgement and RPC
 settlement. Canonical acknowledgement retires optimistic activity immediately. When both facts are
 known, whichever arrives second deletes the record. A canonical acknowledgement that arrives first

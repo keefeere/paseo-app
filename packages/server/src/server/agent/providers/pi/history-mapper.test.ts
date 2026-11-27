@@ -181,13 +181,19 @@ describe("Pi history mapper", () => {
     );
     expect(readData).toHaveBeenCalledTimes(256);
     expect(onUserImageError).toHaveBeenCalledTimes(1);
-    expect(events.slice(1)).toEqual(
-      ["keep text", "also keep this"].map((text) => ({
+    expect(events.slice(1)).toEqual([
+      { type: "timeline", provider: "pi", item: { type: "user_message", text: "keep text" } },
+      {
         type: "timeline",
         provider: "pi",
-        item: { type: "user_message", text },
-      })),
-    );
+        item: {
+          type: "notification",
+          level: "warning",
+          message: "Some Pi history images were omitted because replay reached its image limit.",
+        },
+      },
+      { type: "timeline", provider: "pi", item: { type: "user_message", text: "also keep this" } },
+    ]);
   });
 
   test("skips over-budget image data without spending the budget on decoding it", async () => {

@@ -10,7 +10,7 @@ import { join, parse } from "node:path";
 import { createHash } from "node:crypto";
 import { PiRpcAgentClient } from "../agent/providers/pi/agent.js";
 import { FakePi } from "../agent/providers/pi/test-utils/fake-pi.js";
-import { readPiTranscript } from "../agent/providers/pi/transcript.js";
+import { readPiTranscriptFile } from "../agent/providers/pi/transcript.js";
 import { expect, test, vi } from "vitest";
 import pino from "pino";
 import type { CreationSnapshot, SessionOutboundMessage } from "@getpaseo/protocol/messages";
@@ -31,7 +31,7 @@ function createCreationDaemon(options: Parameters<typeof createTestPaseoDaemon>[
   });
 }
 
-test("reads provider-only Pi image bytes over daemon RPC after a cold replay", async () => {
+test("reads provider-only Pi images over daemon RPC after losing the warm preview", async () => {
   const root = await mkdtemp(join(tmpdir(), "pi-image-rpc-"));
   const file = join(root, "session.jsonl");
   const data =
@@ -42,7 +42,7 @@ test("reads provider-only Pi image bytes over daemon RPC after a cold replay", a
     await writeFile(
       file,
       [
-        { type: "session", version: 3, id: "pi-image-session", cwd: root },
+        { type: "session", version: 3, id: "pi-image-session", cwd: root, title: "Зображення 🖼" },
         ...["first", "second"].map((entryId, index) => ({
           type: "message",
           id: entryId,
@@ -58,9 +58,7 @@ test("reads provider-only Pi image bytes over daemon RPC after a cold replay", a
       const startSession = runtime.startSession.bind(runtime);
       vi.spyOn(runtime, "startSession").mockImplementation(async (input) => {
         const session = await startSession(input);
-        vi.spyOn(session, "getHistory").mockImplementation(async () =>
-          readPiTranscript(await readFile(file, "utf8")),
-        );
+        vi.spyOn(session, "getHistory").mockImplementation(async () => readPiTranscriptFile(file));
         return session;
       });
       const pi = new PiRpcAgentClient({ logger: pino({ level: "silent" }), runtime });
@@ -116,9 +114,24 @@ test("reads provider-only Pi image bytes over daemon RPC after a cold replay", a
       source = await readImage(first.client, agentId);
       const warm = await first.client.fetchAgentTimeline(agentId);
       await rm(source);
-      // A warm timeline still holds its existing reference; fetching it does not replay Pi.
       expect((await first.client.fetchAgentTimeline(agentId)).entries).toEqual(warm.entries);
-      await expect(first.client.readFile(parse(source).root, source)).rejects.toThrow();
+      const restored = await Promise.all([
+        first.client.readFile(parse(source).root, source, undefined, 1024),
+        first.client.readFile(parse(source).root, source),
+      ]);
+      expect(restored.map((read) => Buffer.from(read.bytes))).toEqual([bytes, bytes]);
+      await rm(source);
+      const originalTranscript = await readFile(file, "utf8");
+      try {
+        // Change bytes without changing the record offsets or identity.
+        await writeFile(file, originalTranscript.replaceAll(data, "A" + data.slice(1)));
+        await expect(first.client.readFile(parse(source).root, source)).rejects.toThrow(
+          "Provider image bytes changed since replay",
+        );
+        await expect(readFile(source)).rejects.toMatchObject({ code: "ENOENT" });
+      } finally {
+        await writeFile(file, originalTranscript);
+      }
     } finally {
       await first.close();
     }
