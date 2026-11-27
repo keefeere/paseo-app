@@ -4,7 +4,6 @@ import type { FileHandle } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
 import { expandUserPath, resolvePathFromBase } from "../path-utils.js";
-import { recoverMissingProviderImage } from "../agent/providers/provider-image-output.js";
 import { runGitCommand } from "../../utils/run-git-command.js";
 
 export type ExplorerEntryKind = "file" | "directory";
@@ -252,7 +251,7 @@ export async function readExplorerFileBytes({
   root,
   relativePath,
 }: ReadFileParams): Promise<FileExplorerFileBytes> {
-  const filePath = await resolveExplorerReadPath({ root, relativePath });
+  const filePath = await resolveScopedPath({ root, relativePath });
   const handle = await openFileForRead(filePath.resolvedPath);
 
   try {
@@ -307,7 +306,7 @@ export async function streamExplorerFile(
   { root, relativePath }: ReadFileParams,
   consume: (file: FileExplorerFileStream) => Promise<void>,
 ): Promise<void> {
-  const filePath = await resolveExplorerReadPath({ root, relativePath });
+  const filePath = await resolveScopedPath({ root, relativePath });
   const handle = await openFileForRead(filePath.resolvedPath);
 
   try {
@@ -562,7 +561,7 @@ export async function writeExplorerFile({
 export async function getUnavailableFilePreview(
   input: ReadFileParams & { maxBytes: number },
 ): Promise<FilePreviewUnavailable | null> {
-  const scoped = await resolveExplorerReadPath(input);
+  const scoped = await resolveScopedPath(input);
   const stats = await fs.stat(scoped.resolvedPath);
   if (stats.isDirectory()) {
     return {
@@ -854,15 +853,31 @@ async function isCaseOnlyRename(
   return isSameEntry && source.requestedPath.toLowerCase() === targetPath.toLowerCase();
 }
 
-async function resolveExplorerReadPath(input: ReadFileParams): Promise<ScopedPath> {
-  const scoped = await resolveScopedPath(input);
-  if (
-    scoped.requestedPath === scoped.resolvedPath &&
-    (await recoverMissingProviderImage(scoped.requestedPath))
-  ) {
-    return resolveScopedPath(input);
+/** A recovery may serve a registered absolute path only within the caller's file scope. */
+export async function isMissingScopedFile(input: ReadFileParams): Promise<boolean> {
+  const { requestedPath, resolvedPath } = await resolveScopedPath(input);
+  if (input.relativePath !== requestedPath || requestedPath !== resolvedPath) return false;
+  try {
+    await fs.lstat(requestedPath);
+    return false;
+  } catch (error) {
+    if (!isMissingEntryError(error)) throw error;
   }
-  return scoped;
+  const root = await fs.realpath(expandUserPath(input.root));
+  // realpath of the missing file cannot tell us where its existing parent resolves.
+  let parent = path.dirname(requestedPath);
+  while (true) {
+    let canonicalParent: string;
+    try {
+      canonicalParent = await fs.realpath(parent);
+    } catch (error) {
+      if (!isMissingEntryError(error) || path.dirname(parent) === parent) throw error;
+      parent = path.dirname(parent);
+      continue;
+    }
+    assertWithinWorkspace(root, canonicalParent);
+    return true;
+  }
 }
 
 async function resolveScopedPath({

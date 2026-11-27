@@ -116,6 +116,7 @@ import {
   type PendingForegroundRun,
 } from "./agent-run-state.js";
 import { invokeRewindCapability, type RewindMode } from "./rewind/rewind.js";
+import { ProviderImageRecovery } from "./provider-image-recovery.js";
 import { parseAgentMessage, projectAgentMessages } from "./agent-messages/index.js";
 import { isStaleProviderSessionError } from "./stale-provider-session-error.js";
 import {
@@ -950,6 +951,7 @@ export interface RetiredInternalAgent {
 }
 
 export class AgentManager {
+  readonly providerImageRecovery = new ProviderImageRecovery();
   private readonly pluginLifecycle: PluginLifecycle | undefined;
   private readonly retiredInternalAgents = new Map<
     string,
@@ -2054,7 +2056,12 @@ export class AgentManager {
         providerHandleId: input.providerHandleId,
         cwd: input.cwd,
       },
-      { config: providerLaunchConfig, storedConfig, launchContext },
+      {
+        config: providerLaunchConfig,
+        storedConfig,
+        launchContext,
+        historyOptions: { registerReplayImage: this.providerImageRecovery.register },
+      },
     );
     await this.requireExternalMcpSupport(imported.session, providerLaunchConfig, launchContext);
     let handedToRegistration = false;
@@ -5380,6 +5387,7 @@ export class AgentManager {
 
   private streamProviderHistory(agentId: string, session: AgentSession) {
     return session.streamHistory({
+      registerReplayImage: this.providerImageRecovery.register,
       findSubmittedUserImages: (id) => this.findSubmittedMessageImages(agentId, id).images,
     });
   }

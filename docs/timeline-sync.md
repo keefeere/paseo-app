@@ -295,12 +295,14 @@ after a daemon or app restart without putting base64 data on the timeline wire. 
 the daemon's submitted attachments when the native entry ID matches: Pi can hold a resized
 copy. When Pi has more images than the daemon recorded, replay matches exact content hashes
 and preserves unmatched images from both sources. Resized copies cannot be matched safely in
-that case. Reconstructed previews are temporary. If one is deleted, a scoped file read can
-restore its existing path from an indexed transcript record. Recovery is registered only for
-previously projected images, verifies the content hash before writing, and coalesces concurrent
-requests for the same path. The daemon retains up to 4,096 recovery locations and queues at most
-16 misses, decoding one at a time. If the location is gone, evicted or no longer matches, reload
-the agent to replay the current transcript.
+that case. Reconstructed previews are temporary. On a binary file RPC miss, the destination
+daemon can serve verified bytes for an exact preview path in its own replay index after the
+normal file authorization and scope checks. It never recreates the path or its directory.
+The index retains at most 4,096 locations for images up to 16 MiB. It admits up to 16 reads at
+a time, coalesces concurrent reads of the same preview during decoding, and serves one decoded
+image at a time. If the location is gone, evicted, too large, or no longer matches, reload the
+agent to replay the current transcript. See [daemon permissions](permissions.md#resources) for
+the current daemon-wide file authority.
 
 Preview work per replay is capped at 256 native blocks and about 128 MiB of decoded data. Replay
 adds a timeline warning when it hits the cap and continues with text and submitted attachments.

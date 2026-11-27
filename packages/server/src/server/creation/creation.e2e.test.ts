@@ -53,7 +53,7 @@ test("reads provider-only Pi images over daemon RPC after losing the warm previe
         .map((row) => JSON.stringify(row))
         .join("\n"),
     );
-    const start = async () => {
+    const start = async (paseoHomeRoot = root) => {
       const runtime = new FakePi();
       const startSession = runtime.startSession.bind(runtime);
       vi.spyOn(runtime, "startSession").mockImplementation(async (input) => {
@@ -66,9 +66,9 @@ test("reads provider-only Pi images over daemon RPC after losing the warm previe
       vi.spyOn(pi, "fetchCatalog").mockResolvedValue({ models: [], modes: [] });
       const daemon = await createCreationDaemon({
         agentClients: { pi },
-        paseoHomeRoot: root,
+        paseoHomeRoot,
         cleanup: false,
-        staticDir: root,
+        staticDir: paseoHomeRoot,
         pluginsEnabled: false,
       });
       const client = new DaemonClient({
@@ -114,13 +114,25 @@ test("reads provider-only Pi images over daemon RPC after losing the warm previe
       source = await readImage(first.client, agentId);
       const warm = await first.client.fetchAgentTimeline(agentId);
       await rm(source);
+      await expect(first.client.readFile(root, source)).rejects.toThrow("outside");
+      await expect(first.client.readFile(parse(source).root, source, undefined, 1)).rejects.toThrow(
+        "File is too large to display",
+      );
+      const unrelatedDaemon = await start(join(root, "unrelated-daemon"));
+      try {
+        await expect(unrelatedDaemon.client.readFile(parse(source).root, source)).rejects.toThrow(
+          "ENOENT",
+        );
+      } finally {
+        await unrelatedDaemon.close();
+      }
       expect((await first.client.fetchAgentTimeline(agentId)).entries).toEqual(warm.entries);
       const restored = await Promise.all([
         first.client.readFile(parse(source).root, source, undefined, 1024),
         first.client.readFile(parse(source).root, source),
       ]);
       expect(restored.map((read) => Buffer.from(read.bytes))).toEqual([bytes, bytes]);
-      await rm(source);
+      await expect(readFile(source)).rejects.toMatchObject({ code: "ENOENT" });
       const originalTranscript = await readFile(file, "utf8");
       try {
         // Change bytes without changing the record offsets or identity.

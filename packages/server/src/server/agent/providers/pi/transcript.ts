@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { constants } from "node:fs";
 import { open, readFile } from "node:fs/promises";
-import { MAX_PROVIDER_IMAGE_BYTES } from "../provider-image-output.js";
+import { MAX_RECOVERED_IMAGE_BYTES } from "../../provider-image-recovery.js";
 import { getUserMessageText, type PiCapturedUserMessageEntry } from "./history-mapper.js";
 import type { PiAgentMessage, PiSessionEntry } from "./rpc-types.js";
 
@@ -95,7 +95,7 @@ const record = z
   })
   .passthrough();
 
-const MAX_RECOVERY_LINE_BYTES = Math.ceil(MAX_PROVIDER_IMAGE_BYTES / 3) * 4 + 1024 * 1024;
+const MAX_RECOVERY_LINE_BYTES = Math.ceil(MAX_RECOVERED_IMAGE_BYTES / 3) * 4 + 1024 * 1024;
 
 export async function readPiTranscriptFile(file: string): Promise<PiTranscript> {
   return readPiTranscript(await readFile(file, "utf8"), file);

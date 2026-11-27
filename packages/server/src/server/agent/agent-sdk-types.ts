@@ -631,6 +631,7 @@ export interface ImportProviderSessionContext {
   config: AgentSessionConfig;
   storedConfig: AgentSessionConfig;
   launchContext?: AgentLaunchContext;
+  historyOptions?: AgentHistoryOptions;
 }
 
 export interface ImportedTimelineEntry {
@@ -736,6 +737,7 @@ export interface AgentUsageSession {
 }
 
 export interface AgentHistoryOptions {
+  registerReplayImage?: import("./provider-image-recovery.js").RegisterReplayImage;
   /** Daemon-owned attachments take precedence over native transcript image data. */
   findSubmittedUserImages?: (messageId: string) => AgentTimelineImage[] | undefined;
 }

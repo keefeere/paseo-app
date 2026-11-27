@@ -7,6 +7,7 @@ import {
   readFile,
   rm,
   stat,
+  symlink,
   truncate,
   writeFile,
 } from "node:fs/promises";
@@ -20,6 +21,7 @@ import {
   duplicateExplorerEntry,
   getExplorerFileVersion,
   getDownloadableFileInfo,
+  isMissingScopedFile,
   readExplorerFileBytes,
   readExplorerFile,
   renameExplorerEntry,
@@ -36,6 +38,30 @@ async function createTempDir(prefix: string): Promise<string> {
 }
 
 describe("file explorer service", () => {
+  it.skipIf(process.platform === "win32")(
+    "validates the nearest existing parent of a missing preview",
+    async () => {
+      const scratch = await createTempDir("paseo-preview-scope-");
+      try {
+        const root = path.join(scratch, "workspace");
+        const sibling = path.join(scratch, "sibling");
+        await mkdir(root);
+        await mkdir(sibling);
+        await symlink(sibling, path.join(root, "outside"));
+        await expect(
+          isMissingScopedFile({
+            root,
+            relativePath: path.join(root, "outside", "missing", "preview.png"),
+          }),
+        ).rejects.toThrow("outside");
+        await expect(
+          isMissingScopedFile({ root, relativePath: path.join(root, "removed", "preview.png") }),
+        ).resolves.toBe(true);
+      } finally {
+        await rm(scratch, { recursive: true, force: true });
+      }
+    },
+  );
   it("atomically writes an existing text file at the expected revision", async () => {
     const root = await createTempDir("paseo-file-write-");
     try {

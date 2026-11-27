@@ -2,6 +2,7 @@ import { AsyncLocalStorage, createHook } from "node:async_hooks";
 import { existsSync, rmSync, statSync, readFileSync } from "node:fs";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
+import { ProviderImageRecovery } from "../provider-image-recovery.js";
 import { projectTimelineRows } from "../timeline-projection.js";
 import { describe, expect, test } from "vitest";
 
@@ -9,33 +10,42 @@ import {
   MAX_PROVIDER_IMAGE_BYTES,
   isProviderImageMarkdown,
   materializeProviderImage,
-  recoverMissingProviderImage,
-  registerProviderImageRecovery,
   renderProviderImageOutputAsAssistantMarkdown,
 } from "./provider-image-output.js";
 
 const HASH = "a".repeat(64);
 
-test("coalesces recovery of an exact published preview path", async () => {
-  const data = Buffer.from("unique registered provider preview").toString("base64");
-  const input = { data, mimeType: "image/png" };
+test("coalesces warm preview reads on one daemon without publishing the temp path", async () => {
+  const bytes = Buffer.from("unique registered provider preview");
+  const input = { data: bytes.toString("base64"), mimeType: "image/png" };
   const materialized = await materializeProviderImage(input);
+  const image = { ...materialized, source: materialized.path };
+  const recovery = new ProviderImageRecovery();
+  const unrelatedDaemon = new ProviderImageRecovery();
   let reads = 0;
-  registerProviderImageRecovery(materialized.path, materialized.id, async () => {
+  let resume!: () => void;
+  const paused = new Promise<void>((resolve) => {
+    resume = resolve;
+  });
+  recovery.register(image, async () => {
     reads++;
+    await paused;
     return input;
   });
   rmSync(materialized.path);
+  const consume = async (_image: unknown, recovered: Buffer) => {
+    expect(recovered).toEqual(bytes);
+  };
+  const admitted = Array.from({ length: 16 }, () => recovery.read(image.source, consume));
   try {
-    expect(await recoverMissingProviderImage(`${materialized.path}.not-registered`)).toBe(false);
-    await Promise.all(
-      Array.from({ length: 20 }, () => recoverMissingProviderImage(materialized.path)),
-    );
-    expect(reads).toBe(1);
-    expect(readFileSync(materialized.path)).toEqual(Buffer.from(data, "base64"));
+    await expect(unrelatedDaemon.read(image.source, consume)).resolves.toBe(false);
+    await expect(recovery.read(image.source, consume)).rejects.toThrow("Too many pending");
   } finally {
-    rmSync(materialized.path, { force: true });
+    resume();
+    await expect(Promise.all(admitted)).resolves.toEqual(Array(16).fill(true));
   }
+  expect(reads).toBe(1);
+  expect(existsSync(materialized.path)).toBe(false);
 });
 
 async function renderImageMarkdown(imagePath: string): Promise<string> {

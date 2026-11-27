@@ -12,7 +12,6 @@ import { piReplayedTurns } from "./metrics.js";
 import {
   MAX_PROVIDER_IMAGE_BYTES,
   materializeProviderImage,
-  registerProviderImageRecovery,
   renderProviderImageOutputAsAssistantMarkdown,
 } from "../provider-image-output.js";
 import {
@@ -329,8 +328,9 @@ export class PiHistoryMapper {
           used.add(matched);
           images.push(submitted[matched]);
         } else if (byteSize && mimeType.startsWith("image/")) {
-          images.push({ id, mimeType, source: path, byteSize });
-          this.registerUserImageRecovery(path, id, messageId, index);
+          const image = { id, mimeType, source: path, byteSize };
+          images.push(image);
+          this.registerUserImageRecovery(image, messageId, index);
         }
       } catch (error) {
         this.hooks.onUserImageError?.(error);
@@ -342,13 +342,12 @@ export class PiHistoryMapper {
   }
 
   private registerUserImageRecovery(
-    path: string,
-    hash: string,
+    image: AgentTimelineImage,
     messageId: string | undefined,
     index: number,
   ): void {
     const read = messageId ? this.hooks.recoverImage?.(messageId, index) : undefined;
-    if (read) registerProviderImageRecovery(path, hash, read);
+    if (read) this.hooks.registerReplayImage?.(image, read);
   }
 
   private claimUserImageInput(block: PiImageContent): { data: string; mimeType: string } | null {

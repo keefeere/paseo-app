@@ -1029,6 +1029,7 @@ export class Session {
       },
       downloadTokenStore,
       paseoHome,
+      providerImageRecovery: agentManager.providerImageRecovery,
       logger: this.sessionLogger,
     });
     this.agentManager = agentManager;
